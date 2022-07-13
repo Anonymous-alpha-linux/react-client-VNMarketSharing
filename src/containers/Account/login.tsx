@@ -16,7 +16,6 @@ const Login:React.FC = ()=>  {
     const {login,resetStatus} = useActions();
 
     React.useEffect(()=>{
-
         return () =>{
             resetStatus();
         }

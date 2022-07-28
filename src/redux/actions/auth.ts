@@ -139,7 +139,6 @@ export interface IChangePasswordAction {
 }
 export interface IChangePasswordSuccessAction {
     type: ActionTypes.CHANGE_PASSWORD_SUCCESS;
-    payload: string;
 }
 export interface IChangePasswordErrorAction {
     type: ActionTypes.CHANGE_PASSWORD_ERROR;

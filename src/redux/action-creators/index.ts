@@ -1,6 +1,10 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { Dispatch } from 'redux';
-import { axiosAuthAPIInstance, apiAuthURL, AppLocalStorage } from '../../api';
+import {
+    axiosAuthAPIInstance,
+    apiAuthURL,
+    AppLocalStorage,
+} from '../../config';
 import {
     Response,
     LoginRequest,
@@ -10,10 +14,10 @@ import {
     GetUserResponse,
     ChangePasswordRequest,
 } from '../../models';
-import { AuthAction, ActionTypes } from '..';
+import { Action, ActionTypes } from '..';
 
 export const login = (loginRequest: LoginRequest) => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.LOGIN,
         });
@@ -42,10 +46,17 @@ export const login = (loginRequest: LoginRequest) => {
             });
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
-                dispatch({
-                    type: ActionTypes.LOGIN_FAILED,
-                    payload: error.message,
-                });
+                const errResponse = error.response as AxiosResponse;
+                if (errResponse.data) {
+                    const {
+                        serverMessage,
+                    }: { message: string; serverMessage: string } =
+                        errResponse.data;
+                    dispatch({
+                        type: ActionTypes.LOGIN_FAILED,
+                        payload: serverMessage,
+                    });
+                }
             } else {
                 dispatch({
                     type: ActionTypes.LOGIN_FAILED,
@@ -60,7 +71,7 @@ export const register = (
     registerRequest: RegisterRequest,
     returnURL: string
 ) => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.REGISTER,
         });
@@ -104,7 +115,7 @@ export const register = (
 };
 
 export const logout = () => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.LOGOUT,
         });
@@ -135,7 +146,7 @@ export const logout = () => {
 };
 
 export const getUser = () => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.GET_USER,
         });
@@ -169,7 +180,7 @@ export const getUser = () => {
 };
 
 export const refreshToken = () => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.REFRESH_JWT_TOKEN,
         });
@@ -197,7 +208,7 @@ export const refreshToken = () => {
 };
 
 export const confirmEmail = (userId: string, token: string) => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.CONFIRM_ACCOUNT,
         });
@@ -237,7 +248,7 @@ export const confirmEmail = (userId: string, token: string) => {
 };
 
 export const resetError = () => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.RESET_ERROR,
         });
@@ -245,7 +256,7 @@ export const resetError = () => {
 };
 
 export const resetStatus = () => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.RESET_STATUS,
         });
@@ -253,7 +264,7 @@ export const resetStatus = () => {
 };
 
 export const sendEmailToChangePassword = (email: string) => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD,
         });
@@ -284,6 +295,11 @@ export const sendEmailToChangePassword = (email: string) => {
                         type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
                         payload: serverMessage,
                     });
+                } else {
+                    dispatch({
+                        type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
+                        payload: 'Send email request failed',
+                    });
                 }
             } else {
                 dispatch({
@@ -296,15 +312,15 @@ export const sendEmailToChangePassword = (email: string) => {
 };
 
 export const changePassword = (request: ChangePasswordRequest) => {
-    return async (dispatch: Dispatch<AuthAction>) => {
+    return async (dispatch: Dispatch<Action>) => {
         dispatch({
-            type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD,
+            type: ActionTypes.CHANGE_PASSWORD,
         });
         try {
             await axiosAuthAPIInstance.post(apiAuthURL.changePassword, request);
 
             dispatch({
-                type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_SUCCESS,
+                type: ActionTypes.CHANGE_PASSWORD_SUCCESS,
             });
         } catch (error: any | AxiosError | Error) {
             if (axios.isAxiosError(error)) {
@@ -318,11 +334,11 @@ export const changePassword = (request: ChangePasswordRequest) => {
                         type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
                         payload: serverMessage,
                     });
-                }
-                dispatch({
-                    type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
-                    payload: 'Error client',
-                });
+                } else
+                    dispatch({
+                        type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
+                        payload: 'Error client',
+                    });
             } else {
                 dispatch({
                     type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_ERROR,
@@ -332,3 +348,5 @@ export const changePassword = (request: ChangePasswordRequest) => {
         }
     };
 };
+
+export * from './user';

@@ -1,4 +1,4 @@
-import { ActionTypes, AuthAction } from '..';
+import { ActionTypes, Action } from '..';
 import { ResponseStatus } from '../../models';
 
 interface AuthState {
@@ -25,7 +25,7 @@ const initialState: AuthState = {
 
 const authReducer = (
     state: AuthState = initialState,
-    action: AuthAction
+    action: Action
 ): AuthState => {
     switch (action.type) {
         case ActionTypes.LOGIN:

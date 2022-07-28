@@ -2,8 +2,6 @@ import './App.css';
 import { Layout } from './pages';
 import Router from './Router';
 
-
-
 function App() {
   return (
     <Layout>

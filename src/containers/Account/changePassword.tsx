@@ -1,7 +1,7 @@
 import React from 'react';
-import {Link, useNavigate, useSearchParams} from 'react-router-dom';
-import {Formik,Field,FormikHelpers, ErrorMessage} from 'formik';
-import {Form as BootstrapForm, Row,Col} from 'react-bootstrap';
+import {Link,useSearchParams} from 'react-router-dom';
+import {Formik,FormikHelpers} from 'formik';
+import {Form as BootstrapForm,} from 'react-bootstrap';
 import {useActions, useTypedSelector} from '../../hooks';
 import { ChangePasswordRequest, ResponseStatus } from '../../models';
 import {changePasswordSchema} from '../../schemas';
@@ -9,14 +9,12 @@ import {changePasswordSchema} from '../../schemas';
 export const ChangePassword = () => {
     const [searchParams] = useSearchParams();
     const {changePassword, resetStatus} = useActions();
-    const navigate = useNavigate();
-    const {error, loading, status} = useTypedSelector((state) => state.auth);
+    const {error,loading, status} = useTypedSelector((state) => state.auth);
     React.useEffect(()=>{
         if(status === ResponseStatus.SUCCESS){
-            navigate("/");
+            resetStatus();
         }
         return () =>{
-            console.log("reset status");
             resetStatus();
         }
     },[])
@@ -25,6 +23,7 @@ export const ChangePassword = () => {
     if(!searchParams.get("email") || !searchParams.get("token")){
         throw new Error("Bad request");
     }
+    if(status === ResponseStatus.SUCCESS) return <SuccessChangePassword></SuccessChangePassword>
     return <Formik initialValues={{
         email: searchParams.get("email") || "", 
         token: searchParams.get("token") || "",
@@ -55,7 +54,7 @@ export const ChangePassword = () => {
                         onBlur={handleBlur}
                         aria-describedby="passwordHelper"
                         isValid={touched.password && !errors.password}
-                        isInvalid={!!errors.password}
+                        isInvalid={touched.password && !!errors.password}
                         ></BootstrapForm.Control>
                         <BootstrapForm.Text id="passwordHelper" muted>
                             Your password must be more than 12 characters long
@@ -86,9 +85,17 @@ export const ChangePassword = () => {
                         </span>
                     </div>
 
-                    {error && <p style={{color: "red", textDecoration: "italic"}}>{error}</p>}
+                    <BootstrapForm.Control type="hidden" isInvalid={!!error}></BootstrapForm.Control>
+                    <BootstrapForm.Control.Feedback type="invalid">{error && <>{error}</>}</BootstrapForm.Control.Feedback>
                 </BootstrapForm>
             }
         }
     </Formik>
+}
+
+const SuccessChangePassword = () =>{
+    return <>
+        <h1>Changed password successfully</h1>
+        <p>Back to <Link to="/auth/login">Login</Link></p>
+    </>
 }

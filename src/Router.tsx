@@ -1,9 +1,8 @@
-
-import React from 'react';
-import { BrowserRouter, Route, Routes, Navigate ,Outlet, useLocation} from "react-router-dom";
-import {Navigation, Sidebar,Account} from './containers';
-import {Layout} from './pages';
+import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
+import {Navigation, Sidebar, Account, Chat, User} from './containers';
+import {UserMain} from './pages';
 import {useTypedSelector} from './hooks';
+
 
 function Router() {
     return (
@@ -12,6 +11,7 @@ function Router() {
                 <Route path={"/*"} element={<Navigation></Navigation>}></Route>
                 <Route path={"dashboard/*"} element={<Sidebar></Sidebar>}></Route>
             </Routes>
+
             <Routes>
                 <Route path="auth">
                     <Route path="login" element={
@@ -46,11 +46,23 @@ function Router() {
                 </Route>
 
                 <Route path="/">
-                    <Route index element={<h1>Welcome</h1>}></Route>
+                    <Route index element={<UserMain></UserMain>}></Route>
                     <Route path="protect" element={<RouteGuard>
                         <h2>Something is secrete</h2>
                     </RouteGuard>}></Route>
                     <Route path="public" element={<h2>Public</h2>}></Route>
+                </Route>
+
+                <Route path="/profile" element={<RouteGuard>
+                    <Outlet></Outlet>
+                </RouteGuard>}>
+                    <Route index element={<User.Profile></User.Profile>}></Route>
+                </Route>
+
+                <Route path="/chat">
+                    <Route index element={<RouteGuard>
+                        <Chat.Channel></Chat.Channel>
+                    </RouteGuard>}></Route>
                 </Route>
 
                 <Route path="service" element>
@@ -65,11 +77,12 @@ function Router() {
     )
 }
 
-function RouteGuard(props: {children: JSX.Element}){
+function RouteGuard(props: {children: JSX.Element,roles?: Array<string>}){
     const {data} = useTypedSelector(state => state.auth); 
     const location = useLocation();
 
     if(!data.isAuthorized) return <Navigate to='/auth/login' state={{from: location}} replace></Navigate>
+    if(props.roles && !props?.roles.includes(data.role)) return <Navigate to={'/'} replace></Navigate>
     return (props.children);
 }
 
@@ -81,7 +94,10 @@ const RouteAuth = (props: {children: JSX.Element}) => {
     };
 
     if(data.isAuthorized) return <Navigate to={locationState?.from?.pathname || "/"} replace></Navigate>
+
     return props.children;
 }
+
+const roles = ['admin', 'user']
 
 export default Router

@@ -49,13 +49,19 @@ const UnAuthorizedAction = () =>{
 }
 
 const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
-    const {logout} = useActions();
+    const {logout,getUserInfo} = useActions();
+    const {data: {email}} = useTypedSelector(state => state.auth);
     const {data} = useTypedSelector(state => state.user);
     const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
+
+    React.useEffect(()=>{
+        getUserInfo();
+    },[email]);
 
     function _logoutHandler() {
         logout();   
     }
+    
     return <>
         <Dropdown as={ButtonGroup} size='sm'>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{padding: 0}}>

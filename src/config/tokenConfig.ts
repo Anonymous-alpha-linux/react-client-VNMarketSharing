@@ -1,9 +1,12 @@
 class MarketAdsSharingLocalStorage {
     authKey: string;
     socketKey: string;
+    userKey: string;
+
     constructor() {
         this.authKey = 'LOGIN_USER';
         this.socketKey = 'SESSION_SOCKET_USER';
+        this.userKey = 'USER';
     }
     getLoginUser() {
         return localStorage.getItem(this.authKey);
@@ -16,13 +19,23 @@ class MarketAdsSharingLocalStorage {
     }
 
     getSocketUser() {
-        localStorage.getItem(this.socketKey);
+        return localStorage.getItem(this.socketKey);
     }
     setSocketUser(user: string) {
         localStorage.setItem(this.socketKey, user);
     }
     removeSocketUser() {
         localStorage.removeItem(this.socketKey);
+    }
+
+    getUser() {
+        return localStorage.getItem(this.userKey);
+    }
+    setUser(user: object) {
+        localStorage.setItem(this.userKey, JSON.stringify(user));
+    }
+    removeUser() {
+        localStorage.removeItem(this.userKey);
     }
 }
 

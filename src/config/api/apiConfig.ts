@@ -1,6 +1,10 @@
 import axios, { AxiosInstance } from 'axios';
 import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
-import { AppAPIInstance, UserAppAPIInstance } from './appApiInstance';
+import {
+    AppAPIInstance,
+    UserAppAPIInstance,
+    AddressAppAPIInstance,
+} from './appApiInstance';
 
 const host = process.env.REACT_APP_ENVIRONMENT_HOST;
 const bearerToken: string = LocalStorageService.getLoginUser() as string;
@@ -124,4 +128,12 @@ const axiosUserAPIInstance: AxiosInstance = axios.create({
 });
 const userAPIInstance = new UserAppAPIInstance(axiosUserAPIInstance);
 
-export { axiosInstance, axiosAuthAPIInstance, userAPIInstance };
+// 4. API Address Entity
+const addressAPIInstance = new AddressAppAPIInstance(axiosUserAPIInstance);
+
+export {
+    axiosInstance,
+    axiosAuthAPIInstance,
+    userAPIInstance,
+    addressAPIInstance,
+};

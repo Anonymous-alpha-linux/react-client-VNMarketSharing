@@ -1,10 +1,10 @@
 import {useState, useEffect, useRef,ChangeEvent} from 'react';
 import {Image,Button} from 'react-bootstrap';
 import ReactCrop, {
-  centerCrop,
-  makeAspectCrop,
-  Crop,
-  PixelCrop,
+    centerCrop,
+    makeAspectCrop,
+    Crop,
+    PixelCrop,
 } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css'
 
@@ -14,7 +14,7 @@ export const Thumb = ({image, setImage}: {image: any, setImage: (newImage: File)
     const [thumb, setThumb] = useState<string>('');   
     const [completedCropImage, setCompletedCropImage]  = useState<string>("");
     const fileRef = useRef<File>();
-    
+
     useEffect(()=>{
         if(image instanceof File){
             fileRef.current = image;
@@ -63,7 +63,6 @@ export const Thumb = ({image, setImage}: {image: any, setImage: (newImage: File)
                 fileRef.current = file;
             }
         }}></ImageCrop>}
-       
     </>
 }
 
@@ -71,7 +70,6 @@ const ImageCrop = ({image, onImageCropped}:{image: any, onImageCropped: (blob: B
     const [imgSrc, setImgSrc] = useState<HTMLImageElement>();
     const [crop, setCrop] = useState<Crop>();
     const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-
     const [aspect, setAspect] = useState<number | undefined>(1);
 
     useEffect(() => {

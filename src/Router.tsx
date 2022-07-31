@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
 import {Navigation, Sidebar, Account, Chat, User} from './containers';
-import {UserMain} from './pages';
+import {UserMain,AccountPage} from './pages';
 import {useTypedSelector} from './hooks';
 
 
@@ -53,10 +53,25 @@ function Router() {
                     <Route path="public" element={<h2>Public</h2>}></Route>
                 </Route>
 
-                <Route path="/profile" element={<RouteGuard>
-                    <Outlet></Outlet>
-                </RouteGuard>}>
-                    <Route index element={<User.Profile></User.Profile>}></Route>
+                <Route path="account" element={<RouteGuard>
+                        <AccountPage>
+                            <Outlet></Outlet>
+                        </AccountPage>
+                    </RouteGuard>
+                }>
+                    <Route path="dashboard" element={<h1>Client Dashboard</h1>}></Route>
+
+                    <Route path="profile" element={<User.Profile></User.Profile>}></Route>
+
+                    <Route path="orders" element={<h1>Orders</h1>}></Route>
+
+                    <Route path="address" element={<Outlet></Outlet>}>
+                        <Route index element={<User.Address></User.Address>}></Route>
+                        <Route path="create" element={<User.BillingAddressForm></User.BillingAddressForm>} ></Route>
+                        <Route path="edit" element={<User.ShippingAddressForm></User.ShippingAddressForm>}></Route>
+                    </Route>
+
+                    <Route path="credit" element={<h1>Credit</h1>}></Route>
                 </Route>
 
                 <Route path="/chat">

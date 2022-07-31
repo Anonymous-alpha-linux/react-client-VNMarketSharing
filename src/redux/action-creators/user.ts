@@ -1,8 +1,9 @@
-import { AxiosError, AxiosRequestConfig } from 'axios';
+import { AxiosError, AxiosRequestConfig, AxiosResponse } from 'axios';
 import { Dispatch } from 'redux';
 import { ActionTypes } from '../action-types';
 import { Action } from '../actions';
 import { userAPIInstance } from '../../config';
+import { UpdateUserInfoRequest } from '../../models';
 
 export const getUserInfo = () => async (dispatch: Dispatch<Action>) => {
     dispatch({
@@ -10,13 +11,16 @@ export const getUserInfo = () => async (dispatch: Dispatch<Action>) => {
     });
 
     try {
-        const { username, avatar } = (await userAPIInstance.getInfo()).data as {
+        const { userId, username, avatar } = (await userAPIInstance.getInfo())
+            .data as {
+            userId: string;
             username: string;
             avatar: string;
         };
         dispatch({
             type: ActionTypes.GET_USER_INFO_SUCCESS,
             payload: {
+                userId: userId,
                 username: username,
                 avatar: avatar,
             },
@@ -45,10 +49,10 @@ export const changeAvatar =
                 await userAPIInstance.changeAvatar(
                     { file: file },
                     {
+                        ...axiosConfig,
                         headers: {
                             'Content-Type': 'multipart/form-data',
                         },
-                        ...axiosConfig,
                     }
                 )
             ).data as {
@@ -68,5 +72,38 @@ export const changeAvatar =
                 });
             }
             throw error;
+        }
+    };
+
+export const updateUserInfo =
+    (body: UpdateUserInfoRequest, axiosConfig?: AxiosRequestConfig) =>
+    async (dispatch: Dispatch) => {
+        dispatch({
+            type: ActionTypes.UPDATE_USER_INFO,
+        });
+        try {
+            const { organizationName } = (
+                await userAPIInstance.updateInfo(body, axiosConfig)
+            ).data as {
+                organizationName: string;
+                message: string;
+            };
+
+            dispatch({
+                type: ActionTypes.UPDATE_USER_INFO_SUCCESS,
+                payload: {
+                    organizationName: organizationName,
+                },
+            });
+        } catch (error: Error | AxiosError | any) {
+            let errorResponse = 'Failed';
+            if (error instanceof AxiosError) {
+                const { data } = error.response as AxiosResponse;
+                errorResponse = typeof data === 'string' ? data : errorResponse;
+            }
+            dispatch({
+                type: ActionTypes.UPDATE_USER_INFO_ERROR,
+                payload: errorResponse,
+            });
         }
     };

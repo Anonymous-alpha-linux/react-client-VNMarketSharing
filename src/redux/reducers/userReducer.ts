@@ -4,6 +4,7 @@ import { Action } from '../actions';
 
 interface UserState {
     data: {
+        userId: string;
         username: string;
         avatar: string;
     };
@@ -14,6 +15,7 @@ interface UserState {
 
 const initialState: UserState = {
     data: {
+        userId: '',
         username: '',
         avatar: '',
     },
@@ -38,6 +40,7 @@ export default function userReducer(
             return {
                 loading: false,
                 data: {
+                    userId: action.payload.userId,
                     avatar: action.payload.avatar,
                     username: action.payload.username,
                 },
@@ -62,8 +65,8 @@ export default function userReducer(
             return {
                 loading: false,
                 data: {
+                    ...state.data,
                     avatar: action.payload.image,
-                    username: state.data.username,
                 },
                 error: '',
                 status: ResponseStatus.SUCCESS,
@@ -75,7 +78,29 @@ export default function userReducer(
                 error: action.payload,
                 status: ResponseStatus.FAILED,
             };
-
+        case ActionTypes.UPDATE_USER_INFO:
+            return {
+                ...state,
+                loading: true,
+                status: ResponseStatus.NOT_RESPONSE,
+            };
+        case ActionTypes.UPDATE_USER_INFO_SUCCESS:
+            return {
+                loading: false,
+                status: ResponseStatus.SUCCESS,
+                error: '',
+                data: {
+                    ...state.data,
+                    username: action.payload.organizationName,
+                },
+            };
+        case ActionTypes.UPDATE_USER_INFO_ERROR:
+            return {
+                loading: false,
+                status: ResponseStatus.FAILED,
+                error: action.payload,
+                data: state.data,
+            };
         default:
             return state;
     }

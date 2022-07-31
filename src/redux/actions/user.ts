@@ -6,7 +6,10 @@ export type UserAction =
     | IChangeAvatarFailedAction
     | IGetUserInfoAction
     | IGetUserInfoSuccessAction
-    | IGetUserInfoErrorAction;
+    | IGetUserInfoErrorAction
+    | IUpdateUserInfoAction
+    | IUpdateUserInfoSuccessAction
+    | IUpdateUserInfoFailedAction;
 
 export interface IGetUserInfoAction {
     type: ActionTypes.GET_USER_INFO;
@@ -14,6 +17,7 @@ export interface IGetUserInfoAction {
 export interface IGetUserInfoSuccessAction {
     type: ActionTypes.GET_USER_INFO_SUCCESS;
     payload: {
+        userId: string;
         username: string;
         avatar: string;
     };
@@ -37,4 +41,16 @@ export interface IChangeAvatarFailedAction {
     payload: string;
 }
 
-export interface IChangeInforAction {}
+export interface IUpdateUserInfoAction {
+    type: ActionTypes.UPDATE_USER_INFO;
+}
+export interface IUpdateUserInfoSuccessAction {
+    type: ActionTypes.UPDATE_USER_INFO_SUCCESS;
+    payload: {
+        organizationName: string;
+    };
+}
+export interface IUpdateUserInfoFailedAction {
+    type: ActionTypes.UPDATE_USER_INFO_ERROR;
+    payload: string;
+}

@@ -35,18 +35,71 @@ export class UserAppAPIInstance extends AppAPIInstance {
     constructor(axiosInstance: AxiosInstance) {
         super(new AuthInterceptorBehavior(), axiosInstance);
     }
-    async getInfo(config?: AxiosRequestConfig) {
-        return await this.apiInstance.get('/', config);
+    getInfo(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('/', config);
     }
-    async changeAvatar(
+    changeAvatar(
         body: {
             file: File;
         },
         config?: AxiosRequestConfig
     ) {
-        return await this.apiInstance.post('avatar', body, config);
+        return this.apiInstance.post('avatar', body, config);
     }
-    async updateInfo(body: object, config?: AxiosRequestConfig) {
-        return await this.apiInstance.post('updateInfo', body, config);
+    updateInfo(body: object, config?: AxiosRequestConfig) {
+        return this.apiInstance.put('updateInfo', body, config);
+    }
+    getUserInfo(userId: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.get('info', {
+            ...config,
+            params: {
+                userId: userId,
+            },
+        });
+    }
+}
+
+export class AddressAppAPIInstance extends AppAPIInstance {
+    constructor(axiosInstance: AxiosInstance) {
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+    getAddresses(
+        userId: string,
+        addressType: number,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.get('addresses', {
+            ...config,
+            params: { userId: userId, addressType: addressType },
+        });
+    }
+    getSingleAddress(addressId: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.get('address', {
+            ...config,
+            url: addressId,
+        });
+    }
+    createAddress(body: object, config?: AxiosRequestConfig) {
+        return this.apiInstance.post('createAddress', body, config);
+    }
+    updateAddress(
+        body: object,
+        addressId: string,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put('updateAddress', body, {
+            ...config,
+            params: {
+                addressId: addressId,
+            },
+        });
+    }
+    removeAddress(addressId: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.delete('removeAddress', {
+            ...config,
+            params: {
+                addressId: addressId,
+            },
+        });
     }
 }

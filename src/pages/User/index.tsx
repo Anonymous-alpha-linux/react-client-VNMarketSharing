@@ -1,6 +1,8 @@
 import React from 'react';
 import {Home} from '../../containers';
 
+export * from './account';
+
 export const UserMain: React.FC<{}> = () => {
     return (
         <React.Fragment>

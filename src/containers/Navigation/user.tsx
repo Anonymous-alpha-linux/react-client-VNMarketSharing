@@ -50,16 +50,18 @@ const UnAuthorizedAction = () =>{
 
 const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
     const {logout,getUserInfo} = useActions();
+    const {data: {email}} = useTypedSelector(state => state.auth);
     const {data} = useTypedSelector(state => state.user);
     const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
-    React.useEffect(() =>{
+    React.useEffect(()=>{
         getUserInfo();
-    },[]);
+    },[email]);
 
     function _logoutHandler() {
         logout();   
     }
+    
     return <>
         <Dropdown as={ButtonGroup} size='sm'>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{padding: 0}}>
@@ -75,12 +77,12 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
 
             <Dropdown.Menu as="ul">
                 <Dropdown.Item as="li" className="align-middle">
-                    <Link to="/profile">
+                    <Link to="/account/profile">
                         Profile
                     </Link>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <Link to="/work">
+                    <Link to="/account/dashboard">
                         My work
                     </Link>                   
                 </Dropdown.Item>

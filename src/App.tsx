@@ -1,12 +1,16 @@
 import './App.css';
 import { Layout } from './pages';
 import Router from './Router';
+import {ToastContainer} from 'react-toastify';
 
 function App() {
-  return (
+  return (<>
     <Layout>
       <Router></Router>
     </Layout>
+  
+    <ToastContainer></ToastContainer>
+  </>
   );
 }
 

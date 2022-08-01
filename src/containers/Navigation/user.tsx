@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Navbar, Container, Nav, NavDropdown, Button,ButtonGroup,Image, Dropdown, Modal } from "react-bootstrap";
+import { Navbar, Container, Nav, NavDropdown, Button,ButtonGroup,Image, Dropdown, Modal, Spinner } from "react-bootstrap";
 
 import {useTypedSelector,useActions} from '../../hooks';
+import { CustomLink } from '../../components';
 
 const Navigation = () => {
     const {loading, data} = useTypedSelector((state) => state.auth);
@@ -11,14 +12,27 @@ const Navigation = () => {
         <Container>
                 <Link to="/">
                     <Navbar.Brand>
-                            AdsMarketSharing
+                        AdsMarketSharing
                     </Navbar.Brand>
                 </Link>
             <Navbar.Toggle aria-controls="responsive-navbar-nav" />
             <Navbar.Collapse id="responsive-navbar-nav">
                 <Nav className="me-auto">
-                    <Nav.Link href="/#features">About</Nav.Link>
-                    <Nav.Link href="/#pricing">Contact</Nav.Link>
+                    <Nav.Link as="span">
+                        <CustomLink to={"/about"}>
+                            About
+                        </CustomLink>
+                    </Nav.Link>
+                    <Nav.Link as="span">
+                        <CustomLink to={"/production"}>
+                            Production
+                        </CustomLink>
+                    </Nav.Link>
+                    <Nav.Link as="span">
+                        <CustomLink to={"/contact"}>
+                            Contact
+                        </CustomLink>
+                    </Nav.Link>
                     <NavDropdown title="Services" id="collasible-nav-dropdown">
                         <NavDropdown.Item href="#action/3.1">Advertisment</NavDropdown.Item>
                         <NavDropdown.Item href="#action/3.2">Store Banner</NavDropdown.Item>
@@ -27,15 +41,18 @@ const Navigation = () => {
                         <NavDropdown.Item href="#action/3.3">Become our collaborator</NavDropdown.Item>
                         <NavDropdown.Item href="#action/3.4">Order management</NavDropdown.Item>
                     </NavDropdown>
-                    <Nav.Link href="/#pricing">Pricing</Nav.Link>
+                    <Nav.Link as="span">
+                        <CustomLink to={"/pricing"}>
+                            Pricing
+                        </CustomLink>
+                    </Nav.Link>
                 </Nav>
                 <Nav className="align-items-center" variant='pills'>
-                    {loading && <h4>{"Loading..."}</h4>}
+                    {loading && <Spinner animation="border"></Spinner>}
                     {!data?.isAuthorized? 
                     <UnAuthorizedAction></UnAuthorizedAction>
                     : <ProfileTrigger user={data.email}></ProfileTrigger>}
                 </Nav>
-
             </Navbar.Collapse>
         </Container>
     </Navbar>

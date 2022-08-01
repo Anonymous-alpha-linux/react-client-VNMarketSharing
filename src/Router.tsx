@@ -69,6 +69,7 @@ function Router() {
                         <Route index element={<User.Address></User.Address>}></Route>
                         <Route path="create" element={<User.BillingAddressForm></User.BillingAddressForm>} ></Route>
                         <Route path="edit" element={<User.ShippingAddressForm></User.ShippingAddressForm>}></Route>
+                        <Route path="select" element={<h1>Select Billing Address</h1>}></Route>
                     </Route>
 
                     <Route path="credit" element={<h1>Credit</h1>}></Route>
@@ -82,6 +83,10 @@ function Router() {
 
                 <Route path="service" element>
                     <Route path="collaborator" element={<h1>Service</h1>}></Route>
+                </Route>
+
+                <Route path="/production" element={<Outlet></Outlet>}>
+                    <Route index element={<h1>Product</h1>}></Route>
                 </Route>
 
                 <Route path="/*"

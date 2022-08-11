@@ -9,7 +9,6 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
   const {loading} = useTypedSelector(state => state.auth);
 
   const _isMounted = React.useRef<boolean>(false);
-
   React.useEffect(()=>{
     _isMounted.current = true;
   },[])
@@ -33,7 +32,7 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
     }
   },[chatHubConnection]);
 
-  if(loading || !_isMounted.current) return <Spinner animation='border' role='status'></Spinner>
+  if(loading && !_isMounted.current) return <Spinner animation='border' role='status'></Spinner>
 
   return (
     children

@@ -1,9 +1,9 @@
 import axios, { AxiosInstance } from 'axios';
 import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
 import {
-    AppAPIInstance,
     UserAppAPIInstance,
     AddressAppAPIInstance,
+    CategoryAppAPIInstance,
 } from './appApiInstance';
 
 const host = process.env.REACT_APP_ENVIRONMENT_HOST;
@@ -49,8 +49,6 @@ axiosInstance.interceptors.response.use(
                     const { data } = (
                         await axiosAuthAPIInstance.get('/refresh')
                     ).data;
-
-                    console.log(data);
                 } catch (_error) {}
             }
         }
@@ -131,9 +129,19 @@ const userAPIInstance = new UserAppAPIInstance(axiosUserAPIInstance);
 // 4. API Address Entity
 const addressAPIInstance = new AddressAppAPIInstance(axiosUserAPIInstance);
 
+// 5. API Product
+const axiosProductAPIInstance: AxiosInstance = axios.create({
+    baseURL: `${host}/api/product`,
+    withCredentials: true,
+});
+
+// 5. API Category Entity
+const categoryAPIInstance = new CategoryAppAPIInstance(axiosProductAPIInstance);
+
 export {
     axiosInstance,
     axiosAuthAPIInstance,
     userAPIInstance,
     addressAPIInstance,
+    categoryAPIInstance,
 };

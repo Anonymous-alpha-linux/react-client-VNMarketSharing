@@ -2,11 +2,13 @@ class MarketAdsSharingLocalStorage {
     authKey: string;
     socketKey: string;
     userKey: string;
+    cart: string;
 
     constructor() {
         this.authKey = 'LOGIN_USER';
         this.socketKey = 'SESSION_SOCKET_USER';
         this.userKey = 'USER';
+        this.cart = 'CART';
     }
     getLoginUser() {
         return localStorage.getItem(this.authKey);

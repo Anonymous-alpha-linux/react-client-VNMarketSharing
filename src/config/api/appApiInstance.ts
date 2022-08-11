@@ -1,11 +1,9 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
-import { apiAuthURL, axiosAuthAPIInstance, axiosInstance } from './apiConfig';
+import { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { axiosInstance } from './apiConfig';
 import {
     IInterceptorBehavior,
     AuthInterceptorBehavior,
 } from './interceptorBehavior';
-const host = process.env.REACT_APP_ENVIRONMENT_HOST;
 
 export abstract class AppAPIInstance {
     interceptorBehavior: IInterceptorBehavior;
@@ -26,6 +24,7 @@ export abstract class AppAPIInstance {
         return this.interceptorBehavior.configureResponse(axiosAPIInstance);
     }
 }
+
 export class AuthAppAPIInstance extends AppAPIInstance {
     constructor(axiosInstance: AxiosInstance) {
         super(new AuthInterceptorBehavior(), axiosInstance);
@@ -100,6 +99,56 @@ export class AddressAppAPIInstance extends AppAPIInstance {
             params: {
                 addressId: addressId,
             },
+        });
+    }
+}
+
+export class CategoryAppAPIInstance extends AppAPIInstance {
+    constructor(axiosInstance: AxiosInstance) {
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+
+    getCategories(
+        filter?: Partial<{
+            level: number;
+            parentId: number;
+            page: number;
+            take: number;
+        }>,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.get('categories', {
+            ...config,
+            params: filter,
+        });
+    }
+    getSingleCategory(id: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.get('category', {
+            ...config,
+            params: {
+                id,
+            },
+        });
+    }
+    postNewCategory(body: object, config?: AxiosRequestConfig) {
+        return this.apiInstance.post('category', body, config);
+    }
+    updateSingleCategory(
+        id: string,
+        body: object,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put('category', body, {
+            ...config,
+            params: {
+                id,
+            },
+        });
+    }
+    deleteSingleCategory(id: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.delete('category', {
+            ...config,
+            params: { id },
         });
     }
 }

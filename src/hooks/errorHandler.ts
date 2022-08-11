@@ -1,9 +1,21 @@
-import React from "react";
-import axios, { AxiosError } from "axios";
-import { useActions } from "./useAction";
-import { useTypedSelector } from "./useTypedSelector";
+import { AxiosError } from 'axios';
 
 export function axiosErrorHandler(
-   axiosError: Error | AxiosError,
-   callback: Function
-) {}
+    axiosHandler: () => void,
+    completeHandler?: (errorMsg: string) => void,
+    customErrorHandler?: (axiosError: Error | AxiosError | any) => void
+) {
+    try {
+        axiosHandler();
+    } catch (axiosError: Error | AxiosError | any) {
+        if (customErrorHandler) {
+            customErrorHandler(axiosError);
+        } else {
+            let errorMsg = 'Failed';
+            if (axiosError instanceof AxiosError) {
+                errorMsg = axiosError.response?.data || errorMsg;
+            }
+            completeHandler && completeHandler(errorMsg);
+        }
+    }
+}

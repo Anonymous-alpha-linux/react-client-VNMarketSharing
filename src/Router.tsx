@@ -96,7 +96,6 @@ function Router() {
                 <Route path="service" element>
                     <Route path="collaborator" element={<h1>Service</h1>}></Route>
                 </Route>
-
                 <Route path="/product" element={<Outlet></Outlet>}>
                     <Route index element={<h1>Product</h1>}></Route>
                     <Route path=":id" element={<h1>SingleElement</h1>}></Route>

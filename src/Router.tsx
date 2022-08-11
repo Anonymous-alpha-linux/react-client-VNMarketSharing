@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
-import {Navigation, Sidebar, Account, Chat, User} from './containers';
-import {UserMain,AccountPage} from './pages';
+import {Navigation, Sidebar, Account, Chat, User,Admin} from './containers';
+import {UserMain,AccountPage, PostProduct} from './pages';
 import {useTypedSelector} from './hooks';
 
 
@@ -9,7 +9,9 @@ function Router() {
         <BrowserRouter>
             <Routes>
                 <Route path={"/*"} element={<Navigation></Navigation>}></Route>
-                <Route path={"dashboard/*"} element={<Sidebar></Sidebar>}></Route>
+                <Route path={"dashboard/*"} element={<span style={{width: '20%', backgroundColor: 'blue'}}>
+                    <Admin.AdminLinksSidebar></Admin.AdminLinksSidebar>
+                </span>}></Route>
             </Routes>
 
             <Routes>
@@ -53,6 +55,16 @@ function Router() {
                     <Route path="public" element={<h2>Public</h2>}></Route>
                 </Route>
 
+                <Route path="dashboard" element={<RouteGuard>
+                    <span style={{width: '80%'}}>
+                        <Outlet></Outlet>
+                    </span>
+                </RouteGuard>}>
+                    <Route index element={<h1>DashBoard Admin</h1>}></Route>
+                    <Route path="product" element={<PostProduct></PostProduct>}></Route>
+                    <Route path="category" element={<Admin.Category></Admin.Category>}></Route>
+                </Route>
+
                 <Route path="account" element={<RouteGuard>
                         <AccountPage>
                             <Outlet></Outlet>
@@ -85,8 +97,11 @@ function Router() {
                     <Route path="collaborator" element={<h1>Service</h1>}></Route>
                 </Route>
 
-                <Route path="/production" element={<Outlet></Outlet>}>
+                <Route path="/product" element={<Outlet></Outlet>}>
                     <Route index element={<h1>Product</h1>}></Route>
+                    <Route path=":id" element={<h1>SingleElement</h1>}></Route>
+                    <Route path="category" element={<PostProduct></PostProduct>}></Route>
+                    <Route path="new" element={<></>}></Route>
                 </Route>
 
                 <Route path="/*"
@@ -118,6 +133,6 @@ const RouteAuth = (props: {children: JSX.Element}) => {
     return props.children;
 }
 
-const roles = ['admin', 'user']
+// const roles = ['admin', 'user']
 
 export default Router

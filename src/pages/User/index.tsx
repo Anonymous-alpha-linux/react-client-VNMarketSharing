@@ -2,6 +2,7 @@ import React from 'react';
 import {Home} from '../../containers';
 
 export * from './account';
+export * from './postProduct';
 
 export const UserMain: React.FC<{}> = () => {
     return (

@@ -1,7 +1,7 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {Spinner, Stack} from 'react-bootstrap';
 import {Account} from '../../containers';
-import { useActions, useTypedSelector } from '../../hooks';
+import { useTypedSelector } from '../../hooks';
 
 export const AccountPage = ({children}: {children:React.ReactNode}) => {
     const {loading} = useTypedSelector(state=> state.user);

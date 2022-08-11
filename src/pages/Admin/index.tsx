@@ -1,9 +1,10 @@
 import React from 'react'
 
-export const AdminDashboard: React.FC<{}> = () => {
+export const AdminDashboard: React.FC<{children?: React.ReactNode}> = ({children}) => {
     return (
         <div>
-            Admin main
+            <></>
+            {children}
         </div>
     )
 }

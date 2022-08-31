@@ -1,14 +1,18 @@
+import { PostProductRequest } from '../models';
+
 class MarketAdsSharingLocalStorage {
     authKey: string;
     socketKey: string;
     userKey: string;
     cart: string;
+    postForm: string;
 
     constructor() {
         this.authKey = 'LOGIN_USER';
         this.socketKey = 'SESSION_SOCKET_USER';
         this.userKey = 'USER';
         this.cart = 'CART';
+        this.postForm = 'PRODUCT_FORM';
     }
     getLoginUser() {
         return localStorage.getItem(this.authKey);
@@ -38,6 +42,17 @@ class MarketAdsSharingLocalStorage {
     }
     removeUser() {
         localStorage.removeItem(this.userKey);
+    }
+
+    getPostProductForm(): PostProductRequest | null {
+        const data = localStorage.getItem(this.postForm);
+        return !!data ? JSON.parse(data) : null;
+    }
+    setPostProductForm(formData: PostProductRequest) {
+        localStorage.setItem(this.postForm, JSON.stringify(formData));
+    }
+    removePostProductForm() {
+        localStorage.removeItem(this.postForm);
     }
 }
 

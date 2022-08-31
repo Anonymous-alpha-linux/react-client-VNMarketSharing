@@ -1,4 +1,4 @@
-import {useState, useEffect, useRef,ChangeEvent} from 'react';
+import React,{useState, useEffect, useRef,ChangeEvent, CSSProperties} from 'react';
 import {Image,Button} from 'react-bootstrap';
 import ReactCrop, {
     centerCrop,
@@ -10,7 +10,18 @@ import 'react-image-crop/dist/ReactCrop.css'
 
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
-export const Thumb = ({image, setImage}: {image: any, setImage: (newImage: File) => void}) => {
+interface ThumbProps{
+    image: any;
+    setImage: (newImage: File) => void;
+    showCrop?: boolean;
+    roundedCircle?: boolean;
+    styleThumb?: CSSProperties;
+    styleCrop?: CSSProperties;
+}
+
+export const Thumb = React.forwardRef((
+    {image, setImage, ...props}: ThumbProps, 
+    thumbRef: React.Ref<HTMLImageElement>) => {
     const [thumb, setThumb] = useState<string>('');   
     const [completedCropImage, setCompletedCropImage]  = useState<string>("");
     const fileRef = useRef<File>();
@@ -40,33 +51,49 @@ export const Thumb = ({image, setImage}: {image: any, setImage: (newImage: File)
 
     return <>
         <Image rounded 
-                fluid 
-                roundedCircle  
-                style={{
-                    width:'120px',
-                    height: '120px'
-                }}
-                src={completedCropImage ||thumb || image || defaultAvatar}>
+            ref={thumbRef} 
+            fluid 
+            roundedCircle={props.roundedCircle} 
+            style={{
+                width:'120px',
+                height: '120px',
+                ...props.styleThumb,
+            }}
+            src={completedCropImage ||thumb || image || defaultAvatar}>
         </Image>
         {" "} 
-        <Button onClick={() => {
-            if(fileRef.current){
-                handleCrop(fileRef.current);
+        { 
+        props.showCrop && <span 
+            style={props.styleCrop}>
+            <Button onClick={() => {
+                if(fileRef.current){
+                    handleCrop(fileRef.current);
+                }}}
+            >Crop</Button>
+            {
+                thumb && <ImageCrop image={thumb} 
+                    roundedCircle={props.roundedCircle}
+                    onImageCropped={(blob, imgURLData) => {
+                        if(fileRef.current && imgURLData){
+                            const file = new File([blob], fileRef?.current?.name || 'image', {
+                                type: blob.type
+                            });
+                            setCompletedCropImage(imgURLData);
+                            fileRef.current = file;
+                        }
+                    }}
+                ></ImageCrop>
             }
-        }}>Crop</Button>
-        {thumb && <ImageCrop image={thumb} onImageCropped={(blob, imgURLData) => {
-            if(fileRef.current && imgURLData){
-                const file = new File([blob], fileRef?.current?.name || 'image', {
-                    type: blob.type
-                });
-                setCompletedCropImage(imgURLData);
-                fileRef.current = file;
-            }
-        }}></ImageCrop>}
+            </span>
+        }
     </>
-}
+})
 
-const ImageCrop = ({image, onImageCropped}:{image: any, onImageCropped: (blob: Blob, imgURLData?: string) => void}) => {  
+const ImageCrop = ({image, onImageCropped, ...props}:{
+    image: any, 
+    onImageCropped: (blob: Blob, imgURLData?: string) => void
+    roundedCircle?: boolean
+}) => {  
     const [imgSrc, setImgSrc] = useState<HTMLImageElement>();
     const [crop, setCrop] = useState<Crop>();
     const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -193,7 +220,7 @@ const ImageCrop = ({image, onImageCropped}:{image: any, onImageCropped: (blob: B
         <ReactCrop crop={crop}
             onChange={(_,percentageCrop) => setCrop(percentageCrop)}
             onComplete={(crop) =>setCompletedCrop(crop)}
-            circularCrop
+            circularCrop={props.roundedCircle}
             aspect={aspect}
         >
             <Image 

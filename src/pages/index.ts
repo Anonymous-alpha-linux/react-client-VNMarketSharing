@@ -1,4 +1,4 @@
-export * from './home';
+export * as HomePage from './home';
 export * from './layout';
-export * from './User';
-export * from './Admin';
+export * as UserPage from './User';
+export * as AdminPage from './Admin';

@@ -11,6 +11,7 @@ import {changeAvatarSchema, updateInfoSchema} from '../../schemas';
 import {UpdateUserInfoRequest} from '../../models';
 import {userAPIInstance} from '../../config';
 import {Thumb} from './thumbnail';
+
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 export const Profile = () => {
@@ -29,14 +30,14 @@ export const Profile = () => {
                 <Spinner animation="border"></Spinner>
             </Ratio>
             : <Image rounded 
-            fluid 
-            roundedCircle  
-            style={{
-                width:'120px',
-                height: '120px'
-            }}
-            onClick={openModal}
-            src={data.avatar || defaultAvatar}>
+                fluid 
+                roundedCircle  
+                style={{
+                    width:'120px',
+                    height: '120px'
+                }}
+                onClick={openModal}
+                src={data.avatar || defaultAvatar}>
             </Image>}
 
             <ImageEditor isModalShow={isModalShow} 
@@ -103,7 +104,7 @@ const ImageEditor = ({isModalShow,closeModal} : {
 
                     formHelpers.setSubmitting(false);
                 }}>
-                    {({values,errors,touched, handleSubmit, setFieldValue}) => {
+                    {({values,errors, handleSubmit, setFieldValue, setErrors}) => {
                         return <>
                             <Modal.Header closeButton>
                             <Modal.Title></Modal.Title>
@@ -112,17 +113,28 @@ const ImageEditor = ({isModalShow,closeModal} : {
                                 <Form onSubmit={handleSubmit}>
                                     <div style={{
                                     }}>
-                                        <Thumb image={values.file} setImage={(newImage) =>{ 
-                                            setFieldValue("file", newImage);
-                                        }}></Thumb>
+                                        <Thumb image={values.file} 
+                                            showCrop={true}
+                                            roundedCircle
+                                            setImage={(newImage) =>{
+                                                setFieldValue("file", newImage);
+                                            }}
+                                        ></Thumb>
                                     </div>
-                                    <Form.Control type="file" name="file" 
+                                    <Form.Control type="file" 
+                                        name="file" 
                                         accept="image/*"
                                         aria-describedby="profileHelpBlock"
                                         isInvalid={!!values.file && !!errors.file}
                                         onChange={(e: ChangeEvent<HTMLInputElement>) =>{
                                             if(e.currentTarget.files !== null && e.currentTarget.files.length){
-                                                setFieldValue("file", e.currentTarget.files[0])
+                                                changeAvatarSchema.validate({file: e.currentTarget.files[0]}).then(value => {
+                                                    setFieldValue("file", value.file);
+                                                }).catch(error =>{
+                                                    setErrors({
+                                                        file: error.message
+                                                    })
+                                                })
                                             }
                                     }}></Form.Control>
                                     <Form.Control.Feedback type="invalid">{errors.file}</Form.Control.Feedback>
@@ -222,17 +234,18 @@ const EditableProfile = () =>{
     const navigate = useNavigate();
 
     return <Formik validationSchema={updateInfoSchema}
-    initialValues={{
-        organizationName: '',
-        biography: '',
-        dateOfBirth: (new Date()).toUTCString()
-    }}
-    onSubmit={(values: UpdateUserInfoRequest, formikHelpers: FormikHelpers<UpdateUserInfoRequest>) =>{
-        updateUserInfo(values);
-        formikHelpers.setSubmitting(false);
-    }}>
+        initialValues={{
+            organizationName: '',
+            biography: '',
+            dateOfBirth: (new Date()).toUTCString()
+        }}
+        onSubmit={(values: UpdateUserInfoRequest, formikHelpers: FormikHelpers<UpdateUserInfoRequest>) =>{
+            updateUserInfo(values);
+            formikHelpers.setSubmitting(false);
+        }}>
         {({values, errors, touched, handleChange, handleSubmit}) =>{
-            return <Form onSubmit={handleSubmit}>
+            return (
+            <Form onSubmit={handleSubmit}>
                 <Form.Group controlId='organizationControl'>
                     <Form.Label>Organization name :</Form.Label>
                     <Form.Control name="organizationName" 
@@ -266,6 +279,6 @@ const EditableProfile = () =>{
                     <Button type={"submit"} variant='success'>Apply</Button>
                 </ButtonGroup>
             </Form>
-        }}
+        )}}
     </Formik>
 }

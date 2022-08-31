@@ -4,6 +4,7 @@ import {
     UserAppAPIInstance,
     AddressAppAPIInstance,
     CategoryAppAPIInstance,
+    ProductAppAPIInstance,
 } from './appApiInstance';
 
 const host = process.env.REACT_APP_ENVIRONMENT_HOST;
@@ -134,6 +135,7 @@ const axiosProductAPIInstance: AxiosInstance = axios.create({
     baseURL: `${host}/api/product`,
     withCredentials: true,
 });
+const productAPIInstance = new ProductAppAPIInstance(axiosProductAPIInstance);
 
 // 5. API Category Entity
 const categoryAPIInstance = new CategoryAppAPIInstance(axiosProductAPIInstance);
@@ -143,5 +145,6 @@ export {
     axiosAuthAPIInstance,
     userAPIInstance,
     addressAPIInstance,
+    productAPIInstance,
     categoryAPIInstance,
 };

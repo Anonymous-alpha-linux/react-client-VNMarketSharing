@@ -1,9 +1,10 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { axiosInstance } from './apiConfig';
 import {
     IInterceptorBehavior,
     AuthInterceptorBehavior,
+    PublicInterceptorBehavior,
 } from './interceptorBehavior';
+import { PostProductRequest } from '../../models';
 
 export abstract class AppAPIInstance {
     interceptorBehavior: IInterceptorBehavior;
@@ -30,6 +31,7 @@ export class AuthAppAPIInstance extends AppAPIInstance {
         super(new AuthInterceptorBehavior(), axiosInstance);
     }
 }
+
 export class UserAppAPIInstance extends AppAPIInstance {
     constructor(axiosInstance: AxiosInstance) {
         super(new AuthInterceptorBehavior(), axiosInstance);
@@ -108,6 +110,11 @@ export class CategoryAppAPIInstance extends AppAPIInstance {
         super(new AuthInterceptorBehavior(), axiosInstance);
     }
 
+    getAllCategories(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('categories/all', {
+            ...config,
+        });
+    }
     getCategories(
         filter?: Partial<{
             level: number;
@@ -149,6 +156,67 @@ export class CategoryAppAPIInstance extends AppAPIInstance {
         return this.apiInstance.delete('category', {
             ...config,
             params: { id },
+        });
+    }
+}
+
+export class ProductAppAPIInstance extends AppAPIInstance {
+    constructor(axiosInstance: AxiosInstance) {
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+
+    getProductList(
+        filter: Partial<{
+            page: number;
+            take: number;
+            followAlpha: boolean;
+            followPrice: boolean;
+            minPrice: number;
+            maxPrice: number;
+            followRating: boolean;
+        }>,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.get('', {
+            ...config,
+            params: filter,
+        });
+    }
+    getProductItem(id: number, config?: AxiosRequestConfig) {
+        return this.apiInstance.get(id.toString(), config);
+    }
+    getMyProductList(
+        filter: Partial<{
+            page: number;
+            take: number;
+            followAlpha: boolean;
+            followPrice: boolean;
+            minPrice: number;
+            maxPrice: number;
+            followRating: boolean;
+        }>,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.get('me', {
+            ...config,
+            params: filter,
+        });
+    }
+    createNewProduct(body: PostProductRequest, config?: AxiosRequestConfig) {
+        return this.apiInstance.post('create', body, {
+            ...config,
+        });
+    }
+    updateProduct(body: PostProductRequest, config?: AxiosRequestConfig) {
+        return this.apiInstance.put('update', body, {
+            ...config,
+        });
+    }
+    deleteProduct(id: number) {
+        return this.apiInstance.delete('delete', {
+            params: {
+                id,
+            },
         });
     }
 }

@@ -1,0 +1,115 @@
+/* post product */
+.post-product__breadcrumb {
+    font-style: italic;
+    text-indent: 10px;
+    display: inline-block;
+    color: var(--clr-green-dark);
+    user-select: none;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.post-product__breadcrumb--icon {
+    vertical-align: bottom;
+    font-size: 2rem;
+    padding-left: 1.2rem;
+    color: var(--clr-logo);
+}
+
+/* 2. multiple uploads */
+.multi-upload__thumb--wrapper {
+    display: flex;
+    align-items: center;
+    padding: 1.2rem 0;
+    gap: 1rem;
+}
+
+.multi-upload__thumb--card {
+    position: relative;
+    top: 0;
+    left: 0;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.multi-upload__thumb--card:hover .multi-upload__thumb--editBtn,
+.multi-upload__thumb--card:hover .multi-upload__thumb--delBtn {
+    width: 120px;
+    transform: scale(1);
+    background-color: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(0.02);
+    -webkit-backdrop-filter: blur(0.02);
+    padding: 1.2rem 2.4rem;
+    text-align: center;
+    transform-origin: right;
+    transition: width 0.4s linear, transform 0.4s linear;
+    margin: 0 auto;
+    font-style: italic;
+    font-weight: 400;
+    color: var(--clr-logo);
+}
+
+.multi-upload__thumb--editBtn {
+    position: absolute;
+    display: inline-block;
+    top: 0;
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    height: 50%;
+    transform: scale(0);
+    transform-origin: left;
+    transition: width 0.4s 0.2s linear, transform 0.4s linear;
+}
+
+.multi-upload__thumb--delBtn {
+    position: absolute;
+    display: inline-block;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    overflow: hidden;
+    height: 50%;
+    transform: scale(0);
+    transform-origin: left;
+    transition: width 0.4s 0.2s linear, transform 0.4s linear;
+}
+
+.multi-upload__thumb--editBtn:hover,
+.multi-upload__thumb--delBtn:hover {
+    color: var(--clr-white) !important;
+    font-weight: 800 !important;
+    box-shadow: 0 0 10px 2px var(--clr-logo), 20px 20px 50px 10px var(--clr-logo) inset;
+}
+
+.multi-upload__input {
+    cursor: pointer;
+    font-size: 2rem;
+    flex-basis: 120px;
+    padding: 0 1.2rem 1.2rem;
+    width: min-content;
+    height: min-content;
+    line-height: 1;
+}
+
+/* Classify Product Preview */
+.classify-product-preview__header>tr,
+.classify-product-preview__header th {
+    border: 1px solid black;
+    padding: 1.2rem 2.4rem;
+    border-collapse: collapse;
+    text-transform: capitalize;
+}
+
+.classify-product-preview__body {}
+
+.classify-product-preview__cell,
+.classify-product-preview__cell--input {
+    padding: 1.2rem 2rem;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.classify-product-preview__cell {
+    padding: 1rem 2rem;
+}

@@ -1,6 +1,7 @@
 import * as yup from 'yup';
 import 'yup-phone';
-const PERMIT_FILE_FORMATS = ['image/jpeg', 'image/png', 'image/jpg'];
+export const PERMIT_FILE_FORMATS = ['image/jpeg', 'image/png', 'image/jpg'];
+
 export const changeAvatarSchema = yup.object().shape({
     file: yup
         .mixed()
@@ -10,8 +11,8 @@ export const changeAvatarSchema = yup.object().shape({
             if (!value) {
                 return true;
             }
-            console.log(value.size <= 5 * 1024 * 1024);
-            return value.size <= 5 * 1024 * 1024;
+
+            return value.size <= 2 * 1024 * 1024;
         })
         .test(
             'FILE FORMAT',

@@ -197,8 +197,29 @@ const BillingAddressCard = ({billingAddress, completeRemove}:{billingAddress: Ad
         </Modal>
     </>
 }
+const VNProvincesApi = "https://provinces.open-api.vn/api/p/48?depth=3";
+type BillingAddressFormState = {
+    data?: {
+        name: string;
+        districts?: {
+            name: string;
+            code: number;
+            division_type: string;              
+            codename: string;
+            province_code: number;
+            wards?: {
+                name: string;
+                code: number;
+                division_type: string;
+                codename: string;
+                strict_code: 490                          
+            }[];
+        }[];
+    }
+}
 export const BillingAddressForm = () =>{
     const {data: {userId}} = useTypedSelector(state => state.user);
+    const [state,setState] = React.useState<BillingAddressFormState>();
     const navigate = useNavigate();
     const location = useLocation();
     const locationState = location.state as {
@@ -222,6 +243,8 @@ export const BillingAddressForm = () =>{
             userId: parseInt(userId)
     }
 
+
+    
     return (
         <Formik initialValues={initialValue}
         validationSchema={createAddress}

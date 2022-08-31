@@ -1,17 +1,17 @@
 import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
-import {Navigation, Sidebar, Account, Chat, User,Admin} from './containers';
-import {UserMain,AccountPage, PostProduct} from './pages';
+import {Account, Chat, User,Admin,AppNav} from './containers';
+import {UserPage} from './pages';
 import {useTypedSelector} from './hooks';
-
 
 function Router() {
     return (
         <BrowserRouter>
             <Routes>
-                <Route path={"/*"} element={<Navigation></Navigation>}></Route>
+                <Route path={"/*"} element={<AppNav.Navigation></AppNav.Navigation>}></Route>
                 <Route path={"dashboard/*"} element={<span style={{width: '20%', backgroundColor: 'blue'}}>
                     <Admin.AdminLinksSidebar></Admin.AdminLinksSidebar>
                 </span>}></Route>
+                <Route path={"sale/*"} element={<AppNav.SellerNavbar></AppNav.SellerNavbar>}></Route>
             </Routes>
 
             <Routes>
@@ -48,11 +48,7 @@ function Router() {
                 </Route>
 
                 <Route path="/">
-                    <Route index element={<UserMain></UserMain>}></Route>
-                    <Route path="protect" element={<RouteGuard>
-                        <h2>Something is secrete</h2>
-                    </RouteGuard>}></Route>
-                    <Route path="public" element={<h2>Public</h2>}></Route>
+                    <Route index element={<UserPage.ProductPage></UserPage.ProductPage>}></Route>
                 </Route>
 
                 <Route path="dashboard" element={<RouteGuard>
@@ -61,14 +57,14 @@ function Router() {
                     </span>
                 </RouteGuard>}>
                     <Route index element={<h1>DashBoard Admin</h1>}></Route>
-                    <Route path="product" element={<PostProduct></PostProduct>}></Route>
+                    <Route path="product" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
                     <Route path="category" element={<Admin.Category></Admin.Category>}></Route>
                 </Route>
 
                 <Route path="account" element={<RouteGuard>
-                        <AccountPage>
+                        <UserPage.AccountPage>
                             <Outlet></Outlet>
-                        </AccountPage>
+                        </UserPage.AccountPage>
                     </RouteGuard>
                 }>
                     <Route path="dashboard" element={<h1>Client Dashboard</h1>}></Route>
@@ -87,7 +83,7 @@ function Router() {
                     <Route path="credit" element={<h1>Credit</h1>}></Route>
                 </Route>
 
-                <Route path="/chat">
+                <Route path="chat">
                     <Route index element={<RouteGuard>
                         <Chat.Channel></Chat.Channel>
                     </RouteGuard>}></Route>
@@ -96,11 +92,31 @@ function Router() {
                 <Route path="service" element>
                     <Route path="collaborator" element={<h1>Service</h1>}></Route>
                 </Route>
-                <Route path="/product" element={<Outlet></Outlet>}>
+
+                <Route path="product" element={<Outlet></Outlet>}>
                     <Route index element={<h1>Product</h1>}></Route>
-                    <Route path=":id" element={<h1>SingleElement</h1>}></Route>
-                    <Route path="category" element={<PostProduct></PostProduct>}></Route>
-                    <Route path="new" element={<></>}></Route>
+                    <Route path=":id" element={<UserPage.SingleItem></UserPage.SingleItem>}></Route>
+                    <Route path="category" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
+                    <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
+                </Route>
+
+                <Route path="sale" element={<AppNav.SellerSidebar>
+                    <Outlet></Outlet>
+                </AppNav.SellerSidebar>}>
+                    <Route index element={<>
+                        <h1>Props</h1>
+                    </>}></Route>
+                    <Route path="product" element={<Outlet></Outlet>}>
+                        <Route index element={<UserPage.ProductTablePage></UserPage.ProductTablePage>}></Route>
+                        <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
+                    </Route>
+                    <Route path="*" element={<h1>Not found</h1>}></Route>
+                </Route>
+
+                <Route path="admin"></Route>
+
+                <Route path="page">
+                    <Route index element={<UserPage.UserPage></UserPage.UserPage>}></Route>
                 </Route>
 
                 <Route path="/*"

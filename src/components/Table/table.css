@@ -1,0 +1,234 @@
+/* Table show */
+.table__root {
+    min-width: 100%;
+    max-width: 100%;
+    overflow-x: scroll;
+    background-color: transparent;
+}
+
+
+.table__heading, .table__data {
+    padding: 0.8rem 1.2rem;
+}
+
+.table__heading {
+    padding: 0.5rem 1.2rem;
+    text-transform: capitalize;
+    background-color: var(--clr-table-heading);
+    border-bottom: 1px solid var(--clr-border);
+    white-space: nowrap;
+    line-height: 0.6;
+    position: relative;
+    padding-right: 2.4rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.table__heading--text {
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+.table__data {
+    color: var(--clr-grey-11);
+    font-weight: 400;
+    border-bottom: 1px solid var(--clr-border);
+}
+
+.table__data--row {
+    perspective: 1000px;
+    animation: tableRowAnimation 0.4s linear alternate forwards;
+}
+
+@keyframes tableRowAnimation {
+    0% {
+        transform: scaleY(0) translateY(0);
+    }
+
+    100% {
+        transform: scaleY(1) translateY(1);
+    }
+}
+
+.table__checkbox {
+    padding: 1.2rem;
+    vertical-align: middle;
+    text-align: center;
+}
+
+.table__checkbox input {
+    cursor: pointer;
+}
+
+.table__data--action {
+    padding: 0.2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.table__data--action[aria-controls*="read"] {
+    color: rgb(52, 52, 233);
+}
+
+.table__data--action[aria-controls*="edit"] {
+    color: rgb(6, 197, 6);
+}
+
+.table__data--action[aria-controls*="delete"] {
+    color: rgb(247, 27, 27);
+}
+
+.table__icon {
+    color: var(--clr-grey-11);
+    vertical-align: text-top;
+    position: absolute;
+    right: 0.2rem;
+}
+
+/* Table tools */
+
+.table-tools__root {
+    padding: 1.2rem 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--clr-border);
+}
+
+.table-tools__searchBar {
+    position: relative;
+    display: inline-block;
+}
+
+.table-tools__header {
+    padding: 1.2rem 0;
+}
+
+.table-tools__suggestion {
+    position: absolute;
+    background: #fff;
+    max-width: 320px;
+    min-width: 300px;
+    z-index: 10;
+}
+
+.table-tools__suggestion[aria-haspopup*="false"] {
+    height: 0;
+    transform: scaleY(0);
+    transform: height 0.5s ease, transform 0.5s ease;
+}
+
+.table-tools__suggestion[aria-haspopup*="true"] {
+    height: 200px;
+}
+
+.table-tools__suggestion--item {
+    padding: 1.2rem 3rem;
+}
+
+.table-tools__exports {
+    display: inline-flex;
+    gap: 0.5rem;
+    font-size: 1.2rem;
+    float: right;
+}
+
+.table-tools__exports span {
+    cursor: pointer;
+}
+
+.table-tools__context {
+    overflow-x: scroll;
+}
+
+/* Table search */
+.table-search__input {
+    padding: 5px 10px;
+    border: 1px solid #f1f1f1;
+    border-radius: 12rem;
+}
+
+/* Table filter */
+.table-filter__root {
+    position: relative;
+}
+
+.table-filter__icon {
+    margin-right: 1rem;
+    padding: 0.5rem 0.5rem;
+    border-radius: .2rem;
+    font-weight: 900;
+    font-size: 1.2rem;
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--clr-logo);
+    color: var(--clr-primary-10);
+    vertical-align: middle;
+    cursor: pointer;
+}
+
+.table-filter__panel {
+    transition: height 0.4s linear, transform 0.4s linear;
+    transform-origin: center top;
+    overflow: hidden;
+    position: relative;
+    padding: 1.2rem 1rem;
+}
+
+.table-filter__panel--inner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.table-filter__panel[aria-pressed*=false] {
+    height: 0 !important;
+    transform: scaleY(0);
+}
+
+.table-filter__panel[aria-pressed*=true] {
+    transform: scaleY(1);
+}
+
+.table-filter__panel--input {}
+
+/* Table cell */
+.table__cell {
+    display: inline-block;
+    width: 12rem;
+    padding: 0.5rem;
+}
+
+.table__cell--flex {
+    display: flex;
+}
+
+.table__cell--title {
+    font-weight: 400;
+    color: #000;
+    font-stretch: condensed;
+}
+
+.table__cell--image {
+    width: 40px;
+    height: 40px;
+    margin-right: 0.8rem;
+}
+
+.table__cell--subtitle {}
+
+/* footer */
+.table__footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 1.2rem 0.2rem;
+}
+
+.table__footer--entries {
+    padding: 0.5rem 0.2rem;
+}

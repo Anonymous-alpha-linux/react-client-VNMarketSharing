@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Navbar, Container, Nav, NavDropdown, Button,ButtonGroup,Image, Dropdown, Modal, Spinner } from "react-bootstrap";
+import { Navbar, Container, Nav, NavDropdown, Button,ButtonGroup,Image, Dropdown, Spinner } from "react-bootstrap";
 
 import {useTypedSelector,useActions} from '../../hooks';
 import { CustomLink } from '../../components';
@@ -112,6 +112,9 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
                     <Link to="/notify">
                         Notification
                     </Link>
+                </Dropdown.Item>
+                <Dropdown.Item as="li" className="align-middle">
+                    <CustomLink to="page">My Selling Channel</CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Divider></Dropdown.Divider>
                 <Dropdown.Item as="li" className="align-middle" onClick={_logoutHandler}>

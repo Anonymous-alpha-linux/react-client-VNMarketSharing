@@ -3,6 +3,10 @@ import {Home} from '../../containers';
 
 export * from './account';
 export * from './postProduct';
+export * from './product';
+export * from './singleItem';
+export * from './userPage';
+export * from './productTable';
 
 export const UserMain: React.FC<{}> = () => {
     return (

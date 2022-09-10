@@ -1,6 +1,7 @@
 .slider__container {
-    display: inline-block;
+    display: block;
     color: rgb(253 167 102);
+    padding: 1.2rem 0;
 }
 
 .slider {

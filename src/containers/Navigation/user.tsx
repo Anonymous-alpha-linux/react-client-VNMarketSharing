@@ -114,7 +114,7 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
                     </Link>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="page">My Selling Channel</CustomLink>
+                    <CustomLink to="/sale">My Selling Channel</CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Divider></Dropdown.Divider>
                 <Dropdown.Item as="li" className="align-middle" onClick={_logoutHandler}>

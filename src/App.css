@@ -194,10 +194,33 @@ table, th, tr, td {
   }
 }
 
-::-webkit-scrollbar-thumb {
+/* ::-webkit-scrollbar-thumb {
   background-color: #FF9F43;
 }
 
 ::-webkit-scrollbar-track {
   background-color: #f1f1f1;
+} */
+
+/* width */
+::-webkit-scrollbar {
+  width: 0.5rem;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+
+  /* border-radius: 10px; */
+  /* display: none; */
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  box-shadow: inset 0 0 5px var(--clr-logo);
+  border-radius: 2px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: var(--clr-logo);
 }

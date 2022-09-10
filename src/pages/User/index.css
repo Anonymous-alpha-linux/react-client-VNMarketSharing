@@ -19,9 +19,15 @@
 /* 2. multiple uploads */
 .multi-upload__thumb--wrapper {
     display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: center;
     padding: 1.2rem 0;
     gap: 1rem;
+}
+
+.multi-upload__thumb--wrapper[data-flex-direction*="vertical"] {
+    flex-direction: column;
 }
 
 .multi-upload__thumb--card {
@@ -87,12 +93,21 @@
     font-size: 2rem;
     flex-basis: 120px;
     padding: 0 1.2rem 1.2rem;
-    width: min-content;
-    height: min-content;
+    width: 120px;
+    height: 120px;
     line-height: 1;
+    vertical-align: middle;
+    display: grid;
+    place-items: center;
+}
+
+.multi-upload__hiddenInput {
+    display: block;
 }
 
 /* Classify Product Preview */
+.classify-product-preview__table {}
+
 .classify-product-preview__header>tr,
 .classify-product-preview__header th {
     border: 1px solid black;
@@ -105,11 +120,18 @@
 
 .classify-product-preview__cell,
 .classify-product-preview__cell--input {
-    padding: 1.2rem 2rem;
+    padding: 0 0.2rem;
     text-transform: uppercase;
     text-align: center;
+    white-space: break-spaces;
+    word-break: break-all;
 }
 
 .classify-product-preview__cell {
-    padding: 1rem 2rem;
+    /* padding: 1rem 2rem; */
+}
+
+.classify-product-preview__cell--input {
+    min-width: 240px;
+    padding: 0 1.2rem;
 }

@@ -8,7 +8,6 @@ function App() {
     <Layout>
       <Router></Router>
     </Layout>
-  
     <ToastContainer></ToastContainer>
   </>
   );

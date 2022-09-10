@@ -151,7 +151,7 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
     return <>
         <Dropdown as={ButtonGroup} size='sm'>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{padding: 0}}>
-                <CustomLink to="/profile">
+                <CustomLink to="page">
                     <Image
                     roundedCircle 
                     src={data.avatar || defaultImage}
@@ -162,27 +162,27 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
 
             <Dropdown.Menu as="ul">
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/account/profile">
+                    <CustomLink to="page">
                         Profile
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/account/dashboard">
-                        My work
+                    <CustomLink to="">
+                        My Dashboard
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/chat">
+                    <CustomLink to="chat">
                         Message
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/notify">
+                    <CustomLink to="notify">
                         Notification
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="page">My Selling Channel</CustomLink>
+                    <CustomLink to="/">Back to Buy</CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Divider></Dropdown.Divider>
                 <Dropdown.Item as="li" className="align-middle" onClick={_logoutHandler}>

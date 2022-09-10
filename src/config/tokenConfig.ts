@@ -1,4 +1,4 @@
-import { PostProductRequest } from '../models';
+import { GetPostProductForm, PostProductRequestDTO } from '../models';
 
 class MarketAdsSharingLocalStorage {
     authKey: string;
@@ -44,13 +44,15 @@ class MarketAdsSharingLocalStorage {
         localStorage.removeItem(this.userKey);
     }
 
-    getPostProductForm(): PostProductRequest | null {
+    getPostProductForm(): GetPostProductForm | null {
         const data = localStorage.getItem(this.postForm);
         return !!data ? JSON.parse(data) : null;
     }
-    setPostProductForm(formData: PostProductRequest) {
+
+    setPostProductForm(formData: any) {
         localStorage.setItem(this.postForm, JSON.stringify(formData));
     }
+
     removePostProductForm() {
         localStorage.removeItem(this.postForm);
     }

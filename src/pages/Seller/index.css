@@ -1,0 +1,74 @@
+.seller-profile__header {
+    background: linear-gradient(var(--clr-logo), white, bottom);
+    position: relative;
+    padding: 120px 10px 0;
+}
+
+.seller-profile__avatar {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    background: linear-gradient(to bottom, var(--clr-logo), white);
+    background-size: contain;
+    border-radius: 100%;
+    display: inline-block;
+    box-shadow: 0 0 0 12px inset white, 0 0 4px 10px inset black, 0px 4px 4px 0px;
+    background-repeat: no-repeat;
+}
+
+.seller-profile__avatar--edit {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    font-size: 2rem;
+    background-color: var(--clr-logo);
+    padding: 0.1rem 0.5rem;
+    border-radius: 100%;
+    aspect-ratio: 1 / 1;
+    line-height: 1;
+    color: white;
+}
+
+.seller-profile__banner {
+    background: linear-gradient(to left, var(--clr-logo), white);
+    height: 180px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.seller-profile__text--name {
+    text-transform: capitalize;
+}
+
+.seller-profile__text--sologan {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* number of lines to show */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.seller-profile__header--buttons {
+    display: flex;
+    gap: 2px;
+    justify-content: center;
+}
+
+@media(min-width: 992px) {
+    .seller-profile__header--buttons {
+        flex-direction: column;
+    }
+}
+
+@media(min-width: 1200px) {
+    .seller-profile__header--buttons {
+        flex-direction: row;
+    }
+}

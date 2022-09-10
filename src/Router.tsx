@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
 import {Account, Chat, User,Admin,AppNav} from './containers';
-import {UserPage} from './pages';
+import {SellerPage, UserPage} from './pages';
 import {useTypedSelector} from './hooks';
 
 function Router() {
@@ -109,6 +109,9 @@ function Router() {
                     <Route path="product" element={<Outlet></Outlet>}>
                         <Route index element={<UserPage.ProductTablePage></UserPage.ProductTablePage>}></Route>
                         <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
+                    </Route>
+                    <Route path="page" element={<Outlet></Outlet>}>
+                        <Route index element={<SellerPage.SellerProfile></SellerPage.SellerProfile>}></Route>
                     </Route>
                     <Route path="*" element={<h1>Not found</h1>}></Route>
                 </Route>

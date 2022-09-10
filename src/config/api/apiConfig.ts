@@ -125,6 +125,7 @@ const axiosUserAPIInstance: AxiosInstance = axios.create({
     baseURL: `${host}/api/user`,
     withCredentials: true,
 });
+
 const userAPIInstance = new UserAppAPIInstance(axiosUserAPIInstance);
 
 // 4. API Address Entity

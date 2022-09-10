@@ -1,10 +1,11 @@
 import { AxiosInstance, AxiosRequestConfig } from 'axios';
+import { serialize } from 'object-to-formdata';
 import {
     IInterceptorBehavior,
     AuthInterceptorBehavior,
     PublicInterceptorBehavior,
 } from './interceptorBehavior';
-import { PostProductRequest } from '../../models';
+import { PostProductRequest, PostProductRequestDTO } from '../../models';
 
 export abstract class AppAPIInstance {
     interceptorBehavior: IInterceptorBehavior;
@@ -202,12 +203,24 @@ export class ProductAppAPIInstance extends AppAPIInstance {
             params: filter,
         });
     }
-    createNewProduct(body: PostProductRequest, config?: AxiosRequestConfig) {
-        return this.apiInstance.post('create', body, {
+    createNewProduct(body: PostProductRequestDTO, config?: AxiosRequestConfig) {
+        const { files, ...prop } = body;
+        const formData = serialize(
+            { ...prop, files: Array.from(files) },
+            {
+                indices: true,
+                noFilesWithArrayNotation: true,
+                dotsForObjectNotation: true,
+                nullsAsUndefineds: true,
+                allowEmptyArrays: true,
+            }
+        );
+
+        return this.apiInstance.post('create', formData, {
             ...config,
         });
     }
-    updateProduct(body: PostProductRequest, config?: AxiosRequestConfig) {
+    updateProduct(body: PostProductRequestDTO, config?: AxiosRequestConfig) {
         return this.apiInstance.put('update', body, {
             ...config,
         });

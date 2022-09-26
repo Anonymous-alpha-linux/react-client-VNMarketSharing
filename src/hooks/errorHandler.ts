@@ -2,7 +2,7 @@ import { AxiosError } from 'axios';
 
 export function axiosErrorHandler(
     axiosHandler: () => void,
-    completeHandler?: (errorMsg: string) => void,
+    completeHandler?: (errorMsg: string) => void | null,
     customErrorHandler?: (axiosError: Error | AxiosError | any) => void
 ) {
     try {

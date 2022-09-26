@@ -15,15 +15,16 @@ const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/c
 
 interface ThumbProps{
     image: string | File | null;
-    setImage: (newImage: File) => void;
     showCrop?: boolean;
     roundedCircle?: boolean;
     styleThumb?: CSSProperties;
     styleCrop?: CSSProperties;
+    allowResize?: boolean;
+    setImage: (newImage: File) => void;
 }
 
 export const Thumb = React.forwardRef((
-    {image, setImage, ...props}: ThumbProps, 
+    {image, setImage,allowResize = true, ...props}: ThumbProps, 
     thumbRef: React.Ref<HTMLImageElement>) => {
     const [thumb, setThumb] = useState<string>('');   
     const [completedCropImage, setCompletedCropImage]  = useState<string>("");
@@ -64,7 +65,7 @@ export const Thumb = React.forwardRef((
     }
 
     return <>
-        <div className="thumb__container">
+        <div className="thumb__container" style={props.styleThumb}>
             <div className="thumb__original" style={{
                 visibility: 'hidden',
             }}>
@@ -85,11 +86,8 @@ export const Thumb = React.forwardRef((
                 ref={thumbRef} 
                 fluid 
                 roundedCircle={props.roundedCircle} 
-                style={{
-                    width:'120px',
-                    height: '120px',
-                    ...props.styleThumb,
-                }}
+                width={"100%"}
+                height={"100%"}
                 src={thumb || defaultAvatar}>
             </Image>
         </div>
@@ -139,6 +137,7 @@ export const Thumb = React.forwardRef((
                             setThumb(imgURLData);
                         }
                     }}
+                    allowResize={allowResize}
                 ></ImageCrop>
             }
             </span>
@@ -150,7 +149,8 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
     image: string, 
     originalImageRef: React.RefObject<HTMLImageElement>
     onImageCropped: (blob: Blob, imgURLData?: string, resize ?: number) => void
-    roundedCircle?: boolean
+    roundedCircle?: boolean,
+    allowResize: boolean,
 }) => {  
     const [imgSrc, setImgSrc] = useState<string>(image);
     const [crop, setCrop] = useState<Crop>();
@@ -195,8 +195,6 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
             clearTimeout(t);
         }
     },[completedCrop]);
-
-    // useEffect(() => console.log(originalImageRef.current?.width, originalImageRef.current?.height), [originalImageRef])
 
     function centerAspectCrop(
         mediaWidth: number,
@@ -326,6 +324,8 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
 
         canvas.width = originalWidth * resize;
         canvas.height = originalHeight * resize;
+        console.log(sourceImage);
+        ctx.save();
 
         ctx.drawImage(
             sourceImage,
@@ -335,7 +335,10 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
             originalHeight * resize
         )
 
+        ctx.restore();
+
         return new Promise((resolve, reject) => {
+
             canvas.toBlob((blob) => {
                 // returning an error
                 if (!blob) {
@@ -345,7 +348,7 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
 
                 // creating a Object URL representing the Blob object given
                 const croppedImageUrl = window.URL.createObjectURL(blob);
-
+                
                 imageCompression(blob as File,{
                     maxSizeMB: 1,
                     fileType: 'image/jpeg',
@@ -356,6 +359,8 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
                         blob: compressedBlob as Blob,
                         imgURL: croppedImageUrl,
                     });
+                }).catch(error =>{
+                    console.log(error);
                 });
             }, "image/jpeg", 1);
         });
@@ -363,6 +368,11 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
     // Triggered as use slide the range of resize input
     function resizeHandler(value: number){
         if(originalImageRef.current){
+            console.log("resize", value);
+            console.log(
+                originalImageRef.current.width,
+                originalImageRef.current.height
+            );
             compressImageSize(
                 originalImageRef.current
                 ,(value / 100))
@@ -373,7 +383,7 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
     }
 
     return <>
-        <Form.Group controlId="resizeImage">
+        {props.allowResize && <Form.Group controlId="resizeImage">
             <Form.Label>Resizing:</Form.Label>
             <Form.Control type="range" 
                 min={10} 
@@ -385,7 +395,7 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
                 value={orientation}
             ></Form.Control>
             <p>{orientation} / 100 %</p>
-        </Form.Group>
+        </Form.Group>}
         <div style={{
             maxWidth: '100%',
             maxHeight: '100%',

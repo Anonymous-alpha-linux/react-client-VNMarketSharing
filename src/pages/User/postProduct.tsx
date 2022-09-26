@@ -74,7 +74,7 @@ export const PostProduct = () => {
     }
     async function sendProductForm(request: PostProductRequestDTO){
         const { files, productDetails, ...rest } = request;
-        console.log("send");
+        
         const encoding64BaseImages = await Promise.all(Array.from(files).map((file) => transformImagetoString(file)));
 
         const encoding64BaseDetailImages = await Promise.all(Array.from(productDetails).map((detail) => {
@@ -91,8 +91,6 @@ export const PostProduct = () => {
             })
         );
 
-        console.log(files, productDetails);
-        console.log(encoding64BaseImages, encoding64BaseDetailImages);
 
         AppLocalStorage.setPostProductForm({
             ...rest,
@@ -161,7 +159,7 @@ export const PostProduct = () => {
                         }),
                         files: new Set<File>(files),    
                     } as PostProductRequestDTO;
-                    console.log(files);
+
                     sendProductForm(productFormRequest);
                 }}
                 >
@@ -183,6 +181,7 @@ export const PostProduct = () => {
                         return (
                             <>
                                 {postProductFormSteps.find(s => s.key === state.currentStep)?.element}
+                                <pre>{JSON.stringify(props.values, null, 4)}</pre>
                                 <pre>{JSON.stringify(props.errors, null, 4)}</pre>
                             </>
                         )
@@ -293,11 +292,6 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
             </Form.Group>
         </Form.Group>
 
-        {/* <Form.Group controlId='postProductSpecification'>
-            <h3>Product specification</h3>
-            
-        </Form.Group> */}
-
         <Form.Group controlId='postProductSelling'>
             <h3>Product Selling</h3>
             {!formProps.values.classifies.length && <Form.Group controlId='productDetail'>
@@ -361,6 +355,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                                             }}
                                             onClick={() =>{
                                                 arrayHelpers.remove(index);
+                                                
                                             }}>
                                                 <BiMinus></BiMinus>
                                         </Button>
@@ -585,6 +580,10 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
                                 background: "white",
                                 boxShadow: '2px -2px 2px black inset, 0 0 10px 20px var(--clr-logo)',
                             }}
+                            styleThumb={{
+                                width:'120px',
+                                height: '120px'
+                            }}
                             setImage={(newImage) =>{
                                 setState(o => {
                                     return {
@@ -754,7 +753,7 @@ const SingleFileUpload = ({initialImage,onChange, ...props}: SingleFileUploadPro
                         <span className="multi-upload__thumb--cropper">
                             <User.Thumb 
                                 ref={thumbElement}
-                                image={state?.imageUrl && state.imageUrl || ""} 
+                                image={state?.imageUrl || ""} 
                                 showCrop={state?.showCrop}
                                 styleCrop={{
                                     position: 'fixed',

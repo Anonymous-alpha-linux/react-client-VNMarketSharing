@@ -1,3 +1,50 @@
+/* 1. Product page */
+#categoryTrending .productPage__card {
+    width: 100%;
+    height: 310px;
+    max-height: 620px;
+    font-weight: 900;
+    font-size: 3rem;
+    color: #fff;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* #categoryTrending .productPage__card::after {
+    content: '';
+    width: 100%;
+    height: 1px;
+    border: 1px solid #fff;
+    margin: 0 30px;
+} */
+
+#categoryTrending .productPage__card:hover {
+    transform: scale(1.2);
+    text-decoration: underline;
+}
+
+#productShowcase .productPage__card {
+    user-select: none;
+}
+
+#productShowcase__unique {
+    user-select: none;
+}
+
+#productShowcase__unique button {
+    background-color: var(--clr-logo);
+    border: 1px solid var(--clr-logo);
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+
+#productShowcase__unique button:hover {
+    transform: scale(1.2);
+}
+
 /* post product */
 .post-product__breadcrumb {
     font-style: italic;
@@ -134,4 +181,25 @@
 .classify-product-preview__cell--input {
     min-width: 240px;
     padding: 0 1.2rem;
+}
+
+/* Product show */
+.single-product__name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    /* number of lines to show */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.single-product__description {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    /* number of lines to show */
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
 }

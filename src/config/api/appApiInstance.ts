@@ -5,7 +5,11 @@ import {
     AuthInterceptorBehavior,
     PublicInterceptorBehavior,
 } from './interceptorBehavior';
-import { PostProductRequest, PostProductRequestDTO } from '../../models';
+import {
+    PostProductRequest,
+    PostProductRequestDTO,
+    ProductFilter,
+} from '../../models';
 
 export abstract class AppAPIInstance {
     interceptorBehavior: IInterceptorBehavior;
@@ -167,15 +171,7 @@ export class ProductAppAPIInstance extends AppAPIInstance {
     }
 
     getProductList(
-        filter: Partial<{
-            page: number;
-            take: number;
-            followAlpha: boolean;
-            followPrice: boolean;
-            minPrice: number;
-            maxPrice: number;
-            followRating: boolean;
-        }>,
+        filter: Partial<ProductFilter>,
         config?: AxiosRequestConfig
     ) {
         return this.apiInstance.get('', {
@@ -231,5 +227,56 @@ export class ProductAppAPIInstance extends AppAPIInstance {
                 id,
             },
         });
+    }
+}
+
+export class SellerAppAPIInstance extends AppAPIInstance {
+    constructor(axiosInstance: AxiosInstance) {
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+
+    getSellerPage(userId: number, config?: AxiosRequestConfig) {
+        return this.apiInstance.get('', {
+            params: { userId },
+            ...config,
+        });
+    }
+    postSellerPage(userId: number, data: object, config?: AxiosRequestConfig) {
+        return this.apiInstance.post('profile', data, {
+            params: { userId },
+            ...config,
+        });
+    }
+    changeSellerAvatar(
+        userId: number,
+        newAvatar: File,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put(
+            'avatar',
+            {
+                newAvatar,
+            },
+            {
+                params: { userId },
+                ...config,
+            }
+        );
+    }
+    changeSellerBanner(
+        userId: number,
+        newBanner: File,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put(
+            'banner',
+            {
+                newBanner,
+            },
+            {
+                params: { userId },
+                ...config,
+            }
+        );
     }
 }

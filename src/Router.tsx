@@ -1,7 +1,10 @@
 import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
-import {Account, Chat, User,Admin,AppNav} from './containers';
+import {Account, Chat, User,Admin,AppNav, Footer} from './containers';
 import {SellerPage, UserPage} from './pages';
 import {useTypedSelector} from './hooks';
+import { Container } from "react-bootstrap";
+
+const roles = ['Administrator', 'User']
 
 function Router() {
     return (
@@ -45,9 +48,12 @@ function Router() {
                             <Account.ChangePassword></Account.ChangePassword>
                         </RouteAuth>}></Route>
                     </Route>
+                    <Route path="*" element={<h1>Empty page</h1>}></Route>
                 </Route>
 
-                <Route path="/">
+                <Route path="/" element={<Container fluid className="px-md-2 px-xl-5">
+                    <Outlet></Outlet>
+                </Container>}>
                     <Route index element={<UserPage.ProductPage></UserPage.ProductPage>}></Route>
                 </Route>
 
@@ -94,19 +100,25 @@ function Router() {
                 </Route>
 
                 <Route path="product" element={<Outlet></Outlet>}>
-                    <Route index element={<h1>Product</h1>}></Route>
+                    <Route index element={<UserPage.ProductFilter></UserPage.ProductFilter>}></Route>
                     <Route path=":id" element={<UserPage.SingleItem></UserPage.SingleItem>}></Route>
                     <Route path="category" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
                     <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
                 </Route>
 
-                <Route path="sale" element={<AppNav.SellerSidebar>
-                    <Outlet></Outlet>
-                </AppNav.SellerSidebar>}>
+                <Route path="sale" element={
+                    <RouteGuard roles={roles}>
+                        <AppNav.SellerSidebar>
+                            <Outlet></Outlet>
+                        </AppNav.SellerSidebar>
+                    </RouteGuard>}
+                >
                     <Route index element={<>
-                        <h1>Props</h1>
+                        <h1>Dashboard seller</h1>
                     </>}></Route>
-                    <Route path="product" element={<Outlet></Outlet>}>
+                    <Route path="product" element={<Container>
+                        <Outlet></Outlet>
+                    </Container>}>
                         <Route index element={<UserPage.ProductTablePage></UserPage.ProductTablePage>}></Route>
                         <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
                     </Route>
@@ -126,6 +138,10 @@ function Router() {
                     element={<h1>404 Error: Page Not Found...</h1>}
                 ></Route>
             </Routes>
+
+            <Routes>
+                <Route path="/*" element={<Footer.User></Footer.User>}></Route>
+            </Routes>
         </BrowserRouter>
     )
 }
@@ -133,7 +149,6 @@ function Router() {
 function RouteGuard(props: {children: JSX.Element,roles?: Array<string>}){
     const {data} = useTypedSelector(state => state.auth); 
     const location = useLocation();
-
     if(!data.isAuthorized) return <Navigate to='/auth/login' state={{from: location}} replace></Navigate>
     if(props.roles && !props?.roles.includes(data.role)) return <Navigate to={'/'} replace></Navigate>
     return (props.children);
@@ -151,6 +166,6 @@ const RouteAuth = (props: {children: JSX.Element}) => {
     return props.children;
 }
 
-// const roles = ['admin', 'user']
+
 
 export default Router

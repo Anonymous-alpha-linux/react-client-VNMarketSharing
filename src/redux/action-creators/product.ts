@@ -1,8 +1,52 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { Dispatch } from 'redux';
 import { productAPIInstance, apiAuthURL, AppLocalStorage } from '../../config';
-import { PostProductRequestDTO } from '../../models';
+import {
+    GetProductResponseDTO,
+    PostProductRequestDTO,
+    ProductFilter,
+} from '../../models';
 import { Action, ActionTypes } from '..';
+import { axiosErrorHandler } from '../../hooks';
+
+export const getProductList = (
+    filter: ProductFilter,
+    config?: AxiosRequestConfig
+) => {
+    return async (dispatch: Dispatch<Action>) => {
+        axiosErrorHandler(
+            () => {
+                dispatch({
+                    type: ActionTypes.GET_PRODUCT_LIST,
+                });
+                productAPIInstance
+                    .getProductList(
+                        {
+                            page: filter.page,
+                            take: filter.take,
+                        },
+                        config
+                    )
+                    .then(({ data }) => {
+                        const { productList, amount } = data;
+                        dispatch({
+                            type: ActionTypes.GET_PRODUCT_LIST_SUCCESS,
+                            payload: {
+                                productList: productList,
+                                max: amount,
+                            },
+                        });
+                    });
+            },
+            (error) => {
+                dispatch({
+                    type: ActionTypes.GET_PRODUCT_LIST_FAILED,
+                    payload: error,
+                });
+            }
+        );
+    };
+};
 
 export const postNewProduct = (productRequest: PostProductRequestDTO) => {
     return async (dispatch: Dispatch<Action>) => {

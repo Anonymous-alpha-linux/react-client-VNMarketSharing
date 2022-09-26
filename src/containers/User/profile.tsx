@@ -101,7 +101,6 @@ const ImageEditor = ({isModalShow,closeModal} : {
                             }
                         });
                     }
-
                     formHelpers.setSubmitting(false);
                 }}>
                     {({values,errors, handleSubmit, setFieldValue, setErrors}) => {
@@ -116,9 +115,18 @@ const ImageEditor = ({isModalShow,closeModal} : {
                                         <Thumb image={values.file} 
                                             showCrop={true}
                                             roundedCircle
+                                            styleThumb={{
+                                                width: '120px',
+                                                height: '120px',
+                                                margin: '0 auto'
+                                            }}
+                                            styleCrop={{
+                                                margin: '0 auto'
+                                            }}
                                             setImage={(newImage) =>{
                                                 setFieldValue("file", newImage);
                                             }}
+                                            allowResize={false}
                                         ></Thumb>
                                     </div>
                                     <Form.Control type="file" 

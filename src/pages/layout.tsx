@@ -1,14 +1,17 @@
 import React from 'react';
+import axios from 'axios';
 import {Spinner} from 'react-bootstrap';
 import {useActions, useTypedSelector} from '../hooks';
 import {AppLocalStorage,chatHubConnection} from '../config';
-import { getPhoto } from '../utils';
+import { getCookie, getPhoto } from '../utils';
 import { PostProductClassifyDetailRequestDTO} from '../models';
 import compressImage from 'browser-image-compression';
 
 export const Layout: React.FC<{children: any}> = ({children}) => {
-  const [localStorageUser] = React.useState(AppLocalStorage.getLoginUser());
-  const {getUser, postNewProduct} = useActions();
+  const [localStorageUser, setLocalStorageUser] = React.useState(AppLocalStorage.getLoginUser());
+  const {data: {productList, max, page, take}} = useTypedSelector(s => s.product);
+  const {data: {categoryList}, error: categoryError} = useTypedSelector(s => s.category);
+  const {getUser, postNewProduct, getProductList, getCategoryList} = useActions();
   const {loading} = useTypedSelector(state => state.auth);
 
   const _isMounted = React.useRef<boolean>(false);
@@ -20,13 +23,6 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
       _isMounted.current = false;
     }
   },[])
-
-  // User persistent
-  React.useEffect(()=>{
-    if(localStorageUser){
-      getUser();
-    }
-  },[localStorageUser]);
 
   // Chat hub socket connection
   React.useEffect(()=>{
@@ -46,7 +42,7 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
   React.useEffect(() =>{
     const formRequest = AppLocalStorage.getPostProductForm();
     window.addEventListener('storage', async () => {
-      // const formRequest = AppLocalStorage.getPostProductForm();
+      // 1. Submit product form
       if(formRequest){
         const { files, productDetails, ...rest } = formRequest;
 
@@ -56,29 +52,26 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
         ));
         
         const newProductDetail = await Promise.all(productDetails.map(detail =>{
-            const {image, ...detailObj} = detail;
+          const {image, ...detailObj} = detail;
 
-            return new Promise<PostProductClassifyDetailRequestDTO>(resolve => {
-              compressImage
-                .getFilefromDataUrl(image,`file-${Math.floor(Math.random() * 1000000)}`)
-                .then(file =>{
-                  resolve({
-                    ...detailObj,
-                    image: file
-                  } as PostProductClassifyDetailRequestDTO)
-                })
-            });
-          }));
+          return new Promise<PostProductClassifyDetailRequestDTO>(resolve => {
+            compressImage
+              .getFilefromDataUrl(image,`file-${Math.floor(Math.random() * 1000000)}`)
+              .then(file =>{
+                resolve({
+                  ...detailObj,
+                  image: file
+                } as PostProductClassifyDetailRequestDTO)
+              })
+          });
+        }));
 
-        // console.log(newFiles, newProductDetail);
-        // postNewProduct({
-        //   ...rest,
-        //   files: new Set<File>(newFiles),
-        //   productDetails: newProductDetail
-        // });
+        postNewProduct({
+          ...rest,
+          files: new Set<File>(newFiles),
+          productDetails: newProductDetail
+        });
       }
-      else 
-        console.log("No form to post");
     });
 
     if(formRequest){
@@ -91,6 +84,50 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
       });
     }
   },[]);
+
+  React.useEffect(() => {
+      const cancelSource = axios.CancelToken.source();
+
+      // Fetch product data
+      if(!max || productList.length < max){
+          getProductList({
+              page: page,
+              take: take
+          },{
+              cancelToken: cancelSource.token
+          });
+      }
+
+      return () =>{
+          cancelSource.cancel();
+      }
+  },[productList]);
+
+  React.useEffect(() =>{
+    const cancelSource = axios.CancelToken.source();
+    if(categoryList.length === 0 && !categoryError){
+      getCategoryList({
+        cancelToken: cancelSource.token
+      });
+    }
+    
+    return () =>{
+      cancelSource.cancel();
+    }
+  }, [categoryList]);
+
+  // User persistent
+  React.useEffect(()=>{
+    if(localStorageUser){
+      getUser();
+      return;
+    }
+    const jwt = getCookie("jwt");
+    if(jwt){
+      AppLocalStorage.setLoginUser(jwt);
+      setLocalStorageUser(AppLocalStorage.getLoginUser());
+    }
+  },[localStorageUser]);
 
 
   if(loading && !_isMounted.current) return <Spinner animation='border' role='status'></Spinner>

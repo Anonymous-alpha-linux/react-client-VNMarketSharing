@@ -38,6 +38,17 @@ export type PostProductClassifyDetailRequestDTO = {
     image: File;
 };
 
+export type ProductFilter = {
+    page: number;
+    take: number;
+    followAlpha?: boolean;
+    followPrice?: boolean;
+    minPrice?: number;
+    maxPrice?: number;
+    followRating?: boolean;
+    categoryId?: number;
+};
+
 export type GetPostProductForm = Omit<
     PostProductRequestDTO,
     'files' | 'productDetails'
@@ -61,6 +72,7 @@ export type GetProductResponseDTO = {
     productDetails: GetProductClassifyDetailResponseDTO[];
     soldQuantity: number;
     urls: string[];
+    createdAt: string;
     userPageId: number;
     userPageAvatar: string;
     userPageName: string;

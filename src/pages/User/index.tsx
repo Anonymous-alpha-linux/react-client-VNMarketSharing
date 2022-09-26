@@ -7,6 +7,7 @@ export * from './product';
 export * from './singleItem';
 export * from './userPage';
 export * from './productTable';
+export * from './productFilter';
 
 export const UserMain: React.FC<{}> = () => {
     return (

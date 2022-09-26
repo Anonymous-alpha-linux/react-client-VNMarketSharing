@@ -104,6 +104,8 @@ body {
   color: var(--clr-grey-1);
   line-height: 1.5;
   font-size: 0.875rem;
+  max-width: 2592px;
+  margin: 0 auto;
 }
 
 ul {
@@ -223,4 +225,12 @@ table, th, tr, td {
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
   background: var(--clr-logo);
+}
+
+[data-text-align~="right"] {
+  text-align: right;
+}
+
+[data-text-align~="center"] {
+  text-align: center;
 }

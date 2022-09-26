@@ -1,0 +1,52 @@
+.start__root {
+    position: relative;
+    display: inline-block;
+    background-color: inherit;
+}
+
+.star__thumb {
+    background: inherit;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.star__tracking {
+    position: absolute;
+    background: yellow;
+    width: 50%;
+    height: 100%;
+    left: 0;
+    top: 0;
+    transition: 0.3s;
+}
+
+.star__icons {
+    display: flex;
+    z-index: 1;
+    position: relative;
+    overflow: hidden;
+}
+
+.star__icons i {
+    color: #e9e9e9;
+    stroke-width: 1px;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: black;
+    cursor: pointer;
+    font-size: 1.2rem;
+}
+
+.star__trackers {
+    display: flex;
+    position: absolute;
+    width: 50%;
+    overflow: hidden;
+}
+
+.star__trackers i {
+    color: rgb(255, 255, 90);
+    font-size: 1.2rem;
+}

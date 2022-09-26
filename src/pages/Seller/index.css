@@ -4,6 +4,10 @@
     padding: 120px 10px 0;
 }
 
+.seller-profile__avatar--container {
+    text-align: right;
+}
+
 .seller-profile__avatar {
     position: relative;
     width: 150px;
@@ -13,7 +17,12 @@
     border-radius: 100%;
     display: inline-block;
     box-shadow: 0 0 0 12px inset white, 0 0 4px 10px inset black, 0px 4px 4px 0px;
+    /* border: 12px solid white; */
     background-repeat: no-repeat;
+    display: -ms-inline-grid;
+    display: -moz-inline-grid;
+    display: inline-grid;
+    place-items: center;
 }
 
 .seller-profile__avatar--edit {
@@ -29,6 +38,7 @@
     aspect-ratio: 1 / 1;
     line-height: 1;
     color: white;
+    cursor: pointer;
 }
 
 .seller-profile__banner {
@@ -38,6 +48,7 @@
     position: absolute;
     top: 0;
     left: 0;
+    cursor: pointer;
 }
 
 .seller-profile__text--name {
@@ -59,6 +70,16 @@
     display: flex;
     gap: 2px;
     justify-content: center;
+}
+
+@media(max-width: 576px) {
+    .seller-profile__avatar--container {
+        text-align: center;
+    }
+
+    .seller-profile__text--container {
+        text-align: center;
+    }
 }
 
 @media(min-width: 992px) {

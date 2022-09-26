@@ -56,3 +56,15 @@ export const updateAddress = yup.object().shape({
     phoneNumber: yup.string().phone().required('*Required'),
     country: yup.string().required('*Required'),
 });
+
+export const preventSpecialCharacters = yup
+    .string()
+    .test(
+        'SPECIAL CHARs',
+        'This field cannot accept the special characters',
+        (value) => {
+            var regex = new RegExp(/[ `!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~]/);
+            if (!value) return true;
+            return !regex.test(value);
+        }
+    );

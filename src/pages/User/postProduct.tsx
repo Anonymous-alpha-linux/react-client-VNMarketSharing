@@ -1,22 +1,33 @@
 import React, { ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
-import { FieldArray, Formik, FormikHelpers,FormikProps } from 'formik';
-import { Button, ButtonGroup, Col, Form, Row } from 'react-bootstrap';
+import imageCompression from 'browser-image-compression';
+import { FieldArray, Formik, FormikErrors, FormikHelpers,FormikProps, useFormikContext } from 'formik';
+import { Button, ButtonGroup, Col, Form, InputGroup, Row } from 'react-bootstrap';
 import { HiChevronRight } from 'react-icons/hi';
 import { CgFolderAdd } from 'react-icons/cg';
 import { MdEdit } from 'react-icons/md';
 import { TiTimes } from 'react-icons/ti';
+import { FaTimes } from 'react-icons/fa';
+import { BiMinus, BiPlusCircle } from 'react-icons/bi';
+import { BsPlusCircleFill } from 'react-icons/bs';
 
 import { productAPIInstance,categoryAPIInstance, AppLocalStorage } from '../../config';
-import { PostProductRequest, PostProductRequestDTO } from '../../models';
-import { axiosErrorHandler } from '../../hooks';
+import { PostProductRequestDTO } from '../../models';
+import { axiosErrorHandler, useActions, useDebouncedInput } from '../../hooks';
 import { postProductSchema, changeAvatarSchema } from '../../schemas';
 import { User } from '../../containers';
 import "./index.css";
+import './postProduct.css';
+import { getBase64Image, getPhoto, transformImagetoString } from '../../utils';
 
 type ProductClassify = {
     name: string;
     types: string[];
+}
+
+type ProductClassifyDetail = {
+    image: File;
+    tierIndex: number[];
     price: number;
     inventory: number;
 }
@@ -29,11 +40,13 @@ interface FormValues{
     userPageId: number;
     files?: File[];
     categoryIds: SelectCategoryValues[];
-    classifies: ProductClassify[]
+    classifies: ProductClassify[],
+    classifyDetails: ProductClassifyDetail[],
+    reserve: boolean,
+    itemStatus: 0 | 1,
 }
 
 // Form Display
-
 interface PostProductState {
     loading: boolean;
     error: string;
@@ -59,16 +72,33 @@ export const PostProduct = () => {
             currentStep: o.currentStep < 2 ? o.currentStep + 1 : o.currentStep
         }));
     }
-    function sendProductForm(formData: PostProductRequest){
-        AppLocalStorage.setPostProductForm(formData);
+    async function sendProductForm(request: PostProductRequestDTO){
+        const { files, productDetails, ...rest } = request;
+        
+        const encoding64BaseImages = await Promise.all(Array.from(files).map((file) => transformImagetoString(file)));
 
-        // axiosErrorHandler(() =>{
-        //     productAPIInstance.createNewProduct(formData,{
+        const encoding64BaseDetailImages = await Promise.all(Array.from(productDetails).map((detail) => {
+                return new Promise((resolve) => {
+                    Promise.resolve(
+                        transformImagetoString(detail.image)
+                    ).then((image) => {
+                        resolve({
+                            ...detail,
+                            image,
+                        });
+                    });
+                });
+            })
+        );
 
-        //     }).then(response =>{
 
-        //     })
-        // })
+        AppLocalStorage.setPostProductForm({
+            ...rest,
+            files: encoding64BaseImages,
+            productDetails: encoding64BaseDetailImages,
+        });
+
+        window.dispatchEvent(new Event('storage'));
     }
 
     React.useEffect(() =>{
@@ -78,7 +108,7 @@ export const PostProduct = () => {
         });
 
         return () => {
-
+            cancelSource.cancel();
         }
     },[]);
 
@@ -96,22 +126,40 @@ export const PostProduct = () => {
                     name: '',
                     description: '',
                     inPages: true,
-                    inventory: 0,
+                    inventory: 1,
                     userPageId: 5,
                     price: 12000,
                     categoryIds: [],
-                    classifies: []
+                    reserve: true,
+                    itemStatus: 0,
+                    classifies: [],
+                    classifyDetails: []
                 }}
                 validationSchema={postProductSchema}
                 onSubmit={(values:FormValues, formHelpers: FormikHelpers<FormValues>) =>{
                     formHelpers.setSubmitting(false);
-                    
+                    const { categoryIds ,classifies ,classifyDetails ,files, ...props} = values;
+
                     const productFormRequest = {
-                        ...values,
-                        categoryIds: values.categoryIds.map(c => c.id),
-                        files: new Set<File>(values.files)
-                    } as PostProductRequest;
-    
+                        ...props,
+                        categoryIds: categoryIds.map(c => c.id),
+                        productClassifies: classifies.map(c => {
+                            return {
+                                name: c.name,
+                                classifyTypes: c.types
+                            }
+                        }),
+                        productDetails: classifyDetails.map(d => {
+                            return {
+                                price: d.price,
+                                inventory: d.inventory,
+                                classifyIndexes: d.tierIndex,
+                                image: d.image
+                            }
+                        }),
+                        files: new Set<File>(files),    
+                    } as PostProductRequestDTO;
+
                     sendProductForm(productFormRequest);
                 }}
                 >
@@ -123,14 +171,18 @@ export const PostProduct = () => {
                             },
                             {
                                 key: 2,
-                                element: <PostProductDetail formProps={props} onCancel={prevStep}></PostProductDetail>
+                                element: <PostProductDetail formProps={props}
+                                    onSaveAndHide={props.handleSubmit}
+                                    onUpdate={props.handleSubmit}
+                                    onCancel={prevStep}></PostProductDetail>
                             },
                         ]
-
                         
                         return (
                             <>
                                 {postProductFormSteps.find(s => s.key === state.currentStep)?.element}
+                                <pre>{JSON.stringify(props.values, null, 4)}</pre>
+                                <pre>{JSON.stringify(props.errors, null, 4)}</pre>
                             </>
                         )
                     }}
@@ -138,7 +190,6 @@ export const PostProduct = () => {
         </section>
     )
 }
-
 
 // Second form
 interface PostProductDetailProps{
@@ -149,8 +200,17 @@ interface PostProductDetailProps{
     onUpdate?: () => void;
 }
 
+type PostProductDetailState = {
+    priceTemp: number;
+    inventoryTemp: number;
+}
+
 const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostProductDetailProps) =>{
-    
+    const [state, setState] = React.useState<PostProductDetailState>({
+        priceTemp: 0,
+        inventoryTemp: 0
+    });
+
     React.useEffect(() => {
         const beforeUnloadListener = (event: BeforeUnloadEvent) => {
             event.preventDefault();
@@ -199,7 +259,10 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                     as="textarea"
                     rows={10}
                     value={formProps.values.description}
+                    isInvalid={formProps.touched.description && !!formProps.errors.description}
+                    onBlur={formProps.handleBlur}
                     onChange={formProps.handleChange}></Form.Control>
+                <Form.Control.Feedback type="invalid">{formProps.errors.description}</Form.Control.Feedback>
             </Form.Group>
 
             <Form.Group controlId="categoryIds">
@@ -218,7 +281,8 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
             <Form.Group controlId="files">
                 <MultipleFileUpload
                     name='files'
-                    isInvalid={!!formProps.errors.files}
+                    initialFiles={formProps.values.files || []}
+                    isInvalid={formProps.touched.files && !!formProps.errors.files}
                     errors={formProps.errors.files}
                     formProps={formProps}
                     onChangeMultiple={(files) => {
@@ -228,53 +292,73 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
             </Form.Group>
         </Form.Group>
 
-        <Form.Group controlId='postProductSpecification'>
-            <h3>Product specification</h3>
-            <Row className="md-4">
-                <Form.Group as={Col} md={3} controlId="price">
-                    <Form.Label>Price</Form.Label>
-                    <Form.Control type={"number"} 
-                        step={2000}
-                        name={"price"} 
-                        value={formProps.values.price}
-                        onChange={formProps.handleChange}></Form.Control>
-                </Form.Group>
-
-                <Form.Group as={Col} md={3} controlId="inventory">
-                    <Form.Label>Inventory</Form.Label>
-                    <Form.Control name={"inventory"} 
-                        value={formProps.values.inventory}
-                        onChange={formProps.handleChange}></Form.Control>
-                </Form.Group>
-            </Row>
-        </Form.Group>
-
         <Form.Group controlId='postProductSelling'>
             <h3>Product Selling</h3>
+            {!formProps.values.classifies.length && <Form.Group controlId='productDetail'>
+                <Row className="md-4" style={{
+                    padding: '1.2rem 0'
+                }}>
+                    <Form.Group as={Col} md={3} controlId="price">
+                        <Form.Label>Price</Form.Label>
+                        <Form.Control type={"number"} 
+                            step={2000}
+                            name={"price"} 
+                            value={formProps.values.price}
+                            isInvalid={formProps.touched.price && !!formProps.errors.price}
+                            onBlur={formProps.handleBlur}
+                            onChange={formProps.handleChange}></Form.Control>
+                            <Form.Control.Feedback type="invalid">{formProps.errors.price}</Form.Control.Feedback>
+                    </Form.Group>
+
+                    <Form.Group as={Col} md={3} controlId="inventory">
+                        <Form.Label>Inventory</Form.Label>
+                        <Form.Control name={"inventory"} 
+                            type="number"
+                            value={formProps.values.inventory}
+                            isInvalid={formProps.touched.inventory && !!formProps.errors.inventory}
+                            onBlur={formProps.handleBlur}
+                            onChange={formProps.handleChange}></Form.Control>
+                        <Form.Control.Feedback type="invalid">{formProps.errors.inventory}</Form.Control.Feedback>
+                    </Form.Group>
+                </Row>
+            </Form.Group>}
+
             <Form.Group controlId="productClassify">
                 <FieldArray 
                     name="classifies"
                     render={(arrayHelpers) =>{
-                        return <div>
+                        return <div style={{
+                            margin: '0 0 1.2rem',
+                        }}>
                             {
                                 formProps.values.classifies.map((classify,index) => {
-                                    return <div key={index}>
+                                    return <div key={index} style={{
+                                        position: 'relative',
+                                        margin: '0 0 1.2rem',
+                                    }}>
                                         <ClassifyProductInput 
                                             formProps={formProps} 
                                             name={`classifies[${index}]`}
                                             index={index}
                                             value={classify.name}
                                         ></ClassifyProductInput>
-                                        {formProps.values.classifies.length > 1 && <Button variant="primary"
+                                        <Button
+                                            style={{
+                                                color:"#000",
+                                                position: 'absolute',
+                                                right: '0.1rem',
+                                                top: '0.2rem',
+                                                fontSize: '1.5rem',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                lineHeight: '1'
+                                            }}
                                             onClick={() =>{
-                                                // const newClassifies = formProps.values.classifies.filter((_, indx)=> indx !== index);
-                
-                                                // formProps.setValues({
-                                                //     ...formProps.values,
-                                                //     classifies: newClassifies
-                                                // });
                                                 arrayHelpers.remove(index);
-                                            }}>- Remove</Button>}
+                                                
+                                            }}>
+                                                <BiMinus></BiMinus>
+                                        </Button>
                                     </div>
                                 })
                             }
@@ -286,69 +370,182 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                                             types: [""]
                                         })
                                     }}
-                                >+ Add new classification</Button>
+                                >
+                                    <BsPlusCircleFill></BsPlusCircleFill> 
+                                    <span style={{
+                                        verticalAlign: 'middle',
+                                        display: 'inline-block',
+                                        textIndent: '0.5rem',
+                                    }}>
+                                        Add new classification
+                                    </span>
+                                </Button>
                             }
                         </div>
                     }}
                 ></FieldArray>
             </Form.Group>
 
-            <div>
-                <ClassifyProductPreview data={formProps.values.classifies}></ClassifyProductPreview>
-            </div>
-        </Form.Group>
+            {!!formProps.values.classifies.length && <Form.Group controlId="productClassifyDetails" className="p-3" style={{margin: '0 0 1.2rem', background:'#fff'}}>
+                <FieldArray
+                    name={"classifyDetails"}
+                    render={(arrayHelpers) =>{
+                        return <>
+                            <Form.Group as={Row} 
+                                md={3}
+                                controlId="quickTyping">
+                                <Form.Label column 
+                                    style={{textAlign: 'right'}}
+                                    md={2}
+                                    lg={1}
+                                    >Quick complete</Form.Label>
+                                <Col md={10} lg={6}>
+                                    <InputGroup className="mb-3">
+                                        <Form.Control 
+                                            type="number"
+                                            placeholder="price"
+                                            value={Number(state.priceTemp).toString()}
+                                            min={0}
+                                            step={2000}
+                                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>{
+                                                const leadingNumber = parseInt(event.currentTarget.value.replace(/^0+/, ''), 10);
+                                                setState(o => ({
+                                                    ...o,
+                                                    priceTemp: leadingNumber || 0
+                                                }));
+                                            }}
+                                        ></Form.Control>
+                                        <Form.Control 
+                                            type="number"
+                                            placeholder="inventory"
+                                            value={Number(state.inventoryTemp).toString()}
+                                            min={0}
+                                            step={2000}
+                                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>{
+                                                const leadingNumber = parseInt(event.currentTarget.value.replace(/^0+/, ''), 10);
+                                                setState(o => ({
+                                                    ...o,
+                                                    inventoryTemp: leadingNumber || 0
+                                                }));
+                                            }}
+                                        ></Form.Control>
+                                        <Button variant="success" onClick={()=>{
+                                            formProps.setValues((values) =>({
+                                                ...values,
+                                                classifyDetails: values.classifyDetails.map(d =>{
+                                                    return {
+                                                        ...d,
+                                                        price: state.priceTemp || d.price,
+                                                        inventory: state.inventoryTemp || d.inventory
+                                                    }
+                                                })
+                                            }));
+                                        }}>
+                                            Apply
+                                        </Button>
+                                    </InputGroup>
+                                </Col>
+                            </Form.Group>
 
-        <Form.Group controlId='postProductTransport'>
-            <h3>Transport</h3>
-            <Form.Label></Form.Label>
+                            <ClassifyProductPreview 
+                                data={formProps.values.classifies}
+                                detailData={formProps.values.classifyDetails}
+                                fieldName={"classifyDetails"}
+                                onChange={(event) => {
+                                    formProps.handleChange(event);
+                                }}
+                                onChangeClassifyType={(classifyDetails: ProductClassifyDetail[]) => {
+                                    formProps.setFieldValue("classifyDetails",classifyDetails);
+                                }}
+                            ></ClassifyProductPreview>
+                        </>
+                    }}
+                ></FieldArray>
+            </Form.Group>}
+
         </Form.Group>
 
         <Form.Group controlId='postOtherInformation'>
             <h3>Other information</h3>
-            <Form.Label></Form.Label>
+            <Form.Group controlId="reverseOptions">
+                <Form.Label>Reverse</Form.Label>
+                <Form.Check type="radio" inline name="reserve" label="No" onChange={() => formProps.setFieldValue("reserve", false)} checked/>
+                <Form.Check type="radio" inline name="reserve" label="Yes" onChange={() => formProps.setFieldValue("reserve", true)}/>
+            </Form.Group>
+            <Form.Group controlId="itemStatus">
+                <Form.Label>Item status</Form.Label>
+                <Form.Select name="itemStatus" onChange={formProps.handleChange}>
+                    <option value={0} defaultChecked>New</option>
+                    <option value={1} >Second hand</option>
+                </Form.Select>
+            </Form.Group>
         </Form.Group>
 
-        <ButtonGroup>
+        <ButtonGroup className="me-2" aria-label="First group">
             <Button variant='primary' onClick={onCancel}>Cancel</Button>
-            <Button variant="primary" type="submit" onClick={onSaveAndHide}>Save and cancel</Button>
-            <Button variant="success" type="submit" onClick={onUpdate}>Save and display</Button>
+            <Button variant="primary" type="submit" id="submitAndCancel" onClick={onSaveAndHide}>Save and cancel</Button>
+            <Button variant="success" type="submit" id="submitAndDisplay" onClick={onUpdate}>Save and display</Button>
         </ButtonGroup>
     </Form>)
 }
 
-
 // Upload file 
 interface MultipleFileUploadProps{
-    onChangeMultiple: (files: File[]) => void;
+    name: string,
+    initialFiles: File[] | string[],
+    onChangeMultiple: (files: (File | null)[]) => void;
     isInvalid?: boolean;
     errors?: string;
-    name: string,
     formProps?: FormikProps<FormValues>
 }
 
 type MultipleFileUploadState = {
-    images: File[],
+    images: (File | string | null)[],
     currentIndex: number,
-    showCrop: boolean
+    showCrop: boolean,
+    error?: string | null,
 }
 
 const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
     const [state, setState] = React.useState<MultipleFileUploadState>({
         images: [],
         currentIndex: 0,
-        showCrop: true
+        showCrop: true,
+        error: null
     });
-    const currentInput = React.useRef<HTMLInputElement>(null);
     const thumbElement = React.useRef<HTMLImageElement>(null);
+    const currentInput = React.useRef<HTMLInputElement>(null);
 
-    React.useEffect(()=> {
-        props.onChangeMultiple(state.images);
-    },[state.images])
+    // Update the callback with result of images
+    React.useEffect(() => {
+        Promise.all(state.images.map(image => {
+            if(typeof image === "string") return getPhoto(image);
+            else if(image instanceof File){
+                return image;
+            }
+            return null;
+        }))
+        .then(images =>{
+            props.onChangeMultiple(images);
+        });      
+    },[state.images]);
+
+    function hasDuplicateImage(image : File | string, checkArray: File[]) {
+        const _img = typeof image === "string"? getPhoto(image) : image;
+
+        return checkArray.some(file => {
+            return file.type === _img.type && file.name === _img.name || file.size === _img.size;
+        });
+    }
+
+    function NonNullValue<T>(v: T | null | undefined): v is T{
+        return v !== null && v !== undefined;
+    }
 
     return <>
         <span className="multi-upload__thumb--wrapper">
             { 
-                state.images.map((image,index) => <div className="multi-upload__thumb--card" key={index + 1}>
+                state.images.map((image,index) => <div className="multi-upload__thumb--card" key={index}>
                     <span className="multi-upload__thumb--editBtn"
                         onClick={() => setState(o =>({
                             ...o,
@@ -366,28 +563,38 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
                     >
                         <TiTimes></TiTimes>
                     </span>
-                    <User.Thumb 
-                        ref={thumbElement}
-                        image={image} 
-                        showCrop={state.showCrop && index === state.currentIndex}
-                        styleCrop={{
-                            position: 'fixed',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%,-50%)',
-                            width: '300px',
-                            height: '300px'
-                        }}
-                        setImage={(newImage) =>{
-                            setState(o => {
-                                return {
-                                    ...o,
-                                    images: o.images.map((i, idx) => idx === index ? newImage : i),
-                                    showCrop: false
-                                }
-                            });
-                        }}
-                    ></User.Thumb>
+                    <span className="multi-upload__thumb--cropper">
+                        <User.Thumb 
+                            ref={thumbElement}
+                            image={image} 
+                            showCrop={state.showCrop && index === state.currentIndex}
+                            styleCrop={{
+                                position: 'fixed',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%,-50%)',
+                                minWidth: '300px',
+                                maxWidth: '80vw',
+                                width: '50vw',
+                                zIndex:'1000',
+                                background: "white",
+                                boxShadow: '2px -2px 2px black inset, 0 0 10px 20px var(--clr-logo)',
+                            }}
+                            styleThumb={{
+                                width:'120px',
+                                height: '120px'
+                            }}
+                            setImage={(newImage) =>{
+                                setState(o => {
+                                    return {
+                                        ...o,
+                                        images: o.images.map((i, idx) => idx === index ? newImage : i),
+                                        showCrop: false
+                                    }
+                                });
+                            }}
+                        ></User.Thumb>
+                    </span>
                 </div>)
             }
         
@@ -401,7 +608,7 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
                         }
                     })
                 }}>
-                    <span>
+                    <span style={{display:'none'}}>
                         <Form.Control 
                             style={{display: 'none'}}
                             type="file"
@@ -411,18 +618,33 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
                             name={props.name + `[${state.currentIndex}]`}
                             onChange={(e: ChangeEvent<HTMLInputElement>) => {
                                 const image = e.currentTarget.files && e.currentTarget.files[0];
-                                
+                    
                                 if(image) {
+
                                     changeAvatarSchema.validate({file: image})
                                     .then(({file}) =>{
+                                        const validatedImages = state.images.map(item => {
+                                            if(typeof item === "string"){
+                                                return getPhoto(item);
+                                            }
+                                            return item;
+                                        }).filter(NonNullValue);
+
+                                        if(hasDuplicateImage(image, validatedImages)){
+                                            throw new Error("Your file has been existed");
+                                        }
+
                                         setState(o => {
                                             return {
                                                 ...o,
                                                 images:[...o.images, file],
                                                 currentIndex: o.images.length,
-                                                showCrop: true
+                                                showCrop: true,
+                                                error: null
                                             }
                                         });
+                                        
+
                                     }).catch(error =>{
                                         formProps && formProps.setErrors({
                                             files: error.message
@@ -432,17 +654,178 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
                             }}
                         ></Form.Control>
                     </span>
-
                     <CgFolderAdd></CgFolderAdd>
             </span>
+
         </span>
+        <p>{state.images.map(img => typeof img === "string"
+                            ? getPhoto(img) 
+                            : img)
+                        .reduce((t,f) =>{
+                            return !!f 
+                            ? t + (f.size / 1024 / 1024)  
+                            : t;
+                            }, 0).toFixed(2)} / 3 MB</p>
         
-        {!props.isInvalid && !!props.errors && <Form.Control.Feedback type="invalid">{
-            props.errors
-        }</Form.Control.Feedback>}
+        {!!state.error || !!props.errors && <p style={{
+            color: props.isInvalid? "var(--bs-danger)": "#000",
+            fontStyle: 'italic'
+        }}>{
+            state.error || props.errors
+        }</p>}
     </>
 }
 
+interface SingleFileUploadProp {
+    initialImage?: string | File;
+    name: string;
+    isInvalid?: boolean;
+    errors?: any;
+    onChange?: (image: File | null) => void;
+    onError?: (error: string) => void;
+}
+
+type SingleFileUploadState = {
+    imageUrl?: string | File;
+    showCrop?: boolean;
+    error: string;
+}
+
+const SingleFileUpload = ({initialImage,onChange, ...props}: SingleFileUploadProp) =>{
+    const [state, setState] = React.useState<SingleFileUploadState>({
+        error: ''
+    });
+    const thumbElement = React.useRef<HTMLImageElement>(null);
+    const currentInput = React.useRef<HTMLInputElement>(null);
+    
+    // Update the callback with result of images
+    React.useEffect(() => {
+        if(state?.imageUrl && onChange){
+            if(typeof state.imageUrl === 'string'){
+                onChange(getPhoto(state.imageUrl));
+            }
+            else if(state.imageUrl instanceof File){
+                onChange(state.imageUrl);
+            }
+            else{
+                onChange(null);
+            }
+        }
+    },[state?.imageUrl]);
+
+    React.useEffect(() => {
+        if(initialImage instanceof File){
+            transformImagetoString(initialImage).then(imgUrl =>{
+                setState(o => ({
+                    ...o,
+                    imageUrl: imgUrl
+                }));
+            });
+        }
+    },[initialImage]);
+
+    React.useEffect(() =>{
+        props.onError && props.onError(state.error);
+    },[state.error]);
+
+    return <>
+        <span className="multi-upload__thumb--wrapper" data-flex-direction={"vertical"}>
+            { 
+                state.imageUrl
+                && 
+                <>
+                    <div className="multi-upload__thumb--card">
+                        <span className="multi-upload__thumb--editBtn"
+                            onClick={() => setState(o =>({
+                                ...o,
+                                showCrop: true
+                            }))}
+                        >Edit</span>
+                        <span className="multi-upload__thumb--delBtn" 
+                            onClick={() => setState(o =>({
+                                ...o,
+                                imageUrl: undefined,
+                                showCrop: false
+                            }))}
+                        >
+                            <TiTimes></TiTimes>
+                        </span>
+                        <span className="multi-upload__thumb--cropper">
+                            <User.Thumb 
+                                ref={thumbElement}
+                                image={state?.imageUrl || ""} 
+                                showCrop={state?.showCrop}
+                                styleCrop={{
+                                    position: 'fixed',
+                                    top: '50%',
+                                    left: '50%',
+                                    transform: 'translate(-50%,-50%)',
+                                    minWidth: '300px',
+                                    maxWidth: '80vw',
+                                    width: '50vw',
+                                    zIndex:'1000',
+                                    background: "white",
+                                    boxShadow: '2px -2px 2px black inset, 0 0 10px 20px var(--clr-logo)',
+                                }}
+                                setImage={(newImage) =>{
+                                    setState(o => {
+                                        return {
+                                            ...o,
+                                            imageUrl: newImage,
+                                            showCrop: false
+                                        }
+                                    });
+                                }}
+                            ></User.Thumb>
+                        </span>
+                    </div>
+                </>
+                ||
+                <>
+                    <span className="multi-upload__input"
+                        onClick={() =>{
+                            currentInput.current && currentInput.current.click();
+                        }}>
+                            <CgFolderAdd></CgFolderAdd>
+                    </span>
+                </>
+            }
+            <span className="multi-upload__hiddenInput">
+                <Form.Control 
+                    style={{display: 'none'}}
+                    type="file"
+                    ref={currentInput}
+                    accept="image/*"
+                    aria-describedby='profileHelpBlock'
+                    name={props.name}
+                    isInvalid={props.isInvalid || !!state.error}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                        const image = e.currentTarget.files && e.currentTarget.files[0];
+                        
+                        if(image) {
+                            changeAvatarSchema.validate({file: image})
+                            .then(({_}) =>{
+                                setState(old =>{
+                                    return {
+                                        ...old,
+                                        error: '',
+                                        imageUrl: image
+                                    }
+                                });
+                            }).catch(error =>{
+                                setState(o => ({
+                                    ...o,
+                                    error: error.message
+                                }))
+                            });
+                        }
+                    }}
+                ></Form.Control>
+                <Form.Control.Feedback type="invalid">{state.error || props.errors}</Form.Control.Feedback>
+            </span>
+        </span>
+    </>
+}
 
 // Product classifies
 interface ClassifyProductInputProps {
@@ -453,68 +836,88 @@ interface ClassifyProductInputProps {
 }
 
 const ClassifyProductInput = ({formProps,...props}: ClassifyProductInputProps) =>{
-
+    const [input, setInput] = useDebouncedInput<string>(props.value,{
+        debouncedCallback(_, event?) {
+            event && formProps.handleChange(event)
+        },
+    });
+    
+    React.useEffect(() => {
+        setInput(props.value);
+    },[props.value])
     return <>
-        <div style={{
-                    border: '1px solid #f1f1f1',
-                    background: 'var(--clr-logo',
-                    color: '#fff',
-                    borderRadius: '2.4rem',
-                    padding: '1.2rem 2.4rem'
-                }}>
-            <Row className="md-2">
-                <Form.Group 
-                    controlId={`classifyProduct${props.index}-name`}
+        <div className="product-classify__input">
+            <Row className="md-1 sm-1" lg={2}>
+                <Form.Group controlId={`classifyProduct${props.index}-name`}
                     as={Col} 
-                    md={6}
+                    md={5}
                 >
-                    <Form.Control 
-                        name={`classifies[${props.index}].name`}
-                        onChange={formProps.handleChange}
-                        onBlur={formProps.handleBlur}
-                        placeholder="Classify Name"
-                        value={props.value}
-                    ></Form.Control>
-                    <Form.Control.Feedback type="invalid"></Form.Control.Feedback>
+                    <Row sm={2}>
+                        <Form.Label 
+                            column 
+                            sm={2}
+                            xl={3}
+                            style={{textAlign: 'right'}}>
+                            {`Classify name`}
+                        </Form.Label>
+                        <Col sm={10} xl={9}>
+                            <Form.Control 
+                                name={`classifies[${props.index}].name`}
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                                    setInput(event.currentTarget.value, event);
+                                }}
+                                isInvalid={
+                                    formProps.touched.classifies?.at(props.index)?.name &&
+                                    !!(formProps.errors.classifies?.at(props.index) as ProductClassify)?.name}
+                                onBlur={formProps.handleBlur}
+                                placeholder="Classify Name"
+                                value={input}
+                            ></Form.Control>
+                            <Form.Control.Feedback type="invalid">{(formProps.errors.classifies?.at(props.index) as ProductClassify)?.name}</Form.Control.Feedback>
+                        </Col>
+                    </Row>
                 </Form.Group>
 
-                <Form.Group 
-                    controlId={`classifyProduct-types`}
+                <Form.Group controlId={`classifyProduct-types`}
                     as={Col}
-                    md={6}
+                    md={7}
                 >
                     <FieldArray
                         name={`${props.name}.types`}
                         render={arrayHelpers => {
                             const classifyLst = formProps.values.classifies[props.index].types;
                             return <div>
-                                {classifyLst.map((type,index) =>(
-                                    <div key={index + 1} style={{
-                                        display: 'flex',
-                                        gap: '10px',
-                                        alignItems: 'center',
-                                        paddingBottom: '1.2rem'
-                                    }}>
+                                {classifyLst.map((type,index) =>{
+                                    const classifyError = (formProps.errors?.classifies?.at(props.index) as ProductClassify)?.types?.at(index);
+                                    const classifyTouched = formProps.touched?.classifies?.at(props.index)?.types;
+                                    return <div key={index + 1} style={{position: 'relative'}}>
                                         <ClassifyProductTypeInput 
-                                            index={index}
                                             formProps={formProps}
+                                            index={index}
                                             name={`${props.name}.types[${index}]`}
                                             value={type}
+                                            showRemoveBtn={classifyLst.length > 1}
+                                            handleRemoveBtn={() =>{
+                                                arrayHelpers.remove(index);
+                                            }}
+                                            error={classifyError}
+                                            touched={classifyTouched}
                                         ></ClassifyProductTypeInput>
-                                        <span>
-                                            {classifyLst.length > 1 && (
-                                                <Button variant="danger" 
-                                                    onClick={() =>{
-                                                        arrayHelpers.remove(index);
-                                                    }}
-                                                >- Remove</Button>)
-                                            }
-                                        </span>
                                     </div>
-                                ))}
-                                <Button variant="warning" onClick={() =>{
-                                    arrayHelpers.push("")
-                                }}>+ Add new product classified type</Button>
+                                })}
+                                <Button variant="warning" 
+                                    style={{
+                                        float: 'right',
+                                        color: '#fff',
+                                        fontWeight: '600'
+                                    }}
+                                    onClick={() =>{
+                                        arrayHelpers.push("")
+                                    }}
+                                >
+                                    <BiPlusCircle></BiPlusCircle> 
+                                    <span style={{verticalAlign: 'middle', textIndent: '0.5rem',display:'inline-block'}}>Add new product classified type</span>
+                                </Button>
                             </div>
                         }}
                     />
@@ -526,21 +929,57 @@ const ClassifyProductInput = ({formProps,...props}: ClassifyProductInputProps) =
 
 interface ClassifyProductTypeInputProps {
     formProps: FormikProps<FormValues>;
+    touched?: boolean;
+    error?: string;
+    showRemoveBtn?: boolean;
+    handleRemoveBtn: () => void;
     name: string;
     index: number;
     value: any;
 }
 
 const ClassifyProductTypeInput = ({formProps,...props}:ClassifyProductTypeInputProps) =>{
+    const [input, setInput] = useDebouncedInput<string>(
+        props.value,
+        {
+            debouncedCallback:(_, event?)=> {
+                event && formProps.handleChange(event)
+            },
+        });
+    React.useEffect(() =>{
+        setInput(props.value);
+    },[props.value]);
     return <>
-        <Form.Group controlId="classifyType">
-            <Form.Control 
-                name={`${props.name}`}
-                onChange={formProps.handleChange}
-                onBlur={formProps.handleBlur}
-                value={props.value}
-                placeholder={"Classify description" + ` ${props.index + 1}`}
-            ></Form.Control>
+        <Form.Group as={Row} 
+            className="mb-3 align-items-start" controlId="classifyType">
+            <Form.Label column sm='2' style={{textAlign:'right'}}>
+                {`Classify type`}
+            </Form.Label>
+            <Col sm="8">
+                <Form.Control 
+                    name={`${props.name}`}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>{
+                        setInput(event.currentTarget.value, event);
+                    }}
+                    onBlur={formProps.handleBlur}
+                    value={input}
+                    isInvalid={props.touched && !!props.error}
+                    placeholder={"Classify description" + ` ${props.index + 1}`}
+                ></Form.Control>
+                <Form.Control.Feedback type="invalid">
+                    {props.error}
+                </Form.Control.Feedback>
+            </Col>
+            <Col sm="1">
+                {
+                props.showRemoveBtn && (
+                    <Button variant="danger" 
+                        onClick={props.handleRemoveBtn}
+                    >
+                        <FaTimes></FaTimes>
+                    </Button>)
+                }
+            </Col>
         </Form.Group>
     </>
 }
@@ -548,14 +987,20 @@ const ClassifyProductTypeInput = ({formProps,...props}:ClassifyProductTypeInputP
 // Product classifies preview
 interface ClassifyProductPreviewProps {
     data: ProductClassify[];
+    detailData: ProductClassifyDetail[];
+    fieldName: string;
+    onChange?: (event: React.ChangeEvent<any>) => void;
+    onChangeClassifyType?: (values: ProductClassifyDetail[]) => void;
 }
 class Node {
     value: any;
     nodes: Node[] | null;
+    address: number[];
 
-    constructor(value: any, tails: Node[] | null) {
+    constructor(value: any, tails: Node[] | null, address: number[]) {
         this.value = value;
         this.nodes = tails;
+        this.address = address;
     }
 
     public countChildren(): number {
@@ -571,88 +1016,172 @@ class Node {
             return this.nodes.length * this.nodes[0].countLastNodes();
         return 1;
     }
+
+    public getLastElementAddresses(): number[][]{
+        if(!this.nodes){
+            return [this.address];
+        }
+        return this.nodes.reduce((prev: number[][],node) =>{
+            return [...prev, ...node.getLastElementAddresses()];
+        },[]);
+    }
 }
 type ClassifyProductPreviewListState = {
     rows?: Node[];
+    details: ProductClassifyDetail[];
 }
 
 const ClassifyProductPreview = (props: ClassifyProductPreviewProps) =>{
     const [state, setState] = React.useState<ClassifyProductPreviewListState>({
+        details: []
     });
-    
-    function transformClassifyListToNodeList(classifyList: string[][], startIndx: number): Node[] | null {
+    const _isMounted = React.useRef<boolean>(false);
+    function transformClassifyListToNodeList(classifyList: string[][], startIndx: number,  prevItemAddress?: number[]): Node[] | null {
         if(!classifyList[startIndx]){
             return null;
         }
-        return classifyList[startIndx].map(classify =>{
-            const node = new Node(classify, transformClassifyListToNodeList(classifyList, startIndx + 1));
+        return classifyList[startIndx].map((classify,index) =>{
+            const nodeAddress = !!prevItemAddress? [...prevItemAddress, index] : [index];
+            const nextNodeList = transformClassifyListToNodeList(classifyList, startIndx + 1, nodeAddress);
+        
+            const node = new Node(classify, nextNodeList,nodeAddress);
             return node;
         });
     }
 
     React.useEffect(() =>{
+        
         const bodyData = props.data.map(item => item.types);
+        _isMounted.current = true;
+        if(_isMounted.current){
+            setState(o =>{
+                const rows = transformClassifyListToNodeList(bodyData, 0) || [];
+                const details = rows.reduce((pre: ProductClassifyDetail[], row) => {
 
-        setState(o =>{
-            const rows = transformClassifyListToNodeList(bodyData,0) || [];
-            return {
-                ...o,
-                rows: rows
-            }
-        });
+                    const detailCollection = row.getLastElementAddresses().map((addressCouple) => { 
+                        const updateDetail = props.detailData.find(d => d.tierIndex.every((i,idx) => i === addressCouple[idx]));
+
+                        if(!updateDetail)
+                            return {
+                                inventory: 0,
+                                price: 0,
+                                tierIndex: addressCouple
+                            } as ProductClassifyDetail;
+
+                        return {
+                            ...updateDetail,
+                            tierIndex: addressCouple
+                        };
+                    }) as ProductClassifyDetail[];
+
+
+                    return [...pre, ...detailCollection];
+                }, []) as ProductClassifyDetail[];
+
+                props.onChangeClassifyType && props.onChangeClassifyType(details);
+
+                return {
+                    ...o,
+                    rows: rows,
+                    details: details
+                }
+            });
+        }
+
+        return () =>{
+            _isMounted.current = false;
+        }
     },[props.data]);
 
     return <>
-        <table className='productClassify__preview--table' style={{
-            border: '1px solid #f1f1f1',
-            borderCollapse: 'collapse'
-        }}>
-            <thead className="classify-product-preview__header">
-                <tr>
-                    {
-                        props.data.map((key,index) =>{
-                            return <th key={index}>
-                                {key.name || "Classify Name"} 
-                            </th>
-                        }) 
-                    }
-                    <th>price</th>
-                    <th>inventory</th>
-                </tr>
-            </thead>
-            <tbody className="classify-product-preview__body">
-                <ClassifyProductPreviewList 
-                    rows={state.rows}
-                ></ClassifyProductPreviewList>
-            </tbody>
-        </table>
+        <Row sm={2}>
+            <Form.Label column 
+                sm={2}
+                lg={1}
+                style={{
+                    textAlign:'right'
+                }}
+            >Classify details</Form.Label>
+            <Col sm={10} style={{
+                overflow: 'scroll',
+                maxHeight: '50rem',
+            }}>
+                <table className='classify-product-preview__table' style={{
+                    border: '1px solid #f1f1f1',
+                    borderCollapse: 'collapse'
+                }}>
+                    <thead className="classify-product-preview__header">
+                        <tr>
+                            {
+                                props.data.map((key,index) =>{
+                                    return <th key={index}>
+                                        {key.name || "Classify Name"} 
+                                    </th>
+                                }) 
+                            }
+                            <th>price</th>
+                            <th>inventory</th>
+                            <th>image</th>
+                        </tr>
+                    </thead>
+                    <tbody className="classify-product-preview__body">
+                        <ClassifyProductPreviewList 
+                            fieldName={props.fieldName}
+                            rows={state.rows}
+                            details={state.details}
+                            isNested={false}
+                            onChange={props.onChange}
+                        ></ClassifyProductPreviewList>
+                    </tbody>
+                </table>
+            </Col>
+        </Row>
     </>
 }
 
 const ClassifyProductPreviewList = (props: {
+    fieldName: string,
+    details: ProductClassifyDetail[],
     rows?: Node[],
+    rootIndex?: number,
+    isNested?: boolean,
+    onChange?: (event: React.ChangeEvent<any>) => void;
 }) =>{
 
     if(!props.rows) return null;
-    if(!!props.rows?.[0] && !props.rows[0].nodes){
-        return <React.Fragment>
-            {   
-                props.rows.map((row,index) =>{
-                    return <tr key={index + 1}>
-                        <ClassifyProductPreviewCell
-                            node={row}
-                        ></ClassifyProductPreviewCell>
-                    </tr>
-                })
-            }
-        </React.Fragment> 
-    }
+    // if(!!props.rows?.[0] && !props.rows[0].nodes){
+    //     return <React.Fragment>
+    //         {   
+    //             props.rows.map((row,index) =>{
+    //                 return <tr key={index + 1}>
+    //                     <ClassifyProductPreviewCell
+    //                         node={row}
+    //                         index={index}
+    //                         onChange={props.onChange}
+    //                     ></ClassifyProductPreviewCell>
+    //                 </tr>
+    //             })
+    //         }
+    //     </React.Fragment> 
+    // }
     return <React.Fragment>
     {
         props.rows.map((row,index) =>{
             return <ClassifyProductPreviewRow
                     key={index}
                     node={row}
+                    details={props.details}
+                    index={
+                        props.rows?.length
+                        ? props.isNested && props.rootIndex !== undefined
+                            ?  props.rootIndex + index + 1
+                            : row?.nodes?.length
+                                ? index * row.nodes.length
+                                : index
+                        : index
+                    }
+                    fieldName={`${props.fieldName}`}
+                    onChange={props.onChange}
                 ></ClassifyProductPreviewRow>
         })
     }
@@ -660,18 +1189,113 @@ const ClassifyProductPreviewList = (props: {
 }
 
 const ClassifyProductPreviewRow = (props: {
-    node: Node
+    node: Node;
+    details: ProductClassifyDetail[],
+    index: number;
+    fieldName: string;
+    onChange?: (event: React.ChangeEvent<any>) => void;
 }) =>{
+    const {values, errors, touched, handleBlur, setFieldValue} = useFormikContext<FormValues>();
+    const [price, setPrice, setOriginalPrice] = useDebouncedInput<number, React.ChangeEvent<HTMLInputElement>>(
+        props.details[props.index].price, 
+        {
+            debouncedCallback(_, event){
+                event && props.onChange && props.onChange(event);
+            },
+        }
+    );
+    const [inventory, setInventory,setOriginalInventory] = useDebouncedInput<number,React.ChangeEvent<HTMLInputElement>>(
+        props.details[props.index].inventory, {
+            debouncedCallback(_, event){
+                event && props.onChange && props.onChange(event);
+            }
+    });
+
+    React.useEffect(() =>{
+        setOriginalPrice(values.classifyDetails[props.index].price);
+        setOriginalInventory(values.classifyDetails[props.index].inventory);
+    },[values.classifyDetails[props.index]]);
 
     return <>
         <tr>
             <ClassifyProductPreviewCell
                 node={props.node}
+                index={props.index}
             ></ClassifyProductPreviewCell>
+            <td className="classify-product-preview__cell--input">
+                <Form.Control type='number' 
+                    name={`${props.fieldName}.${props.index}.price`}
+                    value={Number(price).toString()}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        const leadingNumber = parseInt(event.currentTarget.value.replace(/^0+/, ''), 10);
+                        setPrice(leadingNumber || 0, event)
+                    }}
+                    onBlur={handleBlur}
+                    placeholder='Price'
+                    isInvalid={
+                        touched.classifyDetails
+                        && touched.classifyDetails?.at(props.index)?.price
+                        && errors.classifyDetails 
+                        && errors.classifyDetails.at(props.index)
+                        && !!(errors.classifyDetails.at(props.index) as FormikErrors<ProductClassifyDetail>).price
+                        || false
+                    }
+                    min={0}
+                ></Form.Control>
+                <Form.Control.Feedback type="invalid">{
+                    errors.classifyDetails && errors.classifyDetails.at(props.index)
+                    ? (errors.classifyDetails.at(props.index) as FormikErrors<ProductClassifyDetail>).price
+                    : ""
+                }</Form.Control.Feedback>
+            </td>
+            <td className="classify-product-preview__cell--input">
+                <Form.Control type='number'
+                    name={`${props.fieldName}.${props.index}.inventory`}
+                    value={Number(inventory).toString()}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+                        const leadingNumber = parseInt(event.currentTarget.value.replace(/^0+/, ''), 10);
+                        setInventory(leadingNumber || 0, event)
+                    }}
+                    onBlur={handleBlur}
+                    placeholder='Inventory'
+                    min={0}
+                    isInvalid={
+                        touched.classifyDetails
+                        && touched.classifyDetails?.at(props.index)?.inventory
+                        && errors.classifyDetails 
+                        && !!errors.classifyDetails.at(props.index)
+                        && !!(errors.classifyDetails.at(props.index) as FormikErrors<ProductClassifyDetail>).inventory
+                        || false
+                    }
+                ></Form.Control>
+                <Form.Control.Feedback type="invalid">{
+                    errors.classifyDetails && errors.classifyDetails.at(props.index)
+                    ? (errors.classifyDetails.at(props.index) as FormikErrors<ProductClassifyDetail>).inventory
+                    : ""
+                }</Form.Control.Feedback>
+            </td>
+            <td className="classify-product-preview__cell--input">
+                <SingleFileUpload
+                    name={`${props.fieldName}.${props.index}.image`}
+                    errors={
+                        errors.classifyDetails && errors.classifyDetails.at(props.index)
+                        ? (errors.classifyDetails.at(props.index) as FormikErrors<ProductClassifyDetail>).image
+                        : ""
+                    }
+                    onChange={(file: File | null) =>{
+                        setFieldValue(`${props.fieldName}.${props.index}.image`, file);
+                    }}
+                ></SingleFileUpload>
+            </td>
         </tr>
         {
             <ClassifyProductPreviewList
                 rows={props.node?.nodes?.filter((_,index) => !!index)}
+                fieldName={props.fieldName}
+                rootIndex={props.index}
+                isNested={true}
+                details={props.details}
+                onChange={props.onChange}
             ></ClassifyProductPreviewList>
         }
     </>
@@ -679,9 +1303,10 @@ const ClassifyProductPreviewRow = (props: {
 
 const ClassifyProductPreviewCell = (props: {
     node?: Node;
+    index: number;
 }) =>{
 
-    if(!props.node) return <td classify-product-preview__cell>Name</td>;
+    if(!props.node) return <td className="classify-product-preview__cell">Name</td>;
 
     return <>
         <td 
@@ -695,19 +1320,9 @@ const ClassifyProductPreviewCell = (props: {
             props.node?.nodes?.at(0) 
             && <ClassifyProductPreviewCell
                 node={props.node.nodes[0]}
+                index={props.index + 1}
             ></ClassifyProductPreviewCell> 
-            || <>
-                <td className="classify-product-preview__cell--input">
-                    <Form.Control type='number' 
-                    name={`classifies[]`}
-                    placeholder='price'></Form.Control>
-                </td>
-                <td className="classify-product-preview__cell--input">
-                    <Form.Control type='number' placeholder='inventory'></Form.Control>
-                </td>
-            </>
         }
-
     </>
 }
 
@@ -763,7 +1378,6 @@ const PostProductEntry = ({formProps, onClick}: PostProductEntryProps) =>{
                         ...formProps.errors,
                         categoryIds: !isValid? ["Select your category"]: undefined 
                     });
-
                 }}
             ></SelectCategoryInput>
 
@@ -911,23 +1525,26 @@ const SelectCategoryInput = ({formProps,...props}: SelectCategoryInputProps) => 
             ></SelectCategoryList>
         </div>
 
-        <Form.Group>
+        <Form.Group controlId="productCategorySelect">
             <Form.Label>Selected categories: </Form.Label>
             
+            <span>
+                {formProps.values.categoryIds?.map(c => c.name).join(" > ")}
+            </span>
+
             <Form.Control
                 type="hidden"
                 name="categoryIds"
                 isInvalid={!state.isValid && !!formProps.errors.categoryIds}
             ></Form.Control>
 
-            <span>
-                {formProps.values.categoryIds?.map(c => c.name).join(" > ")}
-            </span>
-
             <Form.Control.Feedback type="invalid">{
-                typeof formProps.errors.categoryIds === "string"
-                ? formProps.errors.categoryIds
-                : formProps.errors.categoryIds?.join(" , ")
+                formProps.errors.categoryIds &&
+                typeof formProps.errors.categoryIds === 'string'
+                ? formProps.errors.categoryIds as string
+                : Array.isArray(formProps.errors.categoryIds)
+                    ? (formProps.errors.categoryIds as Array<string>).at(0)
+                    : ""            
             }</Form.Control.Feedback>
         </Form.Group>
     </section>

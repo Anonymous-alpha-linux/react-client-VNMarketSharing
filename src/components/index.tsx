@@ -7,3 +7,5 @@ export * from './TreeView';
 export * as Table from './Table';
 export * as Input from './Input';
 export * from "./Static";
+export * from './Slider';
+export * as Rating from './Rating';

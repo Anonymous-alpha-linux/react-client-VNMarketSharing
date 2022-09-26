@@ -8,6 +8,7 @@ export const CustomLink = (props: LinkProps) => {
             textDecoration: 'inherit',
             cursor:'pointer'
         }}>
+            {props.children}
         </Link>
     )
 }
@@ -18,6 +19,8 @@ export const CustomNavLink = (props: NavLinkProps) => {
             color: 'inherit',
             textDecoration: 'inherit',
             cursor:'pointer'
-        }}></NavLink>
+        }}>
+            {props.children}
+        </NavLink>
     )
 }

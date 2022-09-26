@@ -1,4 +1,5 @@
 import React,{ useCallback, useEffect, useState, useRef } from 'react';
+import { Col, Row, FormControlProps, Form } from 'react-bootstrap';
 import "./multi-range-slider.css";
 
 interface MultiRangeSliderProps{
@@ -57,7 +58,7 @@ export const MultiRangeSlider = ({ min, max, onChange }: MultiRangeSliderProps) 
         max={max}
         value={state.minVal}
         onChange={(event) => {
-          const value = Math.min(Number(event.target.value), state.maxVal - 1);
+          const value = Math.min(parseInt(event.target.value), state.maxVal - 1);
           setState(o => ({
             ...o,
             minVal: value
@@ -74,7 +75,7 @@ export const MultiRangeSlider = ({ min, max, onChange }: MultiRangeSliderProps) 
         max={max}
         value={state.maxVal}
         onChange={(event) => {
-          const value = Math.max(Number(event.target.value), state.minVal + 1);
+          const value = Math.max(parseInt(event.target.value), state.minVal + 1);
           setState(o => ({
             ...o,
             maxVal: value
@@ -94,3 +95,49 @@ export const MultiRangeSlider = ({ min, max, onChange }: MultiRangeSliderProps) 
     </div>
   );
 };
+
+type NumberInputProps = FormControlProps & {
+  style?: React.CSSProperties
+};
+
+export const NumberInput = (props: NumberInputProps) => {
+  const [value, setValue] = React.useState<number>(props.value as number || 0);
+
+  function decreaseNumber(){
+    setValue(o => {
+      const i = props['aria-valuemin'] as number;
+      console.log(i);
+      if(!i && o > i)
+        return o - 1;
+      if(!i){
+        return o - 1; 
+      }
+      
+      return o;
+    })
+  }
+  function increaseNumber(){
+    setValue(o => {
+      const i = props['aria-valuemax'] as number;
+      if(i && o < i)
+        return o + 1;
+      return o;
+    })
+  }
+
+  React.useEffect(() => console.log(value), [value]);
+
+  return <>
+    <Row>
+      <Col sm="auto" onClick={decreaseNumber}>
+        <span>-</span>
+      </Col>
+      <Col>
+        <Form.Control type={"number"} {...props} value={value} style={props.style} disabled></Form.Control>
+      </Col>
+      <Col sm="auto" onClick={increaseNumber}>
+        <span>+</span>
+      </Col>
+    </Row>
+  </>
+}

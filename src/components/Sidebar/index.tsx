@@ -1,6 +1,7 @@
 import React from 'react'
 import { useLocation } from 'react-router-dom';
 import { HiOutlineMenuAlt1 } from 'react-icons/hi';
+import MediaQuery from 'react-responsive';
 import { CustomNavLink} from '..';
 import './sidebar.css';
 
@@ -62,16 +63,23 @@ export function Sidebar(props: SidebarProps) {
 
     return (
     <>
-        <div onClick={toggleSidebar}
-            style={{
-                position: 'fixed', 
-                top: '1.5rem', 
-                left: '260px',
-                zIndex: 1000,
-                cursor: 'pointer'
-            }}>
-                <HiOutlineMenuAlt1></HiOutlineMenuAlt1>
-        </div>
+        <MediaQuery maxWidth={910} onChange={match =>{
+            setState(o =>({
+                ...o,
+                show: !match
+            }));
+        }}>
+            <div onClick={toggleSidebar}
+                style={{
+                    position: 'fixed', 
+                    top: '1.5rem', 
+                    left: '260px',
+                    zIndex: 1000,
+                    cursor: 'pointer'
+                }}>
+                    <HiOutlineMenuAlt1></HiOutlineMenuAlt1>
+            </div>
+        </MediaQuery>
 
         <div className={"sidebar__root" + `${!state.show ? " sidebar__root--hidden": ""}`}>
             <SidebarData data={state.data} 
@@ -95,60 +103,66 @@ interface SidebarDataProps {
     onOpenTab?: (tab: string) => void;
 }
 
-function SidebarData({data, onOpenTab, show}: SidebarDataProps) {
-    const [height, setHeight] = React.useState<number>(0);
+const SidebarData = React.forwardRef(({data, onOpenTab, show}: SidebarDataProps, ref) => {
+    // const [height, setHeight] = React.useState<number>(0);
     const elementRefs = React.useRef<HTMLLIElement[]>([]);
     
-    React.useEffect(() =>{        
-        if(elementRefs.current.length){
-            Promise.resolve(elementRefs.current.reduce((prev, current) => {
-                return prev + current.offsetHeight;
-            }, 0)).then(elementHeight => {
-                setHeight(elementHeight);
-            })
-        }
-
-    },[elementRefs, show])
+    // React.useLayoutEffect(() =>{        
+    //     if(elementRefs.current.length){
+    //         Promise.resolve(elementRefs.current.reduce((prev, current) => {
+    //             console.log(current.offsetHeight);
+    //             return prev + current.offsetHeight;
+    //         }, 0)).then(elementHeight => {
+    //             setHeight(elementHeight);
+    //         })
+    //     }
+    // },[elementRefs, show])
 
     return <>
-        <ul className={`sidebar__group${show && " sidebar__group--show" || ''}`}
-            style={{
-                height: height
-            }}>
-            {show && data.map((link,index) =>(
+        <ul className={`sidebar__group${show && " sidebar__group--show" || ''}`}>
+            {data.map((link,index) =>(
                 <SidebarLink key={index + 1} 
                     ref={element =>{
                         if(element){
                             elementRefs.current[index] = element;
                         }
                     }} 
+                    show={show}
                     data={link} 
                     onOpenTab={onOpenTab}
                 ></SidebarLink>
             ))}
         </ul>
     </>
-}
+})
 
 interface SidebarLinkProps {
     data: SidebarPropData;
-    onOpenTab?: (tab: string) => void;
+    show?: boolean;
+    onOpenTab?: (path: string) => void;
 }
 
-const SidebarLink = React.forwardRef<HTMLLIElement,SidebarLinkProps>(({data, onOpenTab}, ref) => {
+const SidebarLink = React.forwardRef<HTMLLIElement,SidebarLinkProps>(({data, onOpenTab, ...props}, ref) => {
+    const [showNav,setShowNav] = React.useState<boolean>();
     const location = useLocation();
     return <>
         <li ref={ref}
-        onClick={() => onOpenTab && onOpenTab(data.path)}
+        onClick={() => {
+            onOpenTab && onOpenTab(data.path);
+            setShowNav(show => !show);
+        }}
+        data-isopen={props.show}
         className={"sidebar__data--title" + `${!location.pathname.includes(data.path) 
         ? "" 
         : data.isRoot
-        ? " sidebar__title--active"
-        : location.pathname.match(`${data.path}$`)
-        ? " sidebar__link--active" : ""}`}>
+            ? " sidebar__title--active"
+            : location.pathname.match(`${data.path}$`)
+                ? " sidebar__link--active" 
+                : ""}`}
+        >
             <CustomNavLink to={data.path}>
-                <i style={{display:'inline-block'}}>{data.icon}</i>
-                <span style={{ verticalAlign: 'middle', margin: '0 0.96rem'}}>
+                <i className='sidebar__title--icon' style={{display:'inline-block'}}>{data.icon}</i>
+                <span className="sidebar__context" style={{ verticalAlign: 'middle', margin: '0 0.96rem'}}>
                     {data.title}
                 </span>
             </CustomNavLink>
@@ -158,8 +172,11 @@ const SidebarLink = React.forwardRef<HTMLLIElement,SidebarLinkProps>(({data, onO
             </span>}
         </li>
 
-        {data.subNav && <li>
-            <SidebarData data={data.subNav || []} show={data.isOpened}></SidebarData>
+        {data.subNav && <li 
+            data-isopen={props.show}>
+            <SidebarData data={data.subNav || []}
+                show={data.isOpened}
+            ></SidebarData>
         </li>}
     </>
 })

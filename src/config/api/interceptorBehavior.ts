@@ -47,6 +47,7 @@ export class AuthInterceptorBehavior implements IInterceptorBehavior {
                 return response;
             },
             async (error) => {
+                console.log(error);
                 const originalConfig = error.config;
 
                 if (

@@ -3,4 +3,5 @@ export type GetCategoryResponseDTO = {
     level: number;
     name: string;
     subCategoryCount: number;
+    parentId: number;
 };

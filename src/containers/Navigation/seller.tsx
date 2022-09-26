@@ -87,6 +87,17 @@ const SellerSidebar = ({children}: SellerSidebarProps) => {
         isRoot: true
     },
     ]
+    
+    const {data: {userId}} = useTypedSelector(state => state.user);
+    const {getSellerInfo}  = useActions();
+
+    React.useEffect(() =>{
+        if(userId){
+            console.log(userId);
+            getSellerInfo(parseInt(userId));
+        }
+    }, [userId]);
+
     return <>
         <Sidebar data={sidebarStatic} show={true}>
             {children}
@@ -137,24 +148,22 @@ const SellerNavbar = () => {
 const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
     const {logout,getUserInfo} = useActions();
     const {data: {email}} = useTypedSelector(state => state.auth);
-    const {data} = useTypedSelector(state => state.user);
+    const {data: {avatar}} = useTypedSelector(state => state.user);
+    const {data: {pageAvatar}} = useTypedSelector(state => state.seller);
+
     const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
     React.useEffect(()=>{
         getUserInfo();
     },[email]);
-
-    function _logoutHandler() {
-        logout();   
-    }
     
     return <>
         <Dropdown as={ButtonGroup} size='sm'>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{padding: 0}}>
-                <CustomLink to="/profile">
+                <CustomLink to="page">
                     <Image
                     roundedCircle 
-                    src={data.avatar || defaultImage}
+                    src={pageAvatar || avatar || defaultImage}
                     width={"30px"} height={"30px"}>
                     </Image>
                 </CustomLink>
@@ -162,30 +171,30 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
 
             <Dropdown.Menu as="ul">
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/account/profile">
+                    <CustomLink to="page">
                         Profile
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/account/dashboard">
-                        My work
+                    <CustomLink to="">
+                        My Dashboard
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/chat">
+                    <CustomLink to="chat">
                         Message
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/notify">
+                    <CustomLink to="notify">
                         Notification
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="page">My Selling Channel</CustomLink>
+                    <CustomLink to="/">Back to Buy</CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Divider></Dropdown.Divider>
-                <Dropdown.Item as="li" className="align-middle" onClick={_logoutHandler}>
+                <Dropdown.Item as="li" className="align-middle" onClick={() => logout()}>
                     Logout
                 </Dropdown.Item>
             </Dropdown.Menu>

@@ -1,3 +1,19 @@
+export function getCookie(cname: string): string {
+    let name = cname + '=';
+    let decodedCookie = decodeURIComponent(document.cookie);
+    let ca = decodedCookie.split(';');
+    for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) == ' ') {
+            c = c.substring(1);
+        }
+        if (c.indexOf(name) == 0) {
+            return c.substring(name.length, c.length);
+        }
+    }
+    return '';
+}
+
 export function getNestedObject(
     nestedObj: { [key: string]: any },
     pathArr: string | Array<string>
@@ -31,4 +47,46 @@ export function normalizeVietnamese(str: string): string {
     str = str.replace(/\u0300|\u0301|\u0303|\u0309|\u0323/g, ''); // Huyền sắc hỏi ngã nặng
     str = str.replace(/\u02C6|\u0306|\u031B/g, ''); // Â, Ê, Ă, Ơ, Ư
     return str;
+}
+
+export function getBase64Image(img: HTMLImageElement) {
+    var canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+
+    var ctx = canvas.getContext('2d');
+    ctx && ctx.drawImage(img, 0, 0);
+
+    var dataURL = canvas.toDataURL('image/png');
+
+    return dataURL.replace(/^data:image\/(png|jpg);base64,/, '');
+}
+
+export function transformImagetoString(
+    img: File | Blob,
+    callback?: (value: string) => void
+): Promise<string> {
+    return new Promise((resolve) => {
+        const fileReader = new FileReader();
+
+        fileReader.onloadend = function () {
+            if (callback) callback(fileReader.result as string);
+            resolve(fileReader.result as string);
+        };
+
+        fileReader.readAsDataURL(img);
+    });
+}
+
+export function getPhoto(base64Image: string) {
+    var base64 = base64Image;
+    var base64Parts = base64.split(',');
+    var fileFormat = base64Parts[0].split(';')[1];
+    var fileContent = base64Parts[1];
+    var file = new File(
+        [fileContent],
+        `file-${Math.floor(Math.random() * 10000000)}`,
+        { type: fileFormat }
+    );
+    return file;
 }

@@ -11,13 +11,12 @@ import { FaTimes } from 'react-icons/fa';
 import { Input } from '..';
 import { getNestedObject } from '../../utils';
 import { useDebouncedInput } from '../../hooks';
-import Pagination from './pagination';
 
 const TableToolContext = React.createContext<TableToolContextType<any>>({
   searchMatchesResult: []
 });
 
-export const TableTools = function<Values extends TableToolsComponentValues>(props: TableToolsProps<Values>){
+export const TableTools = function<Values extends {[key: string]: any}>(props: TableToolsProps<Values>){
   const [state, setState] = React.useState<TableToolsState<Values>>({
     data: props.data,
     searchMatchesResult: props.data,
@@ -46,22 +45,23 @@ export const TableTools = function<Values extends TableToolsComponentValues>(pro
       }
 
       function dataMatchObject(
-        data: {[key: string]: any}
+        data: Values
       ): boolean{
-        const keys = data && Object.keys(data) || []; 
+        const keys = data ? Object.keys(data) : []; 
 
         return keys.some(k => dataMatch(data[k as keyof typeof data], k))
       }
 
       function dataMatch(
-        data: number|string|boolean|{[key: string]: any}|{[key: string]: any}[],
+        data: number|string|boolean|Values|Values[],
         key: string
       )
       : boolean{
-        if(typeof data === "string" || 
+        if(
+          typeof data === "string" || 
           typeof data === "number" || 
           typeof data === "boolean"){
-          return !!data.toString().match(matchRegExp);
+            return !!data.toString().match(matchRegExp);
         }
         else if(Array.isArray(data)) {
           return data.some(i => {
@@ -73,7 +73,9 @@ export const TableTools = function<Values extends TableToolsComponentValues>(pro
 
       const matches = o.data.map((curr) =>{
         if(typeof key === 'string' && (curr[key as keyof typeof curr] as string).match(matchRegExp)) 
+        {
           return curr;
+        }
         else if(
           Array.isArray(key) 
           && 
@@ -81,9 +83,8 @@ export const TableTools = function<Values extends TableToolsComponentValues>(pro
         ){
           return curr;
         }
-
         return null;
-      },[]).filter(r => r) as Values[]; 
+      }).filter(r => r) as Values[]; 
 
       return {
         ...o,
@@ -174,7 +175,9 @@ type TableSearchProps = {
 } & HTMLProps<HTMLInputElement>;
 
 export function TableSearch(props: TableSearchProps) {
-  const [searchString, changeSearchString] = useDebouncedInput(props.searchResultHandler);
+  const [searchString, changeSearchString] = useDebouncedInput<string>("",{
+    debouncedCallback: props.searchResultHandler
+  });
   const inputRef = React.useRef<HTMLInputElement>(null);
   
   function changeHandler(e: React.FormEvent<HTMLInputElement>){
@@ -189,6 +192,7 @@ export function TableSearch(props: TableSearchProps) {
       <input type={"text"} 
         className="table-search__input" 
         ref={inputRef} 
+        value={searchString}
         onChange={changeHandler} 
         onBlur={props.onBlur} 
         placeholder="Search..."
@@ -246,7 +250,7 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
     setState(o => ({
       ...o,
       filterMatchResults: !props.filterMatchResults.length ? props.data : props.filterMatchResults
-    }))
+    }));
   },[props.data]);
 
   const filterListHandler = async (data: Values[], tableFilterList: TableFilterObject[]) => {
@@ -279,7 +283,9 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
     if(tableFilerObj.objectType === "number" && Array.isArray(tableFilerObj.sortValue)){
       const min = tableFilerObj.sortValue[0];
       const max = tableFilerObj.sortValue[1];
-      const ent = getNestedObject(item, tableFilerObj.sortField) as number;
+      const ent = getNestedObject(item, tableFilerObj.sortField);
+
+      if(typeof ent === "string" && ent.includes("-")) return ent.split(" - ").some(number => parseInt(number) > min || parseInt(number) < max);
       return ent >= min && ent <= max;
     }
     if(tableFilerObj.objectType === "array" && typeof tableFilerObj.sortValue === "string"){
@@ -333,6 +339,7 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
           props.filterKeys
           ? typeof props.filterKeys === 'string'
             ? <span className="table-filter__panel--input">
+                <label className="table-filter__panel--label">{props.filterKeys}</label>
                 <TableFilterPanelInput 
                   filterKey={props.filterKeys}
                   typeOfData={typeof props.data[0]}
@@ -345,8 +352,10 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
 
             : props.filterKeys.map((key,index) => {
                 const data = props.data.map((cur) => cur[key as keyof typeof cur]);
-
+  
+                if(data.some(value => Array.isArray(value) && typeof value[0] === "object")) return null;
                 return <span className="table-filter__panel--input" key={index}>
+                  <label className='table-filter__panel--label'>{key}</label>
                   <TableFilterPanelInput filterKey={key}
                     onChangeHandler={async (data) => await addFilter(data)}
                     typeOfData={Array.isArray(data[0]) ? "array": typeof data[0]}
@@ -359,10 +368,18 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
         <span style={{
           verticalAlign: "text-bottom",
           float: "right",
-          position: "absolute",
-          right: 0,
-          top: 0,
-          bottom: 0
+          // position: "absolute",
+          padding: '0.6rem 1rem',
+          display: 'inline-block',
+          height: '50px',
+          alignSelf:'end',
+          backgroundColor: "var(--clr-logo)",
+          color: '#fff',
+          cursor: 'pointer',
+          marginLeft: "auto",
+          // right: 0,
+          // top: 0,
+          // bottom: 0
         }} onClick={() => {
           filterListHandler(Array.from(props.data),Array.from(state.filterList.values()));
         }}>
@@ -392,6 +409,7 @@ interface TableFilterPanelInputProps<Values>{
 }
 
 function TableFilterPanelInput<Values extends any>(props: TableFilterPanelInputProps<Values>){
+  
   if(props.typeOfData === "string"){
     return (
       <Form.Control 
@@ -427,9 +445,13 @@ function TableFilterPanelInput<Values extends any>(props: TableFilterPanelInputP
     return (
       <Input.MultiRangeSlider 
         min={0} 
-        max={Math.max(...props.data.map(i => i as number))} 
+        max={Math.max(...props.data.map(i => {
+          if(typeof i === "string" && i.includes("-")){
+            return parseInt(i.split(" - ")[1]);
+          }
+          return i as number;
+        }))} 
         onChange={(min, max) =>{
-          // console.log(min,max);
           props.onChangeHandler({
             objectType: props.typeOfData,
             sortField: props.filterKey,
@@ -440,11 +462,45 @@ function TableFilterPanelInput<Values extends any>(props: TableFilterPanelInputP
   }
 
   if(props.typeOfData === "array"){
+    if(Array.isArray(props.data[0])){
+      const arr = props.data as any[][];
+      return <>
+        <TableFilterPanelInput
+          data={arr.flat()}
+          filterKey={props.filterKey}
+          onChangeHandler={props.onChangeHandler}
+          typeOfData={props.typeOfData}
+        ></TableFilterPanelInput>
+      </>
+    }
+    if(typeof props.data[0] === "object" && "title" in (props.data[0] as {[key:string]: any})){
+      // return (
+      // <Form.Select 
+      //   aria-label={`select ${props.filterKey}`} 
+      //   onChange={(e) => props.onChangeHandler({
+      //     objectType: props.typeOfData,
+      //     sortField: props.filterKey,
+      //     sortValue: e.target.value
+      //   })}
+      // >
+      //   <option value={""} label={props.filterKey}></option>
+      //   {
+      //     props.data.map((item,index) => {
+      //       const newItem = item["title" as keyof typeof item] || "";
+      //       return (
+      //       <option key={index} 
+      //         value={newItem as string} 
+      //         label={newItem as string}>
+      //       </option>)
+      //     })
+      //   }
+      // </Form.Select>)
+      return null;
+    }
     const arrayStr = props.data as Array<string>;
     const set = new Set<string>(arrayStr.flat());
   
     const data = Array.from(set) as Array<string>;
-
     return (
       <Form.Select 
         aria-label={`select ${props.filterKey}`} 
@@ -470,7 +526,6 @@ function TableFilterPanelInput<Values extends any>(props: TableFilterPanelInputP
 
   if(props.typeOfData === "object" && "title" in (props.data[0] as {[key: string]: Values})){
     const data = props.data[0] as {[key: string]: any};
-    
     return (
       <TableFilterPanelInput filterKey={"title"}
         onChangeHandler={(newProps: TableFilterObject) => {

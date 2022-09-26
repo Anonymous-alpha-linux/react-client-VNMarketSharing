@@ -5,7 +5,7 @@ import { CustomLink } from '../../components';
 import { Product } from '../../containers';
 import { productAPIInstance } from '../../config';
 import { axiosErrorHandler } from '../../hooks';
-import { GetProductResponseDTO } from '../../models';
+import { GetProductClassifyDetailResponseDTO, GetProductClassifyTypesResponseDTO, GetProductResponseDTO } from '../../models';
 import axios from 'axios';
 
 type ProductTablePageState = {
@@ -67,14 +67,26 @@ export function ProductTablePage() {
               userPageName,
               userPageAvatar,
               productCategories,
+              productClassifies,
+              productDetails,
               ...rest } = product;
 
             return {
               ...rest,
+              price: productDetails.length ? `${Math.min(...productDetails.map(d => d.price))} - ${Math.max(...productDetails.map(d => d.price))}`: rest.price,
               name: {
                 title: rest.name,
-                image: urls[0]
+                image: urls[0] || ""
               },
+              "product catalog": productClassifies.map(classify=>{
+                return classify.name;
+              }),
+              "product classifies": productDetails.map(detail => {
+                return {
+                  title: [detail.productClassifyKey, detail.productClassifyValue].join(", "),
+                  subtitle: `price: ${detail.price},\nremain: ${detail.inventory}`
+                }
+              }),
               "sold quantity": soldQuantity,
               categories: productCategories.map(c=>c.name)
             }
@@ -143,7 +155,7 @@ export function ProductTablePage() {
     </div>
     <Product.ProductTable 
       data={state.data}
-      headers={["name", "price", "inventory", "inPages", "Sold quantity", "categories"]}
+      headers={["name", "product classifies","price", "inventory", "inPages", "Sold quantity", "categories"]}
     ></Product.ProductTable>
   </section>
   )

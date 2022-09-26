@@ -5,3 +5,4 @@ export * as Chat from './Chat';
 export * as Home from './Home';
 export * as Admin from './Admin';
 export * as Product from './Product';
+export * as Footer from './Footer';

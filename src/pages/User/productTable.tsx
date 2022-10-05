@@ -63,17 +63,15 @@ export function ProductTablePage() {
               urls,
               soldQuantity,
               description,
-              userPageId,
-              userPageName,
-              userPageAvatar,
+              userPage,
               productCategories,
               productClassifies,
               productDetails,
               ...rest } = product;
 
-            return {
+            return {  
               ...rest,
-              price: productDetails.length ? `${Math.min(...productDetails.map(d => d.price))} - ${Math.max(...productDetails.map(d => d.price))}`: rest.price,
+              price: !!productDetails?.length ? `${Math.min(...productDetails.map(d => d.price))} - ${Math.max(...productDetails.map(d => d.price))}`: rest.price,
               name: {
                 title: rest.name,
                 image: urls[0] || ""
@@ -81,12 +79,13 @@ export function ProductTablePage() {
               "product catalog": productClassifies.map(classify=>{
                 return classify.name;
               }),
-              "product classifies": productDetails.map(detail => {
+              "product classifies": productDetails?.map(detail => {
                 return {
                   title: [detail.productClassifyKey, detail.productClassifyValue].join(", "),
                   subtitle: `price: ${detail.price},\nremain: ${detail.inventory}`
                 }
               }),
+              "product details": productClassifies?
               "sold quantity": soldQuantity,
               categories: productCategories.map(c=>c.name)
             }

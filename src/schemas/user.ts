@@ -35,7 +35,8 @@ export const updateInfoSchema = yup.object().shape({
 export const createAddress = yup.object().shape({
     receiverName: yup.string().required('*Required'),
     streetAddress: yup.string().required('*Required'),
-    province: yup.string().nullable(),
+    district: yup.string().nullable(),
+    ward: yup.string().nullable(),
     city: yup.string().required('*Required'),
     zipcode: yup.string().nullable(),
     isDefault: yup.bool().default(false),

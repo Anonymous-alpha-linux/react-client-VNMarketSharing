@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Navbar, Container, Nav, NavDropdown, Button, ButtonGroup, Image, Dropdown, Spinner, Badge, Offcanvas, Row, Col } from "react-bootstrap";
+import { Navbar, Container, Nav, NavDropdown, Button, ButtonGroup, Image, Dropdown, Spinner, Badge, Offcanvas, Row, Col, OffcanvasProps } from "react-bootstrap";
 import { FiShoppingCart } from 'react-icons/fi';
 import { FaHeart } from 'react-icons/fa';
 
@@ -9,8 +9,7 @@ import { CustomLink, Input, Logo, Rating } from '../../components';
 import './index.css';
 import { useMediaQuery } from 'react-responsive';
 import { GetProductResponseDTO } from '../../models';
-import { productAPIInstance } from '../../config';
-import productReducer from '../../redux/reducers/productReducer';
+
 const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 interface UserNavigationRouteState {
@@ -90,8 +89,7 @@ const Navigation = () => {
                 </Navbar.Collapse>
             </Container>
         </Navbar>
-        <Navbar
-        className="navigation__bottom px-5 justify-content-center">
+        <Navbar className="navigation__bottom px-5 justify-content-center">
             <Container fluid style={{justifyContent: 'flex-start', margin: '0 auto', flexBasis:'120px'}}>
                 {categoryList.filter(category => category.level === 0).map(category =>{
                     return <span key={category.id} className="navigation__bottom--item">
@@ -124,15 +122,18 @@ const Searchbar = (props:{isOpened?: boolean}) => {
     const [input, setInput] = useDebouncedInput("");
     
     React.useEffect(() =>{
-        if(!open){
-            setResult([]);
-        }
-        else {
+        if(input) {
             searchProductList();
+            return;
         }
+        setResult([]);
     },[open])
 
     React.useEffect(() =>{
+        if(!input){
+            setResult([]);
+            return;
+        }
         searchProductList();
     },[input]);
 
@@ -170,7 +171,7 @@ const Searchbar = (props:{isOpened?: boolean}) => {
                 </span>
             </span>
         </div>
-        <div className="search__completion" aria-hidden={!open && !results.length}>
+        <div className="search__completion" aria-hidden={!open || !results.length}>
             {
                 results.map((result,index) =>{
                     return <SearchItem key={index} product={result}></SearchItem>
@@ -202,7 +203,7 @@ const SearchItem = (props: {product: GetProductResponseDTO}) => {
                         <h4 className="searchItem__title--name" title={props.product.name}>{props.product.name}</h4>
                     </CustomLink>
                     <div>{props.product.price}</div>
-                    <div><Rating.Star></Rating.Star></div>
+                    <div><Rating.Star percentage={0.7}></Rating.Star></div>
                 </div>
             </Col>
         </Row>
@@ -217,22 +218,19 @@ const UnAuthorizedAction = () => {
 }
 
 const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user }) => {
-
     const { logout, getUserInfo } = useActions();
     const { data: { email } } = useTypedSelector(state => state.auth);
     const { data } = useTypedSelector(state => state.user);
-    const { data: { itemList, totalAmount } } = useTypedSelector(state => state.cart);
+    const { data: { totalAmount } } = useTypedSelector(state => state.cart);
     const [state, setState] = React.useState<{
         showOffCanvas: boolean;
     }>({
         showOffCanvas: false
     });
 
-
     React.useEffect(() => {
         getUserInfo();
     }, [email]);
-
 
     function toggleOffCanvas() {
         setState(o => ({
@@ -273,44 +271,7 @@ const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user })
             </div>
         </div>
 
-        <Offcanvas show={state.showOffCanvas} onHide={toggleOffCanvas} placement='end'>
-            <Offcanvas.Header closeButton>
-                <Offcanvas.Title>Cart Review</Offcanvas.Title>
-            </Offcanvas.Header>
-
-            <Offcanvas.Body>
-                <div style={{
-                    paddingBottom: '12px'
-                }}>
-                    {itemList.map(cartItem => {
-                        return <div key={cartItem.productId}>
-                            <span style={{
-                                display: 'inline-block',
-                                width: "80px",
-                                height: "80px",
-                                background: `url(${cartItem.item.urls[0]}) 0 0 / contain`
-                            }}>
-                            </span>
-                            <h4>{cartItem.item.name}</h4>
-                            <i>
-                                Price: {cartItem.item.price}
-                                <Input.NumberInput></Input.NumberInput>
-                            </i>
-                            <p>Quantity: {cartItem.quantity}</p>
-                            <p>Total: ${cartItem.total}</p>
-                        </div>
-                    })}
-                </div>
-
-                <div style={{
-                    position: 'sticky',
-                    bottom: 0,
-                    background: '#fff'
-                }}>
-                    <Button variant="danger">Checkout</Button>
-                </div>
-            </Offcanvas.Body>
-        </Offcanvas>
+        <CartSidebar show={state.showOffCanvas} onHide={toggleOffCanvas} placement='end'></CartSidebar>
 
         <Dropdown as={ButtonGroup} size='sm'>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{ padding: 0 }}>
@@ -359,6 +320,102 @@ const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user })
         </Dropdown>
     </>
 }
+
+
+const CartSidebar = (props: OffcanvasProps) =>{
+    const {removeItemFromCart, clearCart, modifyItemCart, checkCartItem} = useActions();
+    const {data: {itemList,totalPrice}} = useTypedSelector(s => s.cart);
+    const {data: {addressList}} = useTypedSelector(s => s.user);
+    return <>
+    <Offcanvas {...props}>
+            <Offcanvas.Header closeButton>
+                <Offcanvas.Title>Cart Review</Offcanvas.Title>
+            </Offcanvas.Header>
+
+            <Offcanvas.Body>
+                <div style={{
+                    paddingBottom: '12px'
+                }}>
+                    {itemList.map((cartItem, index) => {
+                        return <div key={index + 1}>
+                            <Row>
+                                <Col sm="1">
+                                    <input 
+                                        type={"checkbox"} 
+                                        style={{cursor: 'pointer'}} 
+                                        defaultChecked={cartItem.checked}
+                                        onChange={() => checkCartItem(index)}></input>
+                                </Col>
+                                <Col>
+                                    <span style={{
+                                        display: 'inline-block',
+                                        width: "80px",
+                                        height: "80px",
+                                        background: `url(${cartItem.image}) 0 0 / contain`
+                                    }}>
+                                    </span>
+                                    <h4>{cartItem.item.name}</h4>
+                                    <i>
+                                        Price: {cartItem.item.price}
+                                        <Input.NumberInput 
+                                            readOnly
+                                            value={cartItem.quantity} 
+                                            min={1} 
+                                            max={12000} 
+                                            onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
+                                                if(e.target.valueAsNumber){
+                                                    modifyItemCart(index, cartItem.productId, e.target.valueAsNumber, cartItem.addressId);
+                                                }
+                                            }}
+                                            ></Input.NumberInput>
+                                    </i>
+                                    <p>Address: {addressList.find(add => add.id === cartItem.addressId)?.receiverName}...</p>
+                                    <p>Quantity: {cartItem.quantity}</p>
+                                    <p>Total: ${cartItem.total}</p>
+                                </Col>
+                                <Col sm="1">
+                                    <i style={{cursor:'pointer'}} onClick={() => removeItemFromCart(index)}>x</i>
+                                </Col>
+                            </Row>
+                        </div>
+                    })}
+                </div>
+            </Offcanvas.Body>
+            <div>
+                <Row xs={2} sm={2} style={{
+                        position: 'sticky',
+                        bottom: 0,
+                        background: '#fff',
+                        overflow: 'auto',
+                        // padding: '1rem'
+                    }}>
+                        <Col sm="6">
+                            <div>
+                                {`Total: ${totalPrice} VND`}
+                            </div>
+                            <div>
+                            <CustomLink to={{
+                                pathname: '/cart'
+                            }}>
+                                <Button variant="success">Cart</Button>
+                            </CustomLink>
+                            </div>
+                        </Col>
+                        
+                        <Col sm="6">
+                            <CustomLink to={{
+                                pathname: '/checkout'
+                            }}>
+                                <Button variant="success">Checkout</Button>
+                            </CustomLink>
+                            <Button variant="danger" onClick={clearCart}>Clear all</Button>
+                        </Col>
+                </Row>
+            </div>
+        </Offcanvas>
+    </>
+}
+
 
 
 export { Navigation };

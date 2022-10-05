@@ -56,7 +56,11 @@ Variables
   --clr-primary-8: hsl(205, 86%, 81%);
   --clr-primary-9: hsl(205, 90%, 88%);
   --clr-primary-10: hsl(205, 100%, 96%);
+
+  /* color primary */
   --clr-logo: #FF9F43;
+  --clr-logo-hover: #BF7632;
+
   --clr-font-inside-logo1: #FF4949;
   --clr-font-inside-logo2: #FFCD38;
   /* darkest grey - used for headings */
@@ -233,4 +237,17 @@ table, th, tr, td {
 
 [data-text-align~="center"] {
   text-align: center;
+}
+
+[data-text-align~="middle"] {
+  display: grid;
+  place-items: center;
+}
+
+[data-pointer] {
+  cursor: pointer;
+}
+
+input[type="select"], input[type="date"], input[type="date-time"] {
+  cursor: pointer;
 }

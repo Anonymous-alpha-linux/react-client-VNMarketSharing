@@ -183,7 +183,7 @@
     padding: 0 1.2rem;
 }
 
-/* Product show */
+/* Single-product */
 .single-product__name {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -203,3 +203,5 @@
     line-clamp: 2;
     -webkit-box-orient: vertical;
 }
+
+/* Single product */

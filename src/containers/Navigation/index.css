@@ -7,10 +7,11 @@
     position: sticky;
     top: 0;
     z-index: 101;
+    background: #402711 !important;
 }
 
 .navigation__bottom {
-    background: #000;
+    background: linear-gradient(-180deg, var(--clr-logo), #E68E3C);
     position: sticky;
     top: 70px;
     z-index: 100;
@@ -166,6 +167,10 @@
     overflow-x: hidden;
     display: inline-block;
     transition: 0.5s 0.3s;
+}
+
+.search__completion::--webkit-scrollbar {
+    display: none;
 }
 
 .search__completion--match {

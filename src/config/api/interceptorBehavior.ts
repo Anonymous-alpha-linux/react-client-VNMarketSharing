@@ -51,6 +51,7 @@ export class AuthInterceptorBehavior implements IInterceptorBehavior {
                 const originalConfig = error.config;
 
                 if (
+                    originalConfig?.url &&
                     originalConfig.url !== apiAuthURL.login &&
                     originalConfig.url !== apiAuthURL.refreshToken &&
                     error.response

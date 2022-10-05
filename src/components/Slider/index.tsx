@@ -89,7 +89,7 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
                 </div>
             </div>
             { 
-            props.dataNumber && <>
+            !!props.dataNumber && <>
                 <div className='product-slider__owl--left' onClick={() => {
                     prev(); 
                     setHasClicked(o => true);

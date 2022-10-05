@@ -354,3 +354,4 @@ export * from './product';
 export * from './seller';
 export * from './cart';
 export * from './category';
+export * from './address';

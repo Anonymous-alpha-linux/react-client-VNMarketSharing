@@ -1,0 +1,72 @@
+.numberInput__root {
+    width: 130px;
+    height: 40px;
+}
+
+.numberInput__container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.numberInput__input {
+    -webkit-appearance: none;
+    -webkit-border-radius: 0px;
+    -moz-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    outline: none;
+    border: 2px solid black;
+
+    transition: all 0.2s ease-out;
+}
+
+.numberInput__input[type="number"]:focus {
+    background-color: white;
+    border: 1px solid #9c7830;
+    outline: none;
+}
+
+.numberInput__input[type="number"]::-webkit-inner-spin-button,
+.numberInput__input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.numberInput__input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.numberInput__owl {
+    text-align: center;
+    display: grid;
+    place-items: center;
+    width: 40px;
+    /* height: 100%; */
+    aspect-ratio: 1/1;
+    cursor: pointer;
+    border: 2px solid black;
+    user-select: none;
+    font-weight: 700;
+    transition: all 0.1s ease-out;
+}
+
+.numberInput__owl:active {
+    background-color: #fcf9ed;
+    transform: scale(1.1);
+}
+
+[data-eliminated-border~="left"] {
+    border-left: none;
+}
+
+[data-eliminated-border~="right"] {
+    border-right: none;
+}
+
+[data-eliminated-border~="x"] {
+    border-left: none;
+    border-right: none;
+}

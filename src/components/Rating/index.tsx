@@ -2,7 +2,9 @@ import React from 'react'
 import { AiFillStar, AiOutlineStar } from 'react-icons/ai';
 import "./index.css";
 
-type StarProps = {}
+type StarProps = {
+    percentage: number;
+}
 type StarState = {
     selectedStar: number;
 }
@@ -32,7 +34,7 @@ export function Star(props: StarProps) {
                 </i>
                 
 
-                <div className="star__trackers">
+                <div className="star__trackers" style={{width: `${props.percentage > 1 ? props.percentage : props.percentage * 100}%`}}>
                     <i>
                         <AiFillStar></AiFillStar>
                     </i>

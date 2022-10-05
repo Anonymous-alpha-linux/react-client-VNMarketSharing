@@ -1,6 +1,8 @@
-import React,{ useCallback, useEffect, useState, useRef } from 'react';
-import { Col, Row, FormControlProps, Form } from 'react-bootstrap';
+import React,{ useCallback, useEffect, useState, useRef, ChangeEventHandler } from 'react';
+import { InputHTMLAttributes } from 'react';
+import { Col, Row } from 'react-bootstrap';
 import "./multi-range-slider.css";
+import './number-input.css';
 
 interface MultiRangeSliderProps{
     min: number;
@@ -96,48 +98,45 @@ export const MultiRangeSlider = ({ min, max, onChange }: MultiRangeSliderProps) 
   );
 };
 
-type NumberInputProps = FormControlProps & {
-  style?: React.CSSProperties
-};
+type IdenticalNumberInputProps = {
+  style?: React.CSSProperties;
+  styleOwl?: React.CSSProperties;
+}
 
-export const NumberInput = (props: NumberInputProps) => {
-  const [value, setValue] = React.useState<number>(props.value as number || 0);
+type NumberInputProps = Omit<InputHTMLAttributes<HTMLInputElement>, keyof IdenticalNumberInputProps | "type"> & IdenticalNumberInputProps;
 
-  function decreaseNumber(){
-    setValue(o => {
-      const i = props['aria-valuemin'] as number;
-      console.log(i);
-      if(!i && o > i)
-        return o - 1;
-      if(!i){
-        return o - 1; 
-      }
-      
-      return o;
-    })
-  }
-  function increaseNumber(){
-    setValue(o => {
-      const i = props['aria-valuemax'] as number;
-      if(i && o < i)
-        return o + 1;
-      return o;
-    })
-  }
+export const NumberInput :React.FC<NumberInputProps> = React.forwardRef<HTMLInputElement | null , NumberInputProps>(({className,onChange,...props}: NumberInputProps, forwardedRef) => {
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
-  React.useEffect(() => console.log(value), [value]);
+  React.useEffect(() =>{
+    if(inputRef.current){
+      inputRef.current.addEventListener("change", (e: any)=>{
+        onChange && onChange(e);
+      });
+    }
+    return () =>{
+      inputRef.current?.removeEventListener("change", () =>{
+      });
+    }
+  },[forwardedRef]);
 
   return <>
-    <Row>
-      <Col sm="auto" onClick={decreaseNumber}>
-        <span>-</span>
-      </Col>
-      <Col>
-        <Form.Control type={"number"} {...props} value={value} style={props.style} disabled></Form.Control>
-      </Col>
-      <Col sm="auto" onClick={increaseNumber}>
-        <span>+</span>
-      </Col>
-    </Row>
+    <div className={"numberInput__root"}>
+      <div className={"numberInput__container " + className} style={props.style} ref={forwardedRef}>
+        <span className='numberInput__owl' style={props.styleOwl} onClick={() => {
+          inputRef.current?.stepDown();
+          inputRef.current?.dispatchEvent(new Event("change"));
+        }}>-</span>
+        <input className='numberInput__input' 
+          data-eliminated-border={"x"} 
+          {...props} 
+          type={"number"} 
+          ref={inputRef}></input>
+        <span className="numberInput__owl"  style={props.styleOwl} onClick={() => {
+          inputRef.current?.stepUp();
+          inputRef.current?.dispatchEvent(new Event("change"));
+        }}>+</span>
+      </div>
+    </div>
   </>
-}
+})

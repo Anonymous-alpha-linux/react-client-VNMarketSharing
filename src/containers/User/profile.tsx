@@ -1,7 +1,7 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
-import { useLocation, useNavigate ,Navigate} from 'react-router-dom';
+import { useLocation, useNavigate ,Navigate, useSearchParams} from 'react-router-dom';
 import {Formik, FormikHelpers, useFormikContext} from 'formik';
-import {Form,Image,Button,
+import {Form,Button,
     Spinner,Stack,Ratio,
     Modal,Toast,ToastContainer, 
     ProgressBar, ProgressBarProps, ButtonGroup} from 'react-bootstrap';
@@ -11,46 +11,58 @@ import {changeAvatarSchema, updateInfoSchema} from '../../schemas';
 import {UpdateUserInfoRequest} from '../../models';
 import {userAPIInstance} from '../../config';
 import {Thumb} from './thumbnail';
+import { CustomLink } from '../../components';
+import { AiOutlineEdit } from 'react-icons/ai';
+import "./index.css"
 
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 export const Profile = () => {
     const {data,loading} = useTypedSelector(state => state.user);
     const [isModalShow, setModalShow] = useState<boolean>(false);
-    const [isEditable, setEditable]  = useState<boolean>(false);
+    const [searchParams] = useSearchParams();
 
     function openModal() {return setModalShow(true);}
     function closeModal(){ return setModalShow(false); }
 
+    React.useEffect(() => console.log(searchParams), [searchParams]);
+
     return (<>
         <Stack direction={"vertical"} 
-        className="col-md-5 mx-auto align-items-md-center"
+        className="col-md-7 p-5 mx-auto align-items-md-center"
+        style={{background: "#fff"}}
         gap={3}>
             {loading ? <Ratio aspectRatio={"1x1"} style={{width: '120px', height: '120px'}}>
                 <Spinner animation="border"></Spinner>
             </Ratio>
-            : <Image rounded 
-                fluid 
-                roundedCircle  
-                style={{
-                    width:'120px',
-                    height: '120px'
-                }}
-                onClick={openModal}
-                src={data.avatar || defaultAvatar}>
-            </Image>}
+            : <>
+                <div className='profile__image'
+                    style={{
+                        background: `url(${data.avatar || defaultAvatar}) center / contain no-repeat`
+                    }}
+                    onClick={openModal}>
+                    <div className="profile__icon--edit">
+                        <AiOutlineEdit></AiOutlineEdit>
+                    </div>
+                </div>
+            </>}
 
             <ImageEditor isModalShow={isModalShow} 
             closeModal={closeModal}></ImageEditor>
 
-            {isEditable? <EditableProfile></EditableProfile>: 
-            <PersonalBio></PersonalBio>}
-
-            {!isEditable && <Button onClick={() => {
-                            setEditable(s => !s);
-                        }}>
-                            Edit
-                        </Button>
+            {searchParams.get("isEdit")
+            && <EditableProfile></EditableProfile>
+            || <>
+                <PersonalBio></PersonalBio>
+                <CustomLink to={{
+                    pathname: '',
+                    search: "isEdit=true"
+                }}>
+                    <Button variant="success" style={{background: 'var(--clr-logo)', width: '240px'}}>
+                        Edit
+                    </Button>
+                </CustomLink>
+            </>
             }
         </Stack>
     </>
@@ -253,39 +265,51 @@ const EditableProfile = () =>{
         }}>
         {({values, errors, touched, handleChange, handleSubmit}) =>{
             return (
-            <Form onSubmit={handleSubmit}>
-                <Form.Group controlId='organizationControl'>
-                    <Form.Label>Organization name :</Form.Label>
-                    <Form.Control name="organizationName" 
-                    value={values.organizationName}
-                    isInvalid={touched.organizationName && !!errors.organizationName}
-                    onChange={handleChange}></Form.Control>
-                    <Form.Control.Feedback type="invalid">{errors.organizationName}</Form.Control.Feedback>
-                </Form.Group>
+            <Form onSubmit={handleSubmit} style={{width: '100%'}}>
+                <Stack direction={"vertical"} 
+                    gap={3}>
+                    
+                    <Form.Group controlId='organizationControl'>
+                        <Form.Label>Organization name :</Form.Label>
+                        <Form.Control name="organizationName" 
+                        value={values.organizationName}
+                        isInvalid={touched.organizationName && !!errors.organizationName}
+                        onChange={handleChange}></Form.Control>
+                        <Form.Control.Feedback type="invalid">{errors.organizationName}</Form.Control.Feedback>
+                    </Form.Group>
 
-                <Form.Group controlId='biographyControl'>
-                    <Form.Label>Biography :</Form.Label>
-                    <Form.Control name="biography" 
-                    value={values.biography}
-                    isInvalid={touched.biography && !!errors.biography}
-                    onChange={handleChange}></Form.Control>
-                    <Form.Control.Feedback type="invalid">{errors.biography}</Form.Control.Feedback>
-                </Form.Group>
+                    <Form.Group controlId='biographyControl'>
+                        <Form.Label>Biography :</Form.Label>
+                        <Form.Control as="textarea" name="biography" 
+                        rows={5}
+                        value={values.biography}
+                        isInvalid={touched.biography && !!errors.biography}
+                        onChange={handleChange}></Form.Control>
+                        <Form.Control.Feedback type="invalid">{errors.biography}</Form.Control.Feedback>
+                    </Form.Group>
 
-                <Form.Group controlId='dateOfBirthControl'>
-                    <Form.Label>Date of company:</Form.Label>
-                    <Form.Control type="date" 
-                    name="dateOfBirth" 
-                    value={values.dateOfBirth}
-                    isInvalid={touched.dateOfBirth && !!errors.dateOfBirth}
-                    onChange={handleChange}></Form.Control>
-                    <Form.Control.Feedback type="invalid">{errors.dateOfBirth}</Form.Control.Feedback>
-                </Form.Group>
+                    <Form.Group controlId='dateOfBirthControl'>
+                        <Form.Label>Date of company:</Form.Label>
+                        <Form.Control type="date" 
+                        name="dateOfBirth" 
+                        value={values.dateOfBirth}
+                        isInvalid={touched.dateOfBirth && !!errors.dateOfBirth}
+                        onChange={handleChange}></Form.Control>
+                        <Form.Control.Feedback type="invalid">{errors.dateOfBirth}</Form.Control.Feedback>
+                    </Form.Group>
 
-                <ButtonGroup>
-                    <Button onClick={() => navigate(-1)}>Back</Button>
-                    <Button type={"submit"} variant='success'>Apply</Button>
-                </ButtonGroup>
+                    <ButtonGroup>
+                        <Button onClick={() => navigate({
+                            pathname: "/account/profile"
+                        })}>Back</Button>
+                        <Button 
+                            style={{
+                                background: 'var(--clr-logo)'
+                            }}
+                            type={"submit"} 
+                            variant='success'>Apply</Button>
+                    </ButtonGroup>
+                </Stack>
             </Form>
         )}}
     </Formik>

@@ -6,3 +6,4 @@ export * as Home from './Home';
 export * as Admin from './Admin';
 export * as Product from './Product';
 export * as Footer from './Footer';
+export * as Payment from './Payment';

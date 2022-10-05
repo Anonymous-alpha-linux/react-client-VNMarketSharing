@@ -1,15 +1,19 @@
-import { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { serialize } from 'object-to-formdata';
 import {
     IInterceptorBehavior,
     AuthInterceptorBehavior,
     PublicInterceptorBehavior,
 } from './interceptorBehavior';
+import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
 import {
+    InvoiceCreationDTO,
     PostProductRequest,
     PostProductRequestDTO,
     ProductFilter,
 } from '../../models';
+
+const host = process.env.REACT_APP_ENVIRONMENT_HOST;
 
 export abstract class AppAPIInstance {
     interceptorBehavior: IInterceptorBehavior;
@@ -60,6 +64,21 @@ export class UserAppAPIInstance extends AppAPIInstance {
             ...config,
             params: {
                 userId: userId,
+            },
+        });
+    }
+    updateAddressDefault(
+        addressId: number,
+        userId: number,
+        type: number,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put('setdefault', null, {
+            ...config,
+            params: {
+                addressId,
+                userId,
+                type,
             },
         });
     }
@@ -278,5 +297,47 @@ export class SellerAppAPIInstance extends AppAPIInstance {
                 ...config,
             }
         );
+    }
+}
+
+export class PaymentApiInstance extends AppAPIInstance {
+    constructor() {
+        const bearerToken: string =
+            LocalStorageService.getLoginUser() as string;
+
+        const axiosInstance = axios.create({
+            baseURL: `${host}/api/payment`,
+            withCredentials: true,
+            headers: {
+                Authorization: `Bearer ${bearerToken}`,
+            },
+        });
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+    getBankList(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('bankcode', config);
+    }
+    createInvoice(
+        newInvoice: InvoiceCreationDTO,
+        returnURL: string,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.post('invoice/create', newInvoice, {
+            ...config,
+            params: {
+                returnURL,
+            },
+        });
+    }
+    confirmInvoice(searchParamString: string, config?: AxiosRequestConfig) {
+        return this.apiInstance.get(`confirm${searchParamString}`, config);
+    }
+    getMyOrder(userId: number, config?: AxiosRequestConfig) {
+        return this.apiInstance.get(`invoice/me`, {
+            ...config,
+            params: {
+                userId,
+            },
+        });
     }
 }

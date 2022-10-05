@@ -1,0 +1,69 @@
+#single-product__classifies {
+    margin: 1.5rem;
+}
+
+.single-product__container--classifies {
+    margin-bottom: 1.2rem;
+}
+
+.single-product__button--classify {
+    padding: 0.8rem 1.4rem;
+    border-radius: 2px;
+    background: #fff;
+    display: inline-block;
+    height: 100%;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.3s ease-in-out, background 0 linear 0.5s;
+}
+
+.single-product__button--classify:hover, .single-product__button--classify[aria-selected~="true"] {
+    transform: translateY(-4px);
+    color: #fff;
+    animation: backgroundAnimation 0.5s ease-in-out;
+    background: linear-gradient(to right, var(--clr-logo) 100%, #fff);
+}
+
+@keyframes backgroundAnimation {
+    0% {
+        background: #fff;
+    }
+
+    25% {
+        background: linear-gradient(to right, var(--clr-logo) 25%, #fff);
+    }
+
+    50% {
+        background: linear-gradient(to right, var(--clr-logo) 40%, #fff);
+    }
+
+    75% {
+        background: linear-gradient(to right, var(--clr-logo) 55%, #fff);
+    }
+
+    85% {
+        background: linear-gradient(to right, var(--clr-logo) 85%, #fff);
+    }
+
+    100% {
+        background: linear-gradient(to right, var(--clr-logo) 100%, #fff);
+    }
+}
+
+.single-product__button--cart {
+    background-color: var(--clr-logo);
+    outline: none;
+    border: 1px solid var(--clr-logo);
+    display: flex;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.single-product__button--cart:hover, .single-product__button--cart:active {
+    background-color: var(--clr-logo-hover);
+}
+
+#last {
+    scroll-behavior: smooth;
+    scroll-margin-top: 220px;
+}

@@ -248,6 +248,6 @@ table, th, tr, td {
   cursor: pointer;
 }
 
-input[type="select"], input[type="date"], input[type="date-time"] {
+select, input[type="date"], input[type="date-time"] {
   cursor: pointer;
 }

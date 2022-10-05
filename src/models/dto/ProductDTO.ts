@@ -98,3 +98,12 @@ export type GetProductClassifyDetailResponseDTO = {
     productClassifyValue: string;
     productClassifyValueId: number;
 };
+
+export type ReviewProductCreationDTO = {
+    rate: number;
+    name: string;
+    subject: string;
+    comment: string;
+    userId: number;
+    productId: number;
+};

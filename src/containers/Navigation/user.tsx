@@ -327,7 +327,7 @@ const CartSidebar = (props: OffcanvasProps) =>{
     const {data: {itemList,totalPrice}} = useTypedSelector(s => s.cart);
     const {data: {addressList}} = useTypedSelector(s => s.user);
     return <>
-    <Offcanvas {...props}>
+        <Offcanvas {...props}>
             <Offcanvas.Header closeButton>
                 <Offcanvas.Title>Cart Review</Offcanvas.Title>
             </Offcanvas.Header>

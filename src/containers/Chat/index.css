@@ -1,0 +1,30 @@
+.message-container__button--review {
+    background: black;
+    color: #fff;
+    font-weight: 700;
+    border: none;
+}
+
+.message-container__button--review:hover, .message-container__button--review:active {
+    background: #fff;
+    color: black;
+    border: none;
+}
+
+.message-stick__root {}
+
+.message-stick__container {}
+
+
+.message-stick__message {
+    background: #fff;
+    border-radius: 5px 20px;
+}
+
+.message-stick__message[data-mine~="true"] {
+    /* background: var(--clr-logo); */
+}
+
+.review__emotion {
+    font-size: 1.8rem;
+}

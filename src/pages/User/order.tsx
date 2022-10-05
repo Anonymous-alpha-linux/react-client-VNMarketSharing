@@ -66,6 +66,26 @@ export const OrderShow: React.FC<{}> = () => {
                         <Button onClick={() => changeMode("order")}>Orders</Button>
                     </Col>
                 </Row>
+                <Row className="order-show__button--group py-3">
+                    <Col xs="auto" sm="auto">
+                        <Button>All</Button>
+                    </Col>
+                    <Col xs="auto" sm="auto">
+                        <Button>Pending</Button>
+                    </Col>
+                    <Col xs="auto" sm="auto">
+                        <Button>Waiting</Button>
+                    </Col>
+                    <Col xs="auto" sm="auto">
+                        <Button>Delivering</Button>
+                    </Col>
+                    <Col xs="auto" sm="auto">
+                        <Button>Completed</Button>
+                    </Col>
+                    <Col xs="auto" sm="auto">
+                        <Button>Cancelled</Button>
+                    </Col>
+                </Row>
                 <Row className="p-3">
                     <Form.Control placeholder='Search order such as Id, Shopper, Product name'></Form.Control>
                 </Row>

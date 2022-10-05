@@ -7,6 +7,7 @@ import { GrTransaction } from 'react-icons/gr';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { CustomLink, Rating, Slider } from '../../components';
 import { productAPIInstance,addressAPIInstance } from '../../config';
+import { Chat } from '../../containers';
 import { axiosErrorHandler, useActions, useTypedSelector } from '../../hooks';
 import { GetAddressResponseDTO, GetProductClassifyDetailResponseDTO, GetProductResponseDTO } from '../../models';
 import "./single-product.css";
@@ -34,8 +35,8 @@ interface ISingleProductState {
 }
 export function SingleProduct() {
   const {data: {userId, addressList}} = useTypedSelector(s => s.user);
-  const {id} = useParams();
   const {addToCart} = useActions();
+  const locationParams = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [state,setState] = React.useState<ISingleProductState>({
@@ -44,7 +45,7 @@ export function SingleProduct() {
     currentImageUrlIndex: 0,
     selectedClassifyTypes: [],
     selectedAddressId: 0,
-    addressList: [],
+    addressList: []
   });
   const [key, setKey] = React.useState<string>("photo");
   const [key2, setKey2] = React.useState<string>("description");
@@ -81,15 +82,18 @@ export function SingleProduct() {
 
   React.useEffect(() =>{
     const cancelSource = axios.CancelToken.source();
-    id && axiosErrorHandler(() => {
-      productAPIInstance.getProductItem(parseInt(id),{
-        cancelToken: cancelSource.token
-      }).then(response =>{
-        setStateData(response.data);
-      });
-    }, error => {
-      navigate(-1);
-    }); 
+    if(locationParams.id){
+      const {id} = locationParams;
+      axiosErrorHandler(() => {
+        productAPIInstance.getProductItem(parseInt(id),{
+          cancelToken: cancelSource.token
+        }).then(response =>{
+          setStateData(response.data);
+        });
+      }, error => {
+        navigate(-1);
+      }); 
+    }
     return () => {
       cancelSource.cancel();
     }
@@ -296,6 +300,7 @@ export function SingleProduct() {
           </article>
         </Col>
       </Row>
+
       <div>
         <Image src={state.data?.userPage?.pageAvatar}></Image>
         <i>{state.data?.userPage?.name}</i>
@@ -303,22 +308,43 @@ export function SingleProduct() {
 
       <div id="last">
         <Tabs id="controlled-tab-single-product"
-              activeKey={key2}
-              onSelect={(k) => k && setKey2(k)}
-              className="mb-3">
-            <Tab eventKey="description" title="DESCRIPTION">
-              <textarea value={state.data?.description} 
-                style={{
-                  resize: 'none',
-                  width: '100%',
-                  height: "800px",
-                }} 
-                readOnly></textarea>
-            </Tab>
-            <Tab eventKey="review" title="REVIEWS (5)">Review</Tab>
-            <Tab eventKey="shipping" title="SHIPPING & RETURN (5)">{"Shipping & Return"}</Tab>
-          </Tabs>
+        activeKey={key2}
+        onSelect={(k) => k && setKey2(k)}
+        className="mb-3">
+          <Tab eventKey="description" title="DESCRIPTION">
+            <textarea value={state.data?.description} 
+              style={{
+                resize: 'none',
+                width: '100%',
+                height: "800px",
+              }} 
+              readOnly></textarea>
+          </Tab>
+          <Tab eventKey="review" title="REVIEWS (5)"><ReviewSection productId={state.data?.id || 0} userId={Number(userId)}></ReviewSection></Tab>
+          <Tab eventKey="shipping" title="SHIPPING & RETURN (5)">{"Shipping & Return"}</Tab>
+        </Tabs>
       </div>
+    </section>
+  )
+}
+
+export function ReviewSection(props: {productId: number, userId: number}){
+  const messages = [
+      {name: 'Chua te xao l**', image: 'https://cdn-icons-png.flaticon.com/512/21/21104.png', isMine: true, message: 'Hello', time: new Date(), star: 4 / 5},
+      {name: 'Nguyen Van A', image: 'https://cdn-icons-png.flaticon.com/512/21/21104.png', isMine: false, message: 'Hello', time: new Date(), star: 3 / 5},
+      {name: "Co cai cu lol", image: 'https://cdn-icons-png.flaticon.com/512/21/21104.png', isMine: true, message: 'Hello', time: new Date(), star: 2/ 5},
+    ]
+  return (
+    <section>
+      <Chat.MessageContainer 
+        messages={messages} 
+        user={{
+          image: 'https://cdn-icons-png.flaticon.com/512/21/21104.png',
+          name: 'user',
+          status: 'online',
+          id: props.userId
+        }} 
+        productId={props.productId}></Chat.MessageContainer>
     </section>
   )
 }

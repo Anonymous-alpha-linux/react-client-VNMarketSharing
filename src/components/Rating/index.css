@@ -15,7 +15,7 @@
 
 .star__tracking {
     position: absolute;
-    background: yellow;
+    background: var(--clr-logo);
     width: 50%;
     height: 100%;
     left: 0;
@@ -42,11 +42,11 @@
 .star__trackers {
     display: flex;
     position: absolute;
-    width: 50%;
+    /* width: 50%; */
     overflow: hidden;
 }
 
 .star__trackers i {
-    color: rgb(255, 255, 90);
+    color: var(--clr-logo);
     font-size: 1.2rem;
 }

@@ -5,9 +5,14 @@ import { ActionTypes, Action } from '..';
 
 type SingleProductOverview = {
     productId: number;
-    item: GetProductResponseDTO;
+    detailIndex?: number;
+    price: number;
     quantity: number;
+    image: string;
+    addressId: number;
     total: number;
+    item: GetProductResponseDTO;
+    checked: boolean;
 };
 type CartState = {
     itemList: SingleProductOverview[];
@@ -31,52 +36,108 @@ export const cartReducer = (
     action: Action
 ): ReducerState<CartState> => {
     const oldItemList = state.data.itemList;
+
     switch (action.type) {
         case ActionTypes.ADD_TO_CART:
-            const productId = action.payload.id;
+            const { detailIndex, quantity, price, image, addressId } =
+                action.payload;
+            const { id } = action.payload.product;
+
             const newItem = {
-                productId: action.payload.id,
-                item: action.payload,
-                quantity: 1,
-                total: action.payload.price,
-            };
+                productId: id,
+                item: action.payload.product,
+                addressId: action.payload.addressId,
+                detailIndex: detailIndex,
+                price: price,
+                quantity: quantity,
+                total: price,
+                image: image,
+                checked: true,
+            } as SingleProductOverview;
+            const newAdditionalProductList = oldItemList.some((item) => {
+                return (
+                    item.productId === id &&
+                    addressId === item.addressId &&
+                    detailIndex === item.detailIndex
+                );
+            })
+                ? // Already item
+                  oldItemList.map((item) => {
+                      if (
+                          item.productId === id &&
+                          addressId === item.addressId &&
+                          item.detailIndex === detailIndex
+                      ) {
+                          return {
+                              ...item,
+                              quantity: item.quantity + 1,
+                              total: updateSingleCartItemPrice(
+                                  item.price,
+                                  item.quantity + 1
+                              ),
+                          };
+                      }
+                      return item;
+                  })
+                : // Not find item
+                  [...oldItemList, newItem];
 
             return {
                 ...state,
                 data: {
-                    itemList: oldItemList.some(
-                        (item) => item.productId === productId
-                    )
-                        ? // Already item
-                          oldItemList.map((item) => {
-                              if (item.productId === productId) {
-                                  return {
-                                      ...item,
-                                      quantity: item.quantity + 1,
-                                      total: item.total + action.payload.price,
-                                  };
-                              }
-                              return item;
-                          })
-                        : // Not find item
-                          [...oldItemList, newItem],
-                    totalAmount: state.data.totalAmount + 1,
-                    totalPrice: [...oldItemList, newItem].reduce(
-                        (pre, cur) => pre + cur.total,
-                        0
+                    ...state.data,
+                    itemList: newAdditionalProductList,
+                    ...updateStateDataTotalAndQuantity(
+                        newAdditionalProductList
                     ),
                 },
             };
 
-        case ActionTypes.MODIFY_PRODUCT_CART:
+        case ActionTypes.CHECK_CART_ITEM:
             return {
                 ...state,
+                data: {
+                    ...state.data,
+                    itemList: oldItemList.map((item, index) => {
+                        if (index === action.payload) {
+                            return {
+                                ...item,
+                                checked: !item.checked,
+                            };
+                        }
+                        return item;
+                    }),
+                },
+            };
+
+        case ActionTypes.MODIFY_PRODUCT_CART:
+            const newModifiedCartList = oldItemList.map((item, index) => {
+                const isMapped = index === action.payload.index;
+                return isMapped
+                    ? {
+                          ...item,
+                          quantity: action.payload.quantity,
+                          addressId: action.payload.addressId,
+                          total: updateSingleCartItemPrice(
+                              item.price,
+                              action.payload.quantity
+                          ),
+                      }
+                    : item;
+            });
+
+            return {
+                ...state,
+                data: {
+                    ...state.data,
+                    itemList: newModifiedCartList,
+                    ...updateStateDataTotalAndQuantity(newModifiedCartList),
+                },
             };
 
         case ActionTypes.REMOVE_PRODUCT_CART:
-            const productRemovedId = action.payload;
             const newItemList = oldItemList.filter(
-                (item) => item.productId === productRemovedId
+                (_, index) => index !== action.payload
             );
             return {
                 ...state,
@@ -104,3 +165,22 @@ export const cartReducer = (
             return state;
     }
 };
+
+function updateSingleCartItemPrice(price: number, quantity: number): number {
+    return price * quantity;
+}
+
+function updateStateDataTotalAndQuantity(list: SingleProductOverview[]): {
+    totalPrice: number;
+    totalAmount: number;
+} {
+    return list.reduce(
+        (store, item) => {
+            return {
+                totalPrice: store.totalPrice + item.total,
+                totalAmount: store.totalAmount + item.quantity,
+            };
+        },
+        { totalPrice: 0, totalAmount: 0 }
+    );
+}

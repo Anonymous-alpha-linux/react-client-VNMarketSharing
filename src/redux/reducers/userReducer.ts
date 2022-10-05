@@ -1,4 +1,4 @@
-import { ResponseStatus } from '../../models';
+import { GetAddressResponseDTO, ResponseStatus } from '../../models';
 import { ActionTypes } from '../action-types';
 import { Action } from '../actions';
 
@@ -7,6 +7,7 @@ interface UserState {
         userId: string;
         username: string;
         avatar: string;
+        addressList: GetAddressResponseDTO[];
     };
     loading: boolean;
     error: string;
@@ -18,6 +19,7 @@ const initialState: UserState = {
         userId: '',
         username: '',
         avatar: '',
+        addressList: [],
     },
     error: '',
     loading: false,
@@ -40,6 +42,7 @@ export default function userReducer(
             return {
                 loading: false,
                 data: {
+                    ...state.data,
                     userId: action.payload.userId,
                     avatar: action.payload.avatar,
                     username: action.payload.username,
@@ -100,6 +103,31 @@ export default function userReducer(
                 status: ResponseStatus.FAILED,
                 error: action.payload,
                 data: state.data,
+            };
+        case ActionTypes.GET_ADDRESS_LIST:
+            return {
+                ...state,
+                loading: true,
+                status: ResponseStatus.NOT_RESPONSE,
+                error: '',
+            };
+        case ActionTypes.GET_ADDRESS_LIST_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                status: ResponseStatus.SUCCESS,
+                error: '',
+                data: {
+                    ...state.data,
+                    addressList: action.payload,
+                },
+            };
+        case ActionTypes.GET_ADDRESS_LIST_FAILED:
+            return {
+                ...state,
+                loading: false,
+                status: ResponseStatus.FAILED,
+                error: action.payload,
             };
         default:
             return state;

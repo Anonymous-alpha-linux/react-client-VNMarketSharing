@@ -9,6 +9,8 @@ interface SidebarProps {
     children?: React.ReactNode;
     show: boolean;
     data: SidebarPropData[];
+    styleContainer?: React.CSSProperties;
+    toggleDisplay?: boolean;
 }
 export interface SidebarPropData{
     title: string;
@@ -81,7 +83,7 @@ export function Sidebar(props: SidebarProps) {
             </div>
         </MediaQuery>
 
-        <div className={"sidebar__root" + `${!state.show ? " sidebar__root--hidden": ""}`}>
+        <div className={"sidebar__root" + `${!state.show ? " sidebar__root--hidden": ""}`} style={props.styleContainer}>
             <SidebarData data={state.data} 
                 onOpenTab={(pathName: string) => setOpenForSpecificTab(pathName)} 
                 show={state.show}

@@ -1,5 +1,4 @@
 import { Carousel, Button, Row, Col } from 'react-bootstrap';
-import { useMediaQuery } from 'react-responsive';
 import { Slider } from '../../components';
 import { useTypedSelector } from '../../hooks';
 import { Product } from '../../containers';
@@ -77,7 +76,7 @@ export function ProductPage() {
             <article id={"productShowcase__unique"}>
                 <Row xs={1} sm={2}>
                     {["", ""].map((_,index)=>{
-                        return <Col>
+                        return <Col key={index + 1}>
                             <div style={{textAlign: 'center'}}>
                                 <div className="home__best" style={{
                                     background: `url(${defaultAvatar}) center / 100% no-repeat`,
@@ -146,8 +145,8 @@ export function ProductPage() {
             </article>
             <article>
                 <Row className="px-5">
-                    {categoryList.filter(c => c.level === 0).map(c =>{
-                        return <Col>
+                    {categoryList.filter(c => c.level === 0).map((c,index) =>{
+                        return <Col key={index + 1}>
                             <span style={{textAlign: 'center', 
                                 display: 'inline-block', 
                                 width:"100%", 

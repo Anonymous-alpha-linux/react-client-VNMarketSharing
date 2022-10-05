@@ -7,7 +7,7 @@ export const AccountPage = ({children}: {children:React.ReactNode}) => {
     const {loading} = useTypedSelector(state=> state.user);
 
     return <Stack direction="horizontal" className="align-items-start">
-        <div style={{width: '180px', height: 'fit-content'}}>
+        <div>
             <Account.AccountLinks>
             </Account.AccountLinks>
         </div>

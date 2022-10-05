@@ -3,3 +3,5 @@ export * from './UserDTO';
 export * from './CategoryDTO';
 export * from './ProductDTO';
 export * from './UserPageDTO';
+export * from './PaymentDTO';
+export * from './AddressDTO';

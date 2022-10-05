@@ -6,6 +6,7 @@ import {
     CategoryAppAPIInstance,
     ProductAppAPIInstance,
     SellerAppAPIInstance,
+    PaymentApiInstance,
 } from './appApiInstance';
 
 const host = process.env.REACT_APP_ENVIRONMENT_HOST;
@@ -149,6 +150,9 @@ const axiosSellerAPIInstance: AxiosInstance = axios.create({
 });
 const sellerAPIInstance = new SellerAppAPIInstance(axiosSellerAPIInstance);
 
+// 7. API Payment
+const paymentAPIInstance = new PaymentApiInstance();
+
 export {
     axiosInstance,
     axiosAuthAPIInstance,
@@ -157,4 +161,5 @@ export {
     productAPIInstance,
     categoryAPIInstance,
     sellerAPIInstance,
+    paymentAPIInstance,
 };

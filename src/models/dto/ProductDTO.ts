@@ -1,4 +1,5 @@
 import { GetCategoryResponseDTO } from './CategoryDTO';
+import { GetUserPageResponseDTO } from './UserPageDTO';
 
 export type PostProductRequestDTO = {
     name: string;
@@ -73,9 +74,7 @@ export type GetProductResponseDTO = {
     soldQuantity: number;
     urls: string[];
     createdAt: string;
-    userPageId: number;
-    userPageAvatar: string;
-    userPageName: string;
+    userPage: GetUserPageResponseDTO;
 };
 
 export type GetProductClassifiesResponseDTO = {
@@ -87,11 +86,13 @@ export type GetProductClassifiesResponseDTO = {
 export type GetProductClassifyTypesResponseDTO = {
     id: number;
     name: string;
+    productDetails: GetProductClassifyDetailResponseDTO[];
 };
 
 export type GetProductClassifyDetailResponseDTO = {
     inventory: number;
     price: number;
+    presentImage: string;
     productClassifyKey: string;
     productClassifyKeyId: number;
     productClassifyValue: string;

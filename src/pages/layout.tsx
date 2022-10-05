@@ -11,7 +11,8 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
   const [localStorageUser, setLocalStorageUser] = React.useState(AppLocalStorage.getLoginUser());
   const {data: {productList, max, page, take}} = useTypedSelector(s => s.product);
   const {data: {categoryList}, error: categoryError} = useTypedSelector(s => s.category);
-  const {getUser, postNewProduct, getProductList, getCategoryList} = useActions();
+  const {data: {userId}} = useTypedSelector(s => s.user);
+  const {getUser, postNewProduct, getProductList, getCategoryList, getAddressList} = useActions();
   const {loading} = useTypedSelector(state => state.auth);
 
   const _isMounted = React.useRef<boolean>(false);
@@ -128,6 +129,12 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
       setLocalStorageUser(AppLocalStorage.getLoginUser());
     }
   },[localStorageUser]);
+
+  React.useEffect(() =>{
+    if(userId){
+      getAddressList(Number(userId));
+    }
+  },[userId])
 
 
   if(loading && !_isMounted.current) return <Spinner animation='border' role='status'></Spinner>

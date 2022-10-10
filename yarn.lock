@@ -4926,10 +4926,10 @@
     "merge2" "^1.4.1"
     "slash" "^3.0.0"
 
-"google-libphonenumber@^3.2.25":
-  "integrity" "sha512-Kx2/AqmY0P6863vOhkiCFqfAxfY3jagMe916ByU38JRKiRCqSHGJW1qTOZNV4+ag8Xda69dk6w8VwEeswVy44w=="
-  "resolved" "https://registry.npmjs.org/google-libphonenumber/-/google-libphonenumber-3.2.30.tgz"
-  "version" "3.2.30"
+"google-libphonenumber@^3.2.25", "google-libphonenumber@^3.2.31":
+  "integrity" "sha512-l3bzAkfN4ITICKvuqEiY7JN06RxDAviOoKMtD2KfGYjGK3btPO8Xav7k0fgmf1Ud/pEm523yBh1/s/xDtKEvnw=="
+  "resolved" "https://registry.npmjs.org/google-libphonenumber/-/google-libphonenumber-3.2.31.tgz"
+  "version" "3.2.31"
 
 "graceful-fs@^4.1.2", "graceful-fs@^4.1.6", "graceful-fs@^4.2.0", "graceful-fs@^4.2.4", "graceful-fs@^4.2.6", "graceful-fs@^4.2.9":
   "integrity" "sha512-9ByhssR2fPVsNZj478qUUbKfmL0+t5BDVyjShtyZZLiK7ZDAArFFfopyOTj0M05wE2tJPisA4iTnnXl2YoPvOA=="

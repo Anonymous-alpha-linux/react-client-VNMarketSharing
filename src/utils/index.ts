@@ -1,3 +1,5 @@
+import moment from 'moment';
+
 export function getCookie(cname: string): string {
     let name = cname + '=';
     let decodedCookie = decodeURIComponent(document.cookie);
@@ -93,4 +95,28 @@ export function getPhoto(base64Image: string) {
 
 export function encodeURI(url: string) {
     return encodeURIComponent(url);
+}
+
+export function timeDifferenceString(
+    current: Date | string,
+    diff: Date | string
+): string {
+    const diffArray = {
+        years: 'on',
+        months: 'on',
+        weeks: 'ago',
+        days: 'ago',
+        hours: 'ago',
+        minutes: 'ago',
+        seconds: 'ago',
+    };
+
+    return Object.entries(diffArray).reduceRight((pre, [unit, val]) => {
+        const _diff = moment(diff).diff(
+            current,
+            unit as moment.unitOfTime.Diff
+        );
+
+        return _diff > 1 ? `${_diff} ${unit} ${val}` : pre;
+    }, '');
 }

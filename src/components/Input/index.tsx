@@ -1,8 +1,8 @@
-import React,{ useCallback, useEffect, useState, useRef, ChangeEventHandler } from 'react';
+import React,{ useCallback, useEffect, useState, useRef } from 'react';
 import { InputHTMLAttributes } from 'react';
-import { Col, Row } from 'react-bootstrap';
 import "./multi-range-slider.css";
 import './number-input.css';
+import './star-rate.css';
 
 interface MultiRangeSliderProps{
     min: number;
@@ -140,3 +140,28 @@ export const NumberInput :React.FC<NumberInputProps> = React.forwardRef<HTMLInpu
     </div>
   </>
 })
+
+type IdenticalStarRateProps = {
+  value: number;
+}
+type StarRateProps = Omit<InputHTMLAttributes<HTMLInputElement>, keyof IdenticalStarRateProps> & IdenticalStarRateProps;
+
+export const StarRate = ({value ,...props}: StarRateProps) => {
+  const data = ["five", "four", "three", "two", "one"];
+  return <>
+    <span className="star-rate">
+      {
+        data.map((title, index) =>{
+          return <React.Fragment key={index + 1}>
+            <input type="radio" 
+            id={`star_${5-index}`} 
+            value={5 - index} 
+            checked={Number(value) === 5 - index} 
+            {...props}/>
+            <label htmlFor={`star_${5-index}`} title={title}>&#9733;</label>
+          </React.Fragment>
+        })
+      }
+    </span>
+  </>
+}

@@ -13,6 +13,8 @@
     float: right;
 }
 
+#order-show {}
+
 .order-show__list {
     align-items: stretch;
 }

@@ -1,5 +1,8 @@
 import { GetCategoryResponseDTO } from './CategoryDTO';
-import { GetUserPageResponseDTO } from './UserPageDTO';
+import {
+    GetUserPageResponseDTO,
+    GetUserPageResponseWithoutDescriptionDTO,
+} from './UserPageDTO';
 
 export type PostProductRequestDTO = {
     name: string;
@@ -75,6 +78,7 @@ export type GetProductResponseDTO = {
     urls: string[];
     createdAt: string;
     userPage: GetUserPageResponseDTO;
+    reviewAmount: number;
 };
 
 export type GetProductClassifiesResponseDTO = {
@@ -97,4 +101,38 @@ export type GetProductClassifyDetailResponseDTO = {
     productClassifyKeyId: number;
     productClassifyValue: string;
     productClassifyValueId: number;
+};
+
+export type ReviewProductCreationDTO = {
+    rate: number;
+    name: string;
+    subject: string;
+    comment: string;
+    userId: number;
+    productId: number;
+};
+
+export type ReviewProductResponseDTO = {
+    id: number;
+    rate: number;
+    name: string;
+    subject: string;
+    comment: string;
+    user: {
+        id: number;
+        organizationName: string;
+        avatar: string;
+    };
+    productId: number;
+    replyAmount: number;
+    replies: ReplyReviewProductResponseDTO[];
+    createdAt: Date;
+};
+
+export type ReplyReviewProductResponseDTO = {
+    id: number;
+    comment: string;
+    reviewId: number;
+    createdAt: Date;
+    userPage: GetUserPageResponseWithoutDescriptionDTO;
 };

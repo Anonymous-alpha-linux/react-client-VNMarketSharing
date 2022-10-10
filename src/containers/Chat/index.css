@@ -1,0 +1,57 @@
+.message-container__button--review {
+    background: black;
+    color: #fff;
+    font-weight: 700;
+    border: none;
+}
+
+.message-container__button--review:hover, .message-container__button--review:active {
+    background: #fff;
+    color: black;
+    border: none;
+}
+
+.message-stick__root {}
+
+.message-stick__container {}
+
+.message-stick__image {
+    border: 1px solid black;
+    border-radius: 50%;
+    width: 60px;
+    height: 65px;
+}
+
+.message-stick__message {
+    background: #fff;
+    border-radius: 5px 20px;
+}
+
+.message-stick__message[data-mine~="true"] {
+    /* background: var(--clr-logo); */
+}
+
+.message-stick__reply--action {
+    margin-left: 80px;
+}
+
+.review__emotion {
+    font-size: 1.8rem;
+}
+
+.reply-strick__container {
+    background: #fff;
+    width: 100%;
+    display: inline-block;
+}
+
+.reply-stick__message {}
+
+.reply-stick__message--content {}
+
+.reply-strick__image {
+    border-radius: 50%;
+    width: 60px;
+    height: 70px;
+    border: 1px solid black;
+}

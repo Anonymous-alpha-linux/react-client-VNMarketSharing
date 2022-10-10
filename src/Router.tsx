@@ -51,9 +51,9 @@ function Router() {
                     <Route path="*" element={<h1>Empty page</h1>}></Route>
                 </Route>
 
-                <Route path="/" element={<Container fluid className="px-md-2 px-xl-5">
+                <Route path="/" element={<>
                     <Outlet></Outlet>
-                </Container>}>
+                </>}>
                     <Route index element={<UserPage.ProductPage></UserPage.ProductPage>}></Route>
                 </Route>
 
@@ -77,7 +77,10 @@ function Router() {
 
                     <Route path="profile" element={<User.Profile></User.Profile>}></Route>
 
-                    <Route path="orders" element={<UserPage.OrderShow></UserPage.OrderShow>}></Route>
+                    <Route path="orders" element={<Outlet></Outlet>}>
+                        <Route index element={<UserPage.OrderShow></UserPage.OrderShow>}></Route>
+                        <Route path=":id" element={<UserPage.StepFormPage></UserPage.StepFormPage>}></Route>
+                    </Route>
 
                     <Route path="address" element={<Outlet></Outlet>}>
                         <Route index element={<User.Address></User.Address>}></Route>

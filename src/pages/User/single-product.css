@@ -1,5 +1,5 @@
 #single-product__classifies {
-    margin: 1.5rem;
+    /* margin: 1.5rem; */
 }
 
 .single-product__container--classifies {
@@ -55,7 +55,7 @@
     outline: none;
     border: 1px solid var(--clr-logo);
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     gap: 12px;
 }
 
@@ -66,4 +66,26 @@
 #last {
     scroll-behavior: smooth;
     scroll-margin-top: 220px;
+}
+
+#single-product__infors {
+    line-height: 2.5;
+}
+
+#single-product__merchant {
+    width: 100%;
+    background: #fff;
+}
+
+@media (max-width: 575px) {
+
+    .single-product__button--cart,
+    .single-product__button--checkout,
+    .single-product__button--wish {
+        width: 100%;
+        margin: 4px 0;
+        text-transform: uppercase;
+        text-align: center;
+        justify-content: center;
+    }
 }

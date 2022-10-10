@@ -156,7 +156,7 @@ export function ProductFilter() {
           <p style={{color: 'inherit'}}>
             {[
               "Product", window.location.hash.substring(1)
-            ].join(" > ")}
+            ].join("  ▶ ")}
           </p>
         </header>
 
@@ -170,12 +170,13 @@ export function ProductFilter() {
             </Col>
             <Col>
               <article>
-                <h2 style={{margin:'12px 0',padding: '12px 12px', background:"#fff", borderRadius: '2px', fontWeight:'700', fontStyle: 'italic'}}>
+                <h4 className='py-3 px-2 my-2' style={{
+                  background:"#fff", borderRadius: '2px', fontWeight:'700', fontStyle: 'italic', textTransform: 'uppercase'
+                }}>
                   {window.location.hash.substring(1)}
-                </h2>
-                <div style={{
+                </h4>
+                <div className='py-2 px-2 my-2' style={{
                   background: "var(--clr-logo)",
-                  padding: '1.2rem 20px',
                   color: '#fff'
                 }}>
                   <span>
@@ -231,13 +232,22 @@ export function ProductFilter() {
               <div>
                 {
                 view === FilterView.GRID_VIEW &&
-                <Row xs={1} sm={2} md={3} lg={4} xl={5}>
-                  {products.map((product,index) =>{
-                    return <Col key={index + 1}>
-                        <Product.SingleProduct productItem={product} view='grid'></Product.SingleProduct>
-                      </Col>
-                  })}
-                </Row> ||
+                <>
+                  <Product.ProductList productList={products} 
+                  rowProps={{
+                    xs: '1',
+                    sm: '2',
+                    md: '2',
+                    lg: '3',
+                    xl: '4',
+                    xxl: '4'
+                  }}
+                  colProps={{
+                    xs: 'auto',
+                    sm: 'auto'
+                  }}
+                  ></Product.ProductList>
+                </> ||
                 <Stack direction={'vertical'}>
                   {products.map((product,index) =>{
                     return <span key={index + 1}>
@@ -258,7 +268,8 @@ export function ProductFilter() {
 const FilterPanel = () => {
   const {data: {categoryList}} = useTypedSelector(s => s.category); 
   return <aside style={{
-    width: '320px',
+    width: "20%",
+    minWidth: "260px",
     display: 'inline-block'
   }}>
     <FilterPanelCatalog title={"Categories"} 
@@ -328,15 +339,14 @@ type FilterPriceValue = {
 
 const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
 
-  return <div style={{
+  return <div className='py-2' style={{
     borderTop: "1px solid #000",
-    padding: '20px 12px 10px 12px'
   }}>
-    <h3 style={{
+    <h4 style={{
       textTransform: 'uppercase'
-    }}>{props.title}</h3>
+    }} className="p-2">{props.title}</h4>
 
-    <article>
+    <article className='px-3'>
       {
         props.filterValue.type === FilterType.LIST_VIEW
         ? <Stack gap={3}>
@@ -344,9 +354,9 @@ const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
             return <div key={index + 1} style={filter.style}>
               {!!filter.link ?
               <CustomLink to={filter.link}>
-                <span>{filter.title}</span>
+                <span style={{fontSize:'0.8rem'}}>{filter.title}</span>
               </CustomLink>: 
-              <span>{filter.title}</span>}
+              <span style={{fontSize:'0.8rem'}}>{filter.title}</span>}
               {!!filter.subs?.length && <i style={{float:'right'}}><AiOutlineRight></AiOutlineRight></i>}
             </div>
           })}
@@ -355,7 +365,6 @@ const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
           <Input.MultiRangeSlider min={props.filterValue.min}
             max={props.filterValue.max}
             onChange={(min, max) =>{
-
             }}></Input.MultiRangeSlider>
         </Stack>
       }

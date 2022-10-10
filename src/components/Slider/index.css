@@ -36,7 +36,9 @@
     transform: translateX(calc(var(--slider-position) * 100%));
 }
 
-.product-slider__card[data-position~="out"] {}
+.product-slider__card[data-position~="out"] {
+    opacity: 0;
+}
 
 
 .product-slider__owl--left, .product-slider__owl--right {
@@ -52,6 +54,7 @@
     display: grid;
     place-items: center;
     cursor: pointer;
+    z-index: 20;
 }
 
 .product-slider__owl--left:hover, .product-slider__owl--right:hover {

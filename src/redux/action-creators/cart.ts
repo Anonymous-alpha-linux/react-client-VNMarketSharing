@@ -6,25 +6,34 @@ export const addToCart = (
     product: GetProductResponseDTO,
     addressId: number,
     detailIndex?: number,
-    quantity?: number
+    quantity?: number,
+    options?: {
+        onError: (message: string) => void;
+    }
 ) => {
     return async (dispatch: Dispatch<Action>) => {
-        dispatch({
-            type: ActionTypes.ADD_TO_CART,
-            payload: {
-                quantity: quantity || 1,
-                product: product,
-                detailIndex: detailIndex,
-                price: !!detailIndex
-                    ? product.productDetails?.[detailIndex].price
-                    : product.price,
-                image:
-                    (!!detailIndex &&
-                        product.productDetails?.[detailIndex].presentImage) ||
-                    product.urls?.[0],
-                addressId,
-            },
-        });
+        try {
+            if (!product) {
+                
+            }
+            dispatch({
+                type: ActionTypes.ADD_TO_CART,
+                payload: {
+                    quantity: quantity || 1,
+                    product: product,
+                    detailIndex: detailIndex,
+                    price: !!detailIndex
+                        ? product.productDetails?.[detailIndex].price
+                        : product.price,
+                    image:
+                        (!!detailIndex &&
+                            product.productDetails?.[detailIndex]
+                                .presentImage) ||
+                        product.urls?.[0],
+                    addressId,
+                },
+            });
+        } catch (error) {}
     };
 };
 

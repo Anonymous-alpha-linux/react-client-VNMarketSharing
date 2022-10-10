@@ -358,7 +358,7 @@ export const AddressCreationForm = () => {
         initialFormValues: {
             createdAt: new Date(new Date().toUTCString()),
             isDefault: false,
-            phoneNumber: '(+84)',
+            phoneNumber: '',
             district: '',
             ward: '',
             receiverName: '',
@@ -442,7 +442,7 @@ export const AddressCreationForm = () => {
             }}>
             {({ values, touched, errors, handleBlur, handleChange, handleSubmit, ...props }) => {
                 return <Form onSubmit={handleSubmit}>
-                    <h4>{location?.hash === "BillingAddress" ? "Billing Address" : "Shipping Address"}</h4>
+                    <h4>{location?.hash.toLowerCase().includes("billing") ? "Billing Address" : "Shipping Address"}</h4>
                     <Form.Group controlId='controlReceiverName'>
                         <Form.Label>Receiver Name</Form.Label>
                         <Form.Control value={values.receiverName}
@@ -530,14 +530,12 @@ export const AddressCreationForm = () => {
                                 (+84)
                                 </InputGroup.Text>
                                 <Form.Control type="phone" 
-                                    value={values.phoneNumber}
+                                    value={!values.phoneNumber && !values.phoneNumber.startsWith("(+84)") ? `(+84)` : values.phoneNumber }
                                     name="phoneNumber"
                                     aria-describedby={'phone-addon'}
                                     onBlur={handleBlur}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{
-                                        // e.target.value = `(+84) ${e.target.value}`;
-                                        handleChange(e);
-                                    }} isInvalid={touched.phoneNumber && !!errors.phoneNumber}></Form.Control>
+                                    onChange={handleChange} 
+                                    isInvalid={touched.phoneNumber && !!errors.phoneNumber}></Form.Control>
                                 <Form.Control.Feedback type="invalid">{errors.phoneNumber}</Form.Control.Feedback>
                             </InputGroup>
                         </Form.Group>
@@ -558,7 +556,7 @@ export const AddressUpdateForm = () => {
         initialFormValues: {
             createdAt: new Date(new Date().toUTCString()),
             isDefault: false,
-            phoneNumber: '(+84)',
+            phoneNumber: '',
             district: '',
             ward: '',
             receiverName: '',
@@ -597,7 +595,6 @@ export const AddressUpdateForm = () => {
         getVNProvincesApi();
     }, []);
     React.useEffect(() =>{
-        console.log(location.state);
         if(location.state){
             const locationState = location.state as {
                 from: Location,
@@ -743,12 +740,11 @@ export const AddressUpdateForm = () => {
                                 <InputGroup.Text id="phone-addon">
                                 (+84)
                                 </InputGroup.Text>
-                                <Form.Control type="phone" value={values.phoneNumber.split(")", 1)?.at(1)}
+                                <Form.Control type="phone" value={!values.phoneNumber && !values.phoneNumber.startsWith("(+84)") ? `(+84)` : values.phoneNumber }
                                     name="phoneNumber"
                                     aria-describedby={'phone-addon'}
                                     onBlur={handleBlur}
                                     onChange={(e: React.ChangeEvent<HTMLInputElement>)=>{
-                                        e.target.value = `(+84) ${e.target.value}`;
                                         handleChange(e);
                                     }} isInvalid={touched.phoneNumber && !!errors.phoneNumber}></Form.Control>
                                 <Form.Control.Feedback type="invalid">{errors.phoneNumber}</Form.Control.Feedback>

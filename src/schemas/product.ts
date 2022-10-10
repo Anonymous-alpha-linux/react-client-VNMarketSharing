@@ -143,3 +143,16 @@ export const postProductClassifySchema = yup
     )
     .max(2)
     .required();
+
+export const reviewProductSchema = yup.object().shape({
+    rate: yup
+        .number()
+        .moreThan(0)
+        .lessThan(6)
+        .required('Please rate our product'),
+    name: yup.string().max(20).required(),
+    subject: yup.string().max(20).required(),
+    comment: yup.string().min(12).max(350).required(),
+    userId: yup.number().required(),
+    productId: yup.number().required(),
+});

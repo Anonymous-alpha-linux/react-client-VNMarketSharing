@@ -1,5 +1,6 @@
 import React from 'react'
 import { Button, Col, Container, Form, Row, Stack } from 'react-bootstrap';
+import moment from 'moment';
 import { FaPlusSquare } from 'react-icons/fa';
 import { paymentAPIInstance } from '../../config';
 import { axiosErrorHandler, useTypedSelector } from '../../hooks';
@@ -55,7 +56,7 @@ export const OrderShow: React.FC<{}> = () => {
     },[]);
 
     return (
-        <section>
+        <section id="order-show">
             <>
                 <h3>{state.mode === "invoice" ? "Invoice" : "Order"} List</h3>
                 <Row className="order-show__button--group py-3">
@@ -196,6 +197,14 @@ const OrderCard = ({order, ...props}: {order: GetOrderResponseDTO}) =>{
         <div className="order-card__container p-3">
             <h4>Order Card</h4>
             <div className='order-card__body'>
+                <Row>
+                    <Col>Order Date :</Col>
+                    <Col data-text-align={"right"}>{moment(order.createdAt).format("YYYY-MM-DD")}</Col>
+                </Row>
+                <Row>
+                    <Col>Order Time :</Col>
+                    <Col data-text-align={"right"}>{moment(order.createdAt).format("HH:mm:ssA")}</Col>
+                </Row>
                 <Row>
                     <Col>Order No :</Col>
                     <Col data-text-align={"right"}>{order.id}</Col>

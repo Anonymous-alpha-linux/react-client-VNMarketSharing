@@ -1,7 +1,8 @@
 import { Carousel, Button, Row, Col } from 'react-bootstrap';
 import { Slider } from '../../components';
-import { useTypedSelector } from '../../hooks';
+import { useResponsive, useTypedSelector } from '../../hooks';
 import { Product } from '../../containers';
+import { useMediaQuery } from 'react-responsive';
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 export function ProductPage() {
@@ -12,11 +13,10 @@ export function ProductPage() {
         'https://img.freepik.com/premium-vector/super-sale-extra-discount-banner-template-design-background_416835-461.jpg?w=2000',
         'https://img.freepik.com/premium-vector/extra-discount-3d-sale-banner-template-design-background_416835-543.jpg?w=2000',
     ]
-
-
+    const screenType = useResponsive();
+    
     return <section style={{
         width: '100%',
-        maxWidth: '2320px',
         margin: '0 auto'
     }}>
         {/* Hero */}
@@ -63,11 +63,16 @@ export function ProductPage() {
             </article>
             <article className='mb-3'>
                 <Slider dataNumber={productList.length} 
-                    itemAmountPerTime={3}
+                    itemAmountPerTime={
+                        screenType === "extraLarge" ? 4 :
+                        screenType === "large" ? 3 :
+                        screenType === "medium" ? 2 :
+                        1
+                    }
                     loadNextItemAmount={1}
-                    autoPlayTimeout={3000}
+                    autoPlayTimeout={6000}
                     itemArray={productList}
-                    className="row row-cols-sm-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4"
+                    className="row row-cols-xs-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4"
                     cardNode={(item) => <>
                         <Product.SingleProduct productItem={item}></Product.SingleProduct>
                     </>}
@@ -177,13 +182,26 @@ export function ProductPage() {
             </article>
         </section>
 
+        {/* Proposal products */}
         <section className='py-3'>
             <article style={{textAlign: 'center', padding:'3rem', borderTop: '1px solid #f1f1f1'}}>
                 <h2>Proposal Products</h2>
                 <i>Our product maybe bring your experimental</i>
             </article>
             <article>
-                <Product.ProductList productList={productList.slice(0,30)}></Product.ProductList>
+                <Product.ProductList productList={productList.slice(0,30)} 
+                rowProps={{
+                    xs: '1',
+                    sm: '2',
+                    md: '3',
+                    lg: '4'
+                }}
+                // colProps={{
+                //     xs: 'auto',
+                //     sm: "6",
+                //     md: "4",
+                // }}
+                ></Product.ProductList>
             </article>
         </section>
     </section>

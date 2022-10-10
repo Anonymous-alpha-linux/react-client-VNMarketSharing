@@ -2,8 +2,8 @@ import React from 'react';
 import axios from 'axios';
 import {Spinner} from 'react-bootstrap';
 import {useActions, useTypedSelector} from '../hooks';
-import {AppLocalStorage,chatHubConnection} from '../config';
-import { getCookie, getPhoto } from '../utils';
+import {AppLocalStorage} from '../config';
+import { getCookie } from '../utils';
 import { PostProductClassifyDetailRequestDTO} from '../models';
 import compressImage from 'browser-image-compression';
 
@@ -24,20 +24,6 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
       _isMounted.current = false;
     }
   },[])
-
-  // Chat hub socket connection
-  React.useEffect(()=>{
-    chatHubConnection.connect();
-    chatHubConnection.getHubConnection().onreconnecting(()=>{
-      console.log("reconnecting");
-    });
-    chatHubConnection.getHubConnection().onreconnected((connectionId)=>{
-      console.log("reconnected");
-    });
-    return () =>{
-      chatHubConnection.disconnect();
-    }
-  },[chatHubConnection]);
 
   // Handle Form form localStorage
   React.useEffect(() =>{

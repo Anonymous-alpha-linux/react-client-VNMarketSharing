@@ -18,109 +18,109 @@ export const CheckoutPage: React.FC<{}> = () => {
     const {modifyItemCart, removeItemFromCart}  = useActions();
 
     return (<>
-           <section>
-                <header style={{
-                    width: '100%',
-                    height:'3rem',
-                    background: 'var(--clr-logo)',
-                    color:'#fff',
-                    fontWeight:'500',
-                    padding: '12px',
-                    display: "inline-block"
-                }}>
-                    <Container> 
-                        <p style={{color: 'inherit'}}>
-                            {[
-                            "Product", "Your Cart"
-                            ].join(" > ")}
-                        </p>
-                    </Container>    
-                </header>
-                <Container>
-                    <h3 className="py-3"
-                    style={{textTransform: 'uppercase', fontWeight: '700'}}>
-                        Your cart 
-                        <span style={{fontSize: '1.2rem'}}>({itemList.length} ITEM)</span>
-                    </h3>
-                    <article>
-                        <table style={{width: '100%'}}>
-                            <tr>
-                                <th>
-                                    <input type="checkbox" defaultChecked={false}></input>
-                                </th>
-                                <th className='p-2'>ITEM</th>
-                                <th className='p-2'>PRICE</th>
-                                <th className='p-2'>QUANTITY</th>
-                                <th className='p-2'>TOTAL</th>
-                            </tr>
-                            {
-                                itemList.map((cartItem,index) =>{
-                                    return <tr key={index + 1}>
-                                        <td>
-                                            <input type={"checkbox"} defaultChecked={cartItem.checked}></input>
-                                        </td>
-                                        <td className='py-2'>
-                                            <Row xs={2} sm={2}>
-                                                <Col sm="4" md="3">
-                                                    <div style={{background: `url(${cartItem.image}) center / 100% no-repeat, #fff`, width: '180px', height: '200px', margin: '0 auto'}}>
-                                                    </div>
-                                                </Col>
-                                                <Col sm="8">
-                                                    <h5>{cartItem.item.name}</h5>
-                                                    <div>
-                                                        <label>Receiver :</label>
-                                                        <p>{addressList.find(a => a.id === cartItem.addressId)!.receiverName}</p>
-                                                        <label>Address :</label>
-                                                        <p>
-                                                            <i>
-                                                                {`${addressList.find(a => a.id === cartItem.addressId)!.streetAddress} - ${addressList.find(a => a.id === cartItem.addressId)!.ward} - ${addressList.find(a => a.id === cartItem.addressId)!.district} - ${addressList.find(a => a.id === cartItem.addressId)!.city}`}
-                                                            </i>
-                                                        </p>
-                                                    </div>
-                                                </Col>
-                                            </Row>
-                                        </td>
-                                        <td>
-                                            <i>{cartItem.detailIndex ? cartItem.item?.productDetails?.at(cartItem.detailIndex)?.price : cartItem.price}</i>
-                                        </td>
-                                        <td>
-                                            <Input.NumberInput 
-                                                value={cartItem.quantity} 
-                                                min={1} 
-                                                max={12000} 
-                                                onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
-                                                    if(e.target.valueAsNumber){
-                                                        modifyItemCart(index ,cartItem.productId, e.target.valueAsNumber, cartItem.addressId);
-                                                    }
-                                                }}
-                                                ></Input.NumberInput>
-                                        </td>
-                                        <td>
-                                            {cartItem.total}
-                                        </td>
-                                        <td>
-                                            <span style={{color:'red'}} onClick={() => removeItemFromCart(index)}>
-                                                <TiTimes></TiTimes>
-                                            </span>
-                                        </td>
-                                    </tr>
-                                })
-                            }
-                            <tr>
-                                <td></td>
-                                <td colSpan={4} className="p-3" style={{}}>
-                                    <CustomLink to={{pathname: '/'}}>
-                                        <Button style={{background: 'var(--clr-logo)'}}>Buy More</Button>
-                                    </CustomLink>
-                                </td>
-                            </tr>
-                        </table>
-                    </article>
+        <section>
+            <header style={{
+                width: '100%',
+                height:'3rem',
+                background: 'var(--clr-logo)',
+                color:'#fff',
+                fontWeight:'500',
+                padding: '12px',
+                display: "inline-block"
+            }}>
+                <Container> 
+                    <p style={{color: 'inherit'}}>
+                        {[
+                        "Product", "Your Cart"
+                        ].join(" > ")}
+                    </p>
+                </Container>    
+            </header>
+            <Container>
+                <h3 className="py-3"
+                style={{textTransform: 'uppercase', fontWeight: '700'}}>
+                    Your cart 
+                    <span style={{fontSize: '1.2rem'}}>({itemList.length} ITEM)</span>
+                </h3>
+                <article>
+                    <table style={{width: '100%'}}>
+                        <tr>
+                            <th>
+                                <input type="checkbox" defaultChecked={false}></input>
+                            </th>
+                            <th className='p-2'>ITEM</th>
+                            <th className='p-2'>PRICE</th>
+                            <th className='p-2'>QUANTITY</th>
+                            <th className='p-2'>TOTAL</th>
+                        </tr>
+                        {
+                            itemList.map((cartItem,index) =>{
+                                return <tr key={index + 1}>
+                                    <td>
+                                        <input type={"checkbox"} defaultChecked={cartItem.checked}></input>
+                                    </td>
+                                    <td className='py-2'>
+                                        <Row xs={2} sm={2}>
+                                            <Col sm="4" md="3">
+                                                <div style={{background: `url(${cartItem.image}) center / 100% no-repeat, #fff`, width: '180px', height: '200px', margin: '0 auto'}}>
+                                                </div>
+                                            </Col>
+                                            <Col sm="8">
+                                                <h5>{cartItem.item.name}</h5>
+                                                <div>
+                                                    <label>Receiver :</label>
+                                                    <p>{addressList.find(a => a.id === cartItem.addressId)!.receiverName}</p>
+                                                    <label>Address :</label>
+                                                    <p>
+                                                        <i>
+                                                            {`${addressList.find(a => a.id === cartItem.addressId)!.streetAddress} - ${addressList.find(a => a.id === cartItem.addressId)!.ward} - ${addressList.find(a => a.id === cartItem.addressId)!.district} - ${addressList.find(a => a.id === cartItem.addressId)!.city}`}
+                                                        </i>
+                                                    </p>
+                                                </div>
+                                            </Col>
+                                        </Row>
+                                    </td>
+                                    <td>
+                                        <i>{cartItem.detailIndex ? cartItem.item?.productDetails?.at(cartItem.detailIndex)?.price : cartItem.price}</i>
+                                    </td>
+                                    <td>
+                                        <Input.NumberInput 
+                                            value={cartItem.quantity} 
+                                            min={1} 
+                                            max={12000} 
+                                            onChange={(e:React.ChangeEvent<HTMLInputElement>) => {
+                                                if(e.target.valueAsNumber){
+                                                    modifyItemCart(index ,cartItem.productId, e.target.valueAsNumber, cartItem.addressId);
+                                                }
+                                            }}
+                                            ></Input.NumberInput>
+                                    </td>
+                                    <td>
+                                        {cartItem.total}
+                                    </td>
+                                    <td>
+                                        <span style={{color:'red'}} onClick={() => removeItemFromCart(index)}>
+                                            <TiTimes></TiTimes>
+                                        </span>
+                                    </td>
+                                </tr>
+                            })
+                        }
+                        <tr>
+                            <td></td>
+                            <td colSpan={4} className="p-3" style={{}}>
+                                <CustomLink to={{pathname: '/'}}>
+                                    <Button style={{background: 'var(--clr-logo)'}}>Buy More</Button>
+                                </CustomLink>
+                            </td>
+                        </tr>
+                    </table>
+                </article>
 
-                    <article className="px-3 py-2" style={{overflow: 'auto'}}>
-                        <CartInvoice></CartInvoice>
-                    </article>
-                </Container>
+                <article className="px-3 py-2" style={{overflow: 'auto'}}>
+                    <CartInvoice></CartInvoice>
+                </article>
+            </Container>
         </section>
     </>
     )
@@ -479,12 +479,15 @@ export const CheckoutSuccessPage: React.FC<{}> = () =>{
     </section>)
 }
 
-export const StepFormPage = () => {
+export const StepFormPage: React.FC<{}> = () => {
     return <>
         <section>
             <header>
                 <div className="step-form__steps">
-                    <></>
+                    <div>Step 1</div>
+                    <div>Step 2</div>
+                    <div>Step 3</div>
+                    <div>Step 4</div>
                 </div>
             </header>
             <article></article>

@@ -4,11 +4,12 @@ import { Navbar, Container, Nav, NavDropdown, Button, ButtonGroup, Image, Dropdo
 import { FiShoppingCart } from 'react-icons/fi';
 import { FaHeart } from 'react-icons/fa';
 
-import { useTypedSelector, useActions, useDebouncedInput } from '../../hooks';
+import { useTypedSelector, useActions, useDebouncedInput, useResponsive } from '../../hooks';
 import { CustomLink, Input, Logo, Rating } from '../../components';
 import './index.css';
 import { useMediaQuery } from 'react-responsive';
 import { GetProductResponseDTO } from '../../models';
+import { MdOutlineSearch } from 'react-icons/md';
 
 const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
@@ -23,8 +24,8 @@ const Navigation = () => {
         query: '(max-width:575px)'
     });
     return <>
-        <Navbar className="navigation__top px-5">
-            <Container fluid style={{justifyContent: 'flex-start', flexWrap: 'wrap'}}>
+        <Navbar className="navigation__top">
+            <Container style={{justifyContent: 'flex-start', flexWrap: 'wrap'}}>
                 <Link to="/">
                     <Navbar.Brand>
                         <Logo></Logo>
@@ -69,12 +70,12 @@ const Navigation = () => {
                 </Navbar.Collapse>
             </Container>
         </Navbar>
-        <Navbar className="navigation__middle px-5"
+        <Navbar className="navigation__middle"
         collapseOnSelect 
         expand="lg" 
         bg="dark" 
         variant="dark">
-            <Container fluid style={{justifyContent: 'space-between'}}>
+            <Container className="navigation__middle--inner">
                 <Searchbar isOpened={isMobileScreen}></Searchbar>
                 <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="responsive-navbar-nav">
@@ -89,9 +90,9 @@ const Navigation = () => {
                 </Navbar.Collapse>
             </Container>
         </Navbar>
-        <Navbar className="navigation__bottom px-5 justify-content-center">
-            <Container fluid style={{justifyContent: 'flex-start', margin: '0 auto', flexBasis:'120px'}}>
-                {categoryList.filter(category => category.level === 0).map(category =>{
+        <Navbar className="navigation__bottom justify-content-center">
+            <Container className="navigation__bottom--inner" style={{justifyContent: 'flex-start', margin: '0 auto', flexBasis:'120px'}}>
+                {categoryList.filter(category => category.level === 0).slice(0, 5).map(category =>{
                     return <span key={category.id} className="navigation__bottom--item">
                         <CustomLink to={{
                             pathname: "/product",
@@ -147,30 +148,25 @@ const Searchbar = (props:{isOpened?: boolean}) => {
     }
 
     return <div className='search__root'>
-        <div className="search__container" 
+        <Row className="search__container" 
+            fluid
             onClick={() =>{
                 if(!open){
                     setOpen(true);
-                    
                 }
             }}
             aria-pressed={open}>
-            <div className="search__icon"></div>
-            <div className="search__input">
+            <Col xs="auto" sm="auto" className="search__icon">
+                <MdOutlineSearch></MdOutlineSearch>
+            </Col>
+            <Col className="search__input">
                 <input placeholder="Search your product..." value={input} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInput(e.target.value)}></input>
-            </div>
-            <span style={{
-                display: 'flex',
-                alignItems: 'center',
-                position: 'absolute',
-                top: '50%',
-                right: '15px',
-                transform: 'translateY(-50%)'
-            }}>
+            </Col>
+            <span className="search__close--span">
                 <span className="search__close" aria-hidden={!open} onClick={() => setOpen(false)}>
                 </span>
             </span>
-        </div>
+        </Row>
         <div className="search__completion" aria-hidden={!open || !results.length}>
             {
                 results.map((result,index) =>{
@@ -228,6 +224,8 @@ const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user })
         showOffCanvas: false
     });
 
+    const screenType = useResponsive();
+
     React.useEffect(() => {
         getUserInfo();
     }, [email]);
@@ -273,18 +271,16 @@ const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user })
 
         <CartSidebar show={state.showOffCanvas} onHide={toggleOffCanvas} placement='end'></CartSidebar>
 
-        <Dropdown as={ButtonGroup} size='sm'>
+        <Dropdown as={ButtonGroup} size='sm' align={screenType === "small mobile" ? "start" : "end"}>
             <Dropdown.Toggle split variant="link" id="dropdown-split-basic" size="sm" style={{ padding: 0 }}>
-                <Link to="/profile">
-                    <Image
-                        roundedCircle
-                        src={data.avatar || defaultImage}
-                        width={"50px"} height={"50px"}
-                        style={{
-                            marginRight: '12px'
-                        }}>
-                    </Image>
-                </Link>
+                <Image
+                    roundedCircle
+                    src={data.avatar || defaultImage}
+                    width={"50px"} height={"50px"}
+                    style={{
+                        marginRight: '12px'
+                    }}>
+                </Image>
                 {/* <Navbar.Text>Hello, {data.username.substring(0,5)}...</Navbar.Text> */}
             </Dropdown.Toggle>
 
@@ -321,7 +317,6 @@ const ProfileTrigger: React.JSXElementConstructor<{ user: string }> = ({ user })
     </>
 }
 
-
 const CartSidebar = (props: OffcanvasProps) =>{
     const {removeItemFromCart, clearCart, modifyItemCart, checkCartItem} = useActions();
     const {data: {itemList,totalPrice}} = useTypedSelector(s => s.cart);
@@ -356,7 +351,9 @@ const CartSidebar = (props: OffcanvasProps) =>{
                                     </span>
                                     <h4>{cartItem.item.name}</h4>
                                     <i>
-                                        Price: {cartItem.item.price}
+                                        Price: {cartItem.item.price.toLocaleString('en-US', {
+                                            maximumFractionDigits: 0
+                                        })}
                                         <Input.NumberInput 
                                             readOnly
                                             value={cartItem.quantity} 
@@ -381,41 +378,28 @@ const CartSidebar = (props: OffcanvasProps) =>{
                     })}
                 </div>
             </Offcanvas.Body>
-            <div>
-                <Row xs={2} sm={2} style={{
-                        position: 'sticky',
-                        bottom: 0,
-                        background: '#fff',
-                        overflow: 'auto',
-                        // padding: '1rem'
-                    }}>
-                        <Col sm="6">
-                            <div>
-                                {`Total: ${totalPrice} VND`}
-                            </div>
-                            <div>
-                            <CustomLink to={{
-                                pathname: '/cart'
-                            }}>
-                                <Button variant="success">Cart</Button>
-                            </CustomLink>
-                            </div>
-                        </Col>
-                        
-                        <Col sm="6">
+            <div className='px-2 py-3' style={{lineHeight: 2}}>
+                <span>
+                    {`Total: ${totalPrice} VND`}
+                </span>
+                
+                <span style={{float: 'right'}}>
+                    <Row>
+                        <Col xs="auto" sm="auto">
                             <CustomLink to={{
                                 pathname: '/checkout'
                             }}>
                                 <Button variant="success">Checkout</Button>
                             </CustomLink>
+                        </Col>
+                        <Col xs="auto" sm="auto">
                             <Button variant="danger" onClick={clearCart}>Clear all</Button>
                         </Col>
-                </Row>
+                    </Row>
+                </span>
             </div>
         </Offcanvas>
     </>
 }
-
-
 
 export { Navigation };

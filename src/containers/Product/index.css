@@ -7,7 +7,7 @@
 .singleProduct__card:hover {
     transform: scale(1.05);
     transition: transform 0.3s ease-in-out;
-    z-index: 100;
+    z-index: 10;
     border: 2px solid rgb(228, 121, 26);
 }
 

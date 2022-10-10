@@ -15,6 +15,8 @@ enum SliderCartPosition {
 export function Slider<ItemType>(props: SliderProps<ItemType>) {
     const [state, prev, next] = useSliderPaging(props);
     const [isClicked, setHasClicked] = React.useState<boolean>(false);
+    const ref = React.useRef<(HTMLSpanElement | null)[]>([]);
+
     React.useEffect(() =>{
         let interval : NodeJS.Timer | null = null;
         let timeout: NodeJS.Timeout | null = null;
@@ -22,6 +24,7 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
         if(interval){
             clearInterval(interval);
         }
+
         if(timeout){
             clearTimeout(timeout);
         }
@@ -29,8 +32,9 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
         if(isClicked){
             timeout = setTimeout(() => {
                 setHasClicked(false);
-            }, 5000);
+            }, 1000);
         }
+
         if(props.autoPlayTimeout && state.dataNumber && !isClicked){
             interval = setInterval(() => {
                 next();
@@ -46,6 +50,35 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
             }
         }
     },[props, isClicked]);
+
+    React.useEffect(() =>{
+        actionCatcher();
+        
+        return () =>{
+            removeAction();
+        }
+    }, [])
+
+    function actionCatcher() {
+        ref.current?.forEach(element =>{
+            element?.addEventListener("mousemove", (e) =>{
+                setHasClicked(false);
+            });
+            element?.addEventListener("mouseleave", (e) => {
+                setHasClicked(true);
+            })
+        })
+    }
+
+    function removeAction(){
+        ref.current.forEach(element =>{
+            if(element){
+                let new_element = element?.cloneNode(true);
+                element?.parentNode?.replaceChild(new_element, element);
+            }
+        });
+    }
+        
     return (
         <div className="product-slider__root">
             <div className="product-slider__container">
@@ -53,10 +86,10 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
                 <div className={'product-slider__showcase' + ` ${props.className}`}>
                     {
                         props.itemArray.map((item,index) =>{
-                            
-                            let position : string = index < state.firstSlideItemIndex 
+                            let position : SliderCartPosition = index < state.firstSlideItemIndex - 1
                             ? SliderCartPosition.OUT_LEFT
                             : SliderCartPosition.OUT_RIGHT;
+                            let redundant = props.itemArray.length % state.showPerPage; 
 
                             if(index >= state.firstSlideItemIndex && index <= state.lastSlideItemIndex){
                                 position = index === state.firstSlideItemIndex 
@@ -64,18 +97,35 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
                                 : index === state.lastSlideItemIndex
                                 ? SliderCartPosition.LAST
                                 : SliderCartPosition.IN;
+
                                 return <span key={index + 1} 
                                     className="product-slider__card" 
+                                    ref={(e)=>{ref.current[index] = e}}
                                     data-position={position}
                                     style={{
-                                        transform: `translateX(${state.step * 100 * -1 * props.loadNextItemAmount}%)`
+                                        transform: `translateX(${state.step * 100 * -1 * props.loadNextItemAmount}%)`,
+                                        zIndex: 1
                                     }}>
                                     {(props.cardNode as (item: ItemType) => React.ReactNode)(item)}
+                                </span>
+                            }
+                            else if(position === SliderCartPosition.OUT_LEFT){
+                                return <span key={index + 1} 
+                                className="product-slider__card" 
+                                ref={(e)=>{ref.current[index] = e}}
+                                data-position={position}
+                                style={{
+                                    transform: `translateX(${(redundant + props.itemArray.length - state.lastSlideItemIndex) * 100}%)`
+                                }}>
+                                {
+                                    (props.cardNode as (item: ItemType) => React.ReactNode)(item)
+                                }
                                 </span>
                             }
                             
                             return <span key={index + 1} 
                                 className="product-slider__card" 
+                                ref={(e)=>{ref.current[index] = e}}
                                 data-position={position}
                                 style={{
                                     transform: `translateX(${state.step * 100 * -1 * props.loadNextItemAmount}%)`
@@ -125,6 +175,13 @@ function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
         init();
     }, [props.dataNumber]);
 
+    React.useEffect(() =>{
+        setState(o =>({
+            ...o,
+            data: props.itemArray
+        }))
+    }, [props.itemArray]);
+
     function init(){
         setState(o=>({
             ...o,
@@ -172,13 +229,14 @@ function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
 
     function next() {
         setState(o => {
-            let remainingDataNumber = o.dataNumber - o.lastSlideItemIndex + 1;
+            let remainingDataNumber = o.dataNumber - o.lastSlideItemIndex;
             if(o.runnerTime > o.minStep){
                 if(remainingDataNumber < props.loadNextItemAmount){
                     return {
                         ...o,
                         firstSlideItemIndex: o.firstSlideItemIndex + remainingDataNumber - 1,
-                        lastSlideItemIndex: o.lastSlideItemIndex + remainingDataNumber - 1,
+                        // lastSlideItemIndex: o.lastSlideItemIndex + remainingDataNumber - 1,
+                        lastSlideItemIndex: o.showPerPage - remainingDataNumber,
                         runnerTime: o.runnerTime - 1,
                         step: o.step + 1
                     }
@@ -199,9 +257,9 @@ function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
                 runnerTime: o.maxStep,
                 step: o.minStep
             };
+            
         });
     }
-
 
     return [state, prev ,next];
 }

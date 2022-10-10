@@ -1,5 +1,5 @@
 import React from 'react'
-import {Card,Row,Col,Button,Stack,Container, Form} from 'react-bootstrap';
+import {Card,Row,Col,Button,Stack,Container, Form, RowProps, ColProps} from 'react-bootstrap';
 import { BsCartPlusFill } from 'react-icons/bs';
 import { FaHeart } from 'react-icons/fa';
 import { useMediaQuery } from 'react-responsive';
@@ -15,15 +15,19 @@ interface IUser{
     pageName: string;
 }
 
-export const ProductList: React.FC<{productList: GetProductResponseDTO[]}> = ({productList}) =>{
-    return <Container fluid>
-        <Row xs={1} sm={2} md={3} lg={4} style={{margin: '0 auto', display: 'inline-flex', justifyContent: 'flex-start'}}>
-            {productList.map(productItem => <Col key={productItem.id} xs={12} sm={6} md={4} lg={3}>
+export const ProductList: React.FC<{
+    productList: GetProductResponseDTO[], 
+    rowProps?: RowProps,
+    colProps?: ColProps    
+}> = ({productList, rowProps, ...props}) =>{
+    return <>
+        <Row style={{margin: '0 auto'}} {...rowProps}>
+            {productList.map(productItem => <Col key={productItem.id} {...props.colProps}>
                 <SingleProduct productItem={productItem}></SingleProduct>
             </Col>
             )}
         </Row>
-    </Container>
+    </>
 }
 
 
@@ -58,8 +62,8 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
         return (
             <>
                 <Card className="singleProduct__card" style={{ 
-                    maxWidth: isMobileScreen ? '320px': isExLargeScreen ? '440px': isLargeScreen ? '420px' : isMediumScreen ? "100%" : "auto",
-                    minWidth: isMobileScreen ? '320px': '320px',
+                    maxWidth: isMobileScreen ? '320px': isExLargeScreen ? '440px': isLargeScreen ? '100%' : isMediumScreen ? "100%" : "auto",
+                    minWidth: isMobileScreen ? '320px': '100%',
                     width: '100%'
                 }}>
                     <Card.Body>
@@ -106,7 +110,11 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                         
                         <Card.Subtitle style={{textAlign: 'center', marginTop: '1.8rem', color: "red"}}>
                             <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>{productItem.price.toFixed(2)}</i>    
-                            {productItem.price.toFixed(2)} VND
+                            {productItem.price.toLocaleString("en-US", {
+                                maximumFractionDigits: 0,
+                                // currencyDisplay: 'đ',
+                                // currencySign: "đ"
+                            })} VND
                         </Card.Subtitle>
 
                         <div style={{textAlign: 'center'}}>
@@ -115,8 +123,8 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
 
                         <div>
                             <Form.Select onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAddressId(parseInt(e.target.value))}>
-                                {addressList.map(address =>{
-                                    return <option value={address.id}>
+                                {addressList.map((address,index) =>{
+                                    return <option value={address.id} key={index + 1}>
                                         {`${address.receiverName} - ${address.streetAddress} - ${address.ward} - ${address.district} - ${address.city}`}
                                     </option>
                                 })}
@@ -180,6 +188,7 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                         </CustomLink>
                     </div>
                 </Col>
+
                 <Col md={9} style={{padding:'2rem 1rem 1rem 1rem'}}>
                     <Stack direction="vertical">
                         <div style={{
@@ -195,18 +204,30 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                             </h3>
                         </div>
                         <h4 style={{ marginTop: '1.8rem', color: "red"}}>
-                            <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>{productItem.price.toFixed(2)}</i>    
-                            {productItem.price.toFixed(2)} VND
+                            <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>
+                                {productItem.price.toLocaleString("en-US", {
+                                    maximumFractionDigits: 0,
+                                })}
+                            </i>    
+                            {productItem.price.toLocaleString("en-US", {
+                                maximumFractionDigits: 0,
+                            })} VND
                         </h4>
                         <i className='singleProduct__description--stack'>{productItem.description}</i>
-                        <div style={{margin:'1.8rem 0'}}>
+                        <div className="my-4">
                             <Rating.Star percentage={0.6}></Rating.Star>
+                            <span className="ms-2">{productItem.reviewAmount || "No review yet"}</span>
                         </div>
                         
                         <div>
                             <Form.Select onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAddressId(parseInt(e.target.value))}>
-                                {addressList.map(address =>{
-                                    return <option value={address.id}>
+                                <option>
+                                    <CustomLink to={{
+                                        pathname: "/account/address"
+                                    }}></CustomLink>
+                                </option>
+                                {addressList.map((address,index) =>{
+                                    return <option value={address.id} key={index + 1}>
                                         {`${address.receiverName} - ${address.streetAddress} - ${address.ward} - ${address.district} - ${address.city}`}
                                     </option>
                                 })}
@@ -215,13 +236,15 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
 
                         <div>
                             {
-                                !productItem.productDetails.length &&
+                                !!productItem.productDetails.length &&
                                     <CustomLink to={{
                                         pathname: `/product/${productItem.id}`
                                     }}>
                                         <Button className="bg-dark" 
-                                            style={{cursor: 'pointer', 
-                                            textTransform: 'uppercase'}}>
+                                            style={{
+                                                cursor: 'pointer', 
+                                                textTransform: 'uppercase'
+                                            }}>
                                             Choose your options
                                         </Button>
                                     </CustomLink>

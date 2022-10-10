@@ -247,6 +247,20 @@ export class ProductAppAPIInstance extends AppAPIInstance {
             },
         });
     }
+    getReviewProduct(productId: number) {
+        return this.apiInstance.get('review/list', {
+            params: {
+                productId,
+            },
+        });
+    }
+    getReviewReplies(reviewId: number) {
+        return this.apiInstance.get('review/replies', {
+            params: {
+                reviewId: reviewId,
+            },
+        });
+    }
 }
 
 export class SellerAppAPIInstance extends AppAPIInstance {

@@ -9,14 +9,15 @@ import {
     Response,
     LoginRequest,
     LoginResponse,
-    RegisterRequest,
     RegisterResponse,
     GetUserResponse,
     ChangePasswordRequest,
+    RegisterWithUserRequest,
 } from '../../models';
+import { serialize } from 'object-to-formdata';
 import { Action, ActionTypes } from '..';
 
-export const login = (loginRequest: LoginRequest) => {
+export const login = (loginRequest: LoginRequest, onSuccess?: () => void, onError?: (error: AxiosError) => void) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.LOGIN,
@@ -36,6 +37,7 @@ export const login = (loginRequest: LoginRequest) => {
                 )
             ).data;
             AppLocalStorage.setLoginUser(data.accessToken);
+            onSuccess?.();
             dispatch({
                 type: ActionTypes.LOGIN_SUCCESS,
                 payload: {
@@ -47,9 +49,11 @@ export const login = (loginRequest: LoginRequest) => {
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
                 const errResponse = error.response as AxiosResponse;
+                onError?.(error);
                 if (errResponse.data) {
                     const {
-                        serverMessage,
+                        message,
+                        serverMessage
                     }: { message: string; serverMessage: string } =
                         errResponse.data;
                     dispatch({
@@ -68,7 +72,7 @@ export const login = (loginRequest: LoginRequest) => {
 };
 
 export const register = (
-    registerRequest: RegisterRequest,
+    registerRequest: RegisterWithUserRequest,
     returnURL: string
 ) => {
     return async (dispatch: Dispatch<Action>) => {
@@ -77,26 +81,34 @@ export const register = (
         });
 
         try {
-            const { message }: Response<RegisterResponse> = (
+            const response: Response<RegisterResponse> = (
                 await axiosAuthAPIInstance.post(
                     apiAuthURL.register,
-                    registerRequest,
+                    serialize(registerRequest, {
+                        dotsForObjectNotation: true
+                    }),
                     {
                         params: {
                             returnUrl: encodeURIComponent(returnURL),
                         },
                     }
                 )
-            ).data;
+            );
 
             dispatch({
                 type: ActionTypes.REGISTER_SUCCESS,
-                payload: message,
+                payload: "Success Registered",
             });
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
                 const errorResponse = error.response as AxiosResponse;
-                if (errorResponse.data) {
+                if(errorResponse.status === 403){
+                    dispatch({
+                        type: ActionTypes.REGISTER_FAILED,
+                        payload: "Other user has already registered this email address",
+                    });
+                }
+                else if (errorResponse.data) {
                     const { serverMessage }: Response<RegisterResponse> =
                         errorResponse.data;
                     dispatch({
@@ -160,6 +172,7 @@ export const getUser = () => {
                 payload: {
                     email: data.email,
                     role: data.roles[0].roleName,
+                    roles: data.roles.map(p => p.roleName),
                     isAuthorized: true,
                 },
             });
@@ -207,7 +220,7 @@ export const refreshToken = () => {
     };
 };
 
-export const confirmEmail = (userId: string, token: string) => {
+export const confirmEmail = (userId: string, token: string, success?: () => void) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.CONFIRM_ACCOUNT,
@@ -231,6 +244,7 @@ export const confirmEmail = (userId: string, token: string) => {
                     isAuthorized: true,
                 },
             });
+            success?.();
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
                 dispatch({
@@ -263,7 +277,7 @@ export const resetStatus = () => {
     };
 };
 
-export const sendEmailToChangePassword = (email: string) => {
+export const sendEmailToChangePassword = (email: string, returnUrl?: string) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD,
@@ -275,7 +289,7 @@ export const sendEmailToChangePassword = (email: string) => {
                 {
                     params: {
                         email: email,
-                        return: '/',
+                        returnURL: returnUrl || '/',
                     },
                 }
             );

@@ -68,6 +68,7 @@ export const Profile = () => {
     </>
     )
 }
+
 const ImageEditor = ({isModalShow,closeModal} : {
     isModalShow: boolean,
     closeModal: () => void
@@ -98,7 +99,7 @@ const ImageEditor = ({isModalShow,closeModal} : {
     }
 
     return (
-        <Modal show={isModalShow} onHide={closeModal}>
+        <Modal show={isModalShow} backdrop="static" onHide={closeModal}>
             <Formik validationSchema={changeAvatarSchema}   
                 initialValues={{file: data.avatar}}    
                 onSubmit={(values: {file: any},formHelpers: FormikHelpers<{file: any}>)=>{
@@ -122,8 +123,7 @@ const ImageEditor = ({isModalShow,closeModal} : {
                             </Modal.Header>
                             <Modal.Body>
                                 <Form onSubmit={handleSubmit}>
-                                    <div style={{
-                                    }}>
+                                    <div>
                                         <Thumb image={values.file} 
                                             showCrop={true}
                                             roundedCircle
@@ -172,6 +172,7 @@ const ImageEditor = ({isModalShow,closeModal} : {
         </Modal>
     )
 }
+
 const ProgressAlert = ({progressProps,style}:{progressProps: ProgressBarProps,style?: React.CSSProperties}) =>{
     return <ToastContainer containerPosition='fixed' position='bottom-end' style={style}>
         <Toast>
@@ -184,6 +185,7 @@ const ProgressAlert = ({progressProps,style}:{progressProps: ProgressBarProps,st
         </Toast>
     </ToastContainer>
 }
+
 export interface UserInfoState {
     loading: boolean,
     error: string,
@@ -192,6 +194,7 @@ export interface UserInfoState {
         dateOfBirth: Date,  
     }
 }
+
 const PersonalBio = () =>{
     const {data: {email}} = useTypedSelector(state => state.auth);
     const {data: {userId,username}} = useTypedSelector(state => state.user);
@@ -249,6 +252,7 @@ const PersonalBio = () =>{
         <Form.Control type="disable" value={state.data.biography} readOnly></Form.Control>
     </>
 }
+
 const EditableProfile = () =>{
     const {updateUserInfo} = useActions();
     const navigate = useNavigate();

@@ -83,6 +83,7 @@ export interface IGetUserSuccessAction {
     payload: {
         email: string;
         role: string;
+        roles: string[];
         isAuthorized: boolean;
     };
 }

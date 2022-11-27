@@ -17,7 +17,22 @@ export type RegisterRequest = {
     confirmPassword: string;
     roleId: number;
 };
+
+export type RegisterWithUserRequest = {
+    organizationName: string;
+    biography: string;
+    dateOfBirth: Date;
+    image?: File;
+    account:{
+        email: string; 
+        password: string; 
+        confirmPassword:string; 
+        roleId: number;
+    }
+}
+
 export type RegisterResponse = {};
+
 export type ChangePasswordRequest = {
     email: string;
     token: string;

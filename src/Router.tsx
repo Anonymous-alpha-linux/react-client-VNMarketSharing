@@ -1,22 +1,27 @@
-import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet} from "react-router-dom";
+import React from 'react';
+import { BrowserRouter, Route, Routes, Navigate , useLocation, Outlet, useNavigate} from "react-router-dom";
 import {Account, Chat, User,Admin,AppNav, Footer} from './containers';
-import {SellerPage, UserPage} from './pages';
+import {AdminPage, SellerPage, UserPage} from './pages';
 import {useTypedSelector} from './hooks';
-import { Container } from "react-bootstrap";
+import { Container, Spinner } from "react-bootstrap";
+import { sellerAPIInstance } from './config'
+import { ResponseStatus } from './models';
 
-const roles = ['Administrator', 'User']
+const roles = ['Administrator', 'User', 'Merchant']
 
 function Router() {
     return (
         <BrowserRouter>
+            {/* 1. Header */}
             <Routes>
                 <Route path={"/*"} element={<AppNav.Navigation></AppNav.Navigation>}></Route>
-                <Route path={"dashboard/*"} element={<span style={{width: '20%', backgroundColor: 'blue'}}>
-                    <Admin.AdminLinksSidebar></Admin.AdminLinksSidebar>
+                <Route path={"admin/*"} element={<span style={{width: '20%', backgroundColor: 'blue'}}>
+                    <AppNav.AdminNavbar></AppNav.AdminNavbar>
                 </span>}></Route>
                 <Route path={"sale/*"} element={<AppNav.SellerNavbar></AppNav.SellerNavbar>}></Route>
             </Routes>
 
+            {/* 2. Body */}
             <Routes>
                 <Route path="auth">
                     <Route path="login" element={
@@ -34,9 +39,9 @@ function Router() {
                             <Account.EmailConfirmation.NotConfirmedEmail></Account.EmailConfirmation.NotConfirmedEmail>
                         </RouteAuth>}></Route>
                         <Route path="redirect" element={
-                            <RouteAuth>
+                            <>
                                 <Account.EmailConfirmation.ConfirmedEmail></Account.EmailConfirmation.ConfirmedEmail>
-                            </RouteAuth>
+                            </>
                         }></Route>
                     </Route>
                     <Route path="confirm/changePassword" element={<RouteAuth>
@@ -48,23 +53,30 @@ function Router() {
                             <Account.ChangePassword></Account.ChangePassword>
                         </RouteAuth>}></Route>
                     </Route>
-                    <Route path="*" element={<h1>Empty page</h1>}></Route>
+                    <Route path="*" element={<Container className="p-5">
+                        <h3 data-text-align="center">
+                            Empty page
+                        </h3>
+                    </Container>}></Route>
                 </Route>
 
                 <Route path="/" element={<>
                     <Outlet></Outlet>
                 </>}>
                     <Route index element={<UserPage.ProductPage></UserPage.ProductPage>}></Route>
-                </Route>
+                    <Route path="product" element={<Outlet></Outlet>}>
+                        <Route index element={<UserPage.ProductFilter></UserPage.ProductFilter>}></Route>
+                        <Route path=":id" element={<UserPage.SingleProduct></UserPage.SingleProduct>}></Route>
+                    </Route>
 
-                <Route path="dashboard" element={<RouteGuard>
-                    <span style={{width: '80%'}}>
-                        <Outlet></Outlet>
-                    </span>
-                </RouteGuard>}>
-                    <Route index element={<h1>DashBoard Admin</h1>}></Route>
-                    <Route path="product" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
-                    <Route path="category" element={<Admin.Category></Admin.Category>}></Route>
+                    <Route path="checkout" element={<Outlet></Outlet>}>
+                        <Route index element={<UserPage.CheckoutPage></UserPage.CheckoutPage>}></Route>
+                        <Route path="status" element={<UserPage.CheckoutSuccessPage></UserPage.CheckoutSuccessPage>}></Route>
+                    </Route>
+
+                    <Route path="cart" element={<Outlet></Outlet>}>
+                        <Route index element={<UserPage.CartPage></UserPage.CartPage>}></Route>
+                    </Route>
                 </Route>
 
                 <Route path="account" element={<RouteGuard>
@@ -79,7 +91,9 @@ function Router() {
 
                     <Route path="orders" element={<Outlet></Outlet>}>
                         <Route index element={<UserPage.OrderShow></UserPage.OrderShow>}></Route>
-                        <Route path=":id" element={<UserPage.StepFormPage></UserPage.StepFormPage>}></Route>
+                        <Route path=":id" element={<Outlet></Outlet>}>
+                            <Route index element={<UserPage.StepFormPage></UserPage.StepFormPage>}></Route>
+                        </Route>
                     </Route>
 
                     <Route path="address" element={<Outlet></Outlet>}>
@@ -92,59 +106,68 @@ function Router() {
                     <Route path="credit" element={<div>You didn't have credit now</div>}></Route>
                 </Route>
 
+                <Route path="orders/:id/track" element={<UserPage.OrderTrackerPage></UserPage.OrderTrackerPage>}></Route>
+
                 <Route path="chat">
                     <Route index element={<RouteGuard>
                         <Chat.Channel></Chat.Channel>
                     </RouteGuard>}></Route>
                 </Route>
 
-                <Route path="service" element>
-                    <Route path="collaborator" element={<h1>Service</h1>}></Route>
-                </Route>
-
-                <Route path="product" element={<Outlet></Outlet>}>
-                    <Route index element={<UserPage.ProductFilter></UserPage.ProductFilter>}></Route>
-                    <Route path=":id" element={<UserPage.SingleProduct></UserPage.SingleProduct>}></Route>
-                    <Route path="category" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
-                    <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
-                </Route>
-
-                <Route path="checkout" element={<Outlet></Outlet>}>
-                    <Route index element={<UserPage.CheckoutPage></UserPage.CheckoutPage>}></Route>
-                    <Route path="status" element={<UserPage.CheckoutSuccessPage></UserPage.CheckoutSuccessPage>}></Route>
-                </Route>
-
-                <Route path="cart" element={<Outlet></Outlet>}>
-                    <Route index element={<UserPage.CartPage></UserPage.CartPage>}></Route>
-                </Route>
-
+                {/* Seller */}
                 <Route path="sale" element={
-                    <RouteGuard roles={roles}>
-                        <AppNav.SellerSidebar>
-                            <Outlet></Outlet>
-                        </AppNav.SellerSidebar>
-                    </RouteGuard>}
+                    <SellerAuth>
+                        <RouteGuard roles={roles}>
+                            <AppNav.SellerSidebar>
+                                <Outlet></Outlet>
+                            </AppNav.SellerSidebar>
+                        </RouteGuard>
+                    </SellerAuth>}
                 >
-                    <Route index element={<>
-                        <h1>Dashboard seller</h1>
-                    </>}></Route>
-                    <Route path="product" element={<Container>
+                    <Route index element={<div className="ps-2">
+                        <h3>Dashboard seller</h3>
+                    </div>}></Route>
+                    <Route path="product" element={<>
                         <Outlet></Outlet>
-                    </Container>}>
+                    </>}>
                         <Route index element={<UserPage.ProductTablePage></UserPage.ProductTablePage>}></Route>
-                        <Route path="new" element={<UserPage.PostProduct></UserPage.PostProduct>}></Route>
+                        <Route path="new" element={<UserPage.PostProductForm></UserPage.PostProductForm>}></Route>
                     </Route>
                     <Route path="page" element={<Outlet></Outlet>}>
                         <Route index element={<SellerPage.SellerProfile></SellerPage.SellerProfile>}></Route>
                     </Route>
-                    <Route path="*" element={<h1>Not found</h1>}></Route>
+                    <Route path="invoice" element={<Outlet></Outlet>}>
+                        <Route index element={<SellerPage.InvoiceShow></SellerPage.InvoiceShow>}></Route>
+                        <Route path=":id" element={<SellerPage.OrderShow></SellerPage.OrderShow>}></Route>
+                    </Route>
+                    <Route path="order" element={<Outlet></Outlet>}>
+                        <Route index element={<h3>Order</h3>}></Route>
+                        <Route path=":id" element={<h3>Single Order list</h3>}></Route>
+                    </Route>
+                    <Route path="expense"></Route>
+                    <Route path="*" element={<h2>Not found</h2>}></Route>
                 </Route>
+                {/* Go to when user doesn't register as merchant role */}
+                <Route path="sale/register" element={<SellerPage.SellerProfile></SellerPage.SellerProfile>}></Route>
 
-                <Route path="admin" element={<Outlet></Outlet>}>
+                {/* Admin */}
+                <Route path="admin" element={<RouteGuard roles={['Administrator']}>
+                    <Admin.AdminLinksSidebar>
+                        <Outlet></Outlet>
+                    </Admin.AdminLinksSidebar>
+                </RouteGuard>}>
+                    <Route index path="dashboard" element={<AdminPage.DashboardPage></AdminPage.DashboardPage>}></Route>
+                    <Route path="product" element={<AdminPage.ProductInspectPage></AdminPage.ProductInspectPage>}></Route>
+                    <Route path="category" element={<AdminPage.CategoryTablePage></AdminPage.CategoryTablePage>}></Route>
+                    <Route path="seller" element={<AdminPage.SellerTable></AdminPage.SellerTable>}></Route>
+                    <Route path="user" element={<AdminPage.UserTablePage></AdminPage.UserTablePage>}></Route>
+                    <Route path="block" element={<AdminPage.BlockTablePage></AdminPage.BlockTablePage>}></Route>
+                    <Route path="notify" element={<AdminPage.NotificationPage></AdminPage.NotificationPage>}></Route>
+                    <Route path="*" element={<h2>404 Not Found</h2>}></Route>
                 </Route>
 
                 <Route path="page">
-                    <Route index element={<UserPage.UserPage></UserPage.UserPage>}></Route>
+                    <Route index element={<UserPage.UserMain></UserPage.UserMain>}></Route>
                 </Route>
 
                 <Route path="/*"
@@ -152,18 +175,31 @@ function Router() {
                 ></Route>
             </Routes>
 
+            {/* 3. Footer */}
             <Routes>
+                <Route path="sale/*" element={<></>}></Route>
+                <Route path="admin/*" element={<></>}></Route>
                 <Route path="/*" element={<Footer.User></Footer.User>}></Route>
             </Routes>
         </BrowserRouter>
     )
 }
 
-function RouteGuard(props: {children: JSX.Element,roles?: Array<string>}){
+export function RouteGuard(props: {children: JSX.Element,roles?: string[]}){
     const {data} = useTypedSelector(state => state.auth); 
     const location = useLocation();
+
+    function validateRoles(roles: string[], authorizes: string[]):boolean {
+        return authorizes.some((role) => {
+            return roles.some(irole => {
+                // console.log(`${role}===${irole}?`, role === irole);
+                return role === irole;
+            });
+        });
+    }
+
     if(!data.isAuthorized) return <Navigate to='/auth/login' state={{from: location}} replace></Navigate>
-    if(props.roles && !props?.roles.includes(data.role)) return <Navigate to={'/'} replace></Navigate>
+    if(props?.roles && !validateRoles(props.roles, data.roles)) return (<Navigate to={'/'} replace></Navigate>)
     return (props.children);
 }
 
@@ -174,9 +210,38 @@ const RouteAuth = (props: {children: JSX.Element}) => {
         from?: Location
     };
 
-    if(data.isAuthorized) return <Navigate to={locationState?.from?.pathname || "/"} replace></Navigate>
+    if(data.isAuthorized) return (<Navigate to={locationState?.from?.pathname || "/"} replace></Navigate>)
 
     return props.children;
+}
+
+const SellerAuth = (props: {children: JSX.Element}) => {
+    const {data, status, loading} = useTypedSelector(p => p.seller);
+    const [isAllowed, setIsAllowed] = React.useState(false);
+    const navigate = useNavigate();
+
+    React.useEffect(() =>{
+        if(status === ResponseStatus.FAILED){
+            navigate("/sale/register", {
+                replace: true,
+            });
+            return;
+        }
+        else if(data.id){
+            setIsAllowed(true);
+            return;
+        }
+    },[data]);
+
+    if(loading) return (
+        <Container className="p-5" data-text-align="middle">
+            <Spinner animation="border"></Spinner>
+        </Container>
+    )
+
+    return <>
+        {isAllowed && props.children}
+    </>
 }
 
 

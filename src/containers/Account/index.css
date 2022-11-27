@@ -1,0 +1,80 @@
+.login__paper, .register__paper {
+    background-color: #fff;
+    max-width: 620px;
+    margin: 0 auto;
+    animation: slideLeft 0.6s ease-in-out;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.06) 0px 1px 2px 0px;
+}
+
+.login__btn {
+    background-color: var(--clr-logo);
+    border: 1px solid transparent;
+}
+
+.register__btn {
+    background-color: rgb(66, 188, 5);
+    border: 1px solid transparent;
+}
+
+.register__step{
+    color: rgba(0, 0, 0, 0.3);
+    text-shadow: none;
+    transition: color 0.5s linear;
+}
+
+.register__step[data-active="true"]{
+    text-shadow: 0 10px rgb(0, 0, 0);
+    color: rgb(66, 188, 5);
+}
+
+.register__step--container{
+    animation: slideLeft 0.5s linear;
+}
+
+.email-confirm__waiter::after{
+    content: '.';
+    animation: textWaiter 2s linear infinite;
+    text-align: left;
+    width: 30px;
+    display: inline-block;
+}
+
+.email-confirm__paper{
+    background-color: #fff;
+    max-width: 620px;
+    margin: 0 auto;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.06) 0px 2px 4px -1px;
+}
+
+
+
+@keyframes slideLeft {
+    0% {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes textWaiter {
+    0% {
+        content: '.'
+    }
+    25% {
+        content: '..'
+    }
+    50% {
+        content: '...'
+    }
+    75%{
+        content: '....'
+    }
+    100%{
+        content: '.....'
+
+    }
+}
+

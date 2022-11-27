@@ -14,7 +14,6 @@ export const getSellerInfo = (userId: number, config?: AxiosRequestConfig) => {
         try {
             const { data }: AxiosResponse<GetUserPageResponseDTO> =
                 await sellerAPIInstance.getSellerPage(userId, config);
-
             dispatch({
                 type: ActionTypes.GET_USER_PAGE_SUCCESS,
                 payload: data,
@@ -45,7 +44,10 @@ export const getSellerInfo = (userId: number, config?: AxiosRequestConfig) => {
 export const postSellerInfo = (
     userId: number,
     request: PostUserPageRequestDTO,
-    config?: AxiosRequestConfig
+    config?: AxiosRequestConfig & Partial<{
+        onError: () => void,
+        onSuccess: () => void,
+    }>,
 ) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
@@ -55,7 +57,7 @@ export const postSellerInfo = (
         try {
             const { data }: AxiosResponse<GetUserPageResponseDTO> =
                 await sellerAPIInstance.postSellerPage(userId, request, config);
-
+            config?.onSuccess?.();
             dispatch({
                 type: ActionTypes.CREATE_UPDATE_USER_PAGE_SUCCESS,
                 payload: data,
@@ -63,6 +65,7 @@ export const postSellerInfo = (
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
                 const errResponse = error.response as AxiosResponse;
+                config?.onError?.();
                 if (errResponse.data) {
                     const {
                         serverMessage,

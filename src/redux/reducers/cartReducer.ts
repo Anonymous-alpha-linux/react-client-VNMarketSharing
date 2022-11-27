@@ -5,7 +5,7 @@ import { ActionTypes, Action } from '..';
 
 type SingleProductOverview = {
     productId: number;
-    detailIndex?: number;
+    detailIndexes?: (number | undefined)[];
     price: number;
     quantity: number;
     image: string;
@@ -39,7 +39,8 @@ export const cartReducer = (
 
     switch (action.type) {
         case ActionTypes.ADD_TO_CART:
-            const { detailIndex, quantity, price, image, addressId } =
+            console.log("add to cart")
+            const { detailIndexes, quantity, price, image, addressId } =
                 action.payload;
             const { id } = action.payload.product;
 
@@ -47,18 +48,19 @@ export const cartReducer = (
                 productId: id,
                 item: action.payload.product,
                 addressId: action.payload.addressId,
-                detailIndex: detailIndex,
+                detailIndexes: detailIndexes,
                 price: price,
                 quantity: quantity,
                 total: price,
                 image: image,
                 checked: true,
             } as SingleProductOverview;
+            console.log("new",newItem);
             const newAdditionalProductList = oldItemList.some((item) => {
                 return (
                     item.productId === id &&
                     addressId === item.addressId &&
-                    detailIndex === item.detailIndex
+                    item?.detailIndexes?.every((di,index) => detailIndexes?.[index] === di)
                 );
             })
                 ? // Already item
@@ -66,7 +68,7 @@ export const cartReducer = (
                       if (
                           item.productId === id &&
                           addressId === item.addressId &&
-                          item.detailIndex === detailIndex
+                          item.detailIndexes === detailIndexes
                       ) {
                           return {
                               ...item,

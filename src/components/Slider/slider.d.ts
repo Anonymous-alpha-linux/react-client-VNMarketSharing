@@ -1,16 +1,33 @@
 type ArrayElement<ArrayType extends readonly unknown[]> =
     ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
 
-interface SliderProps<ItemType> {
+type SliderProps<ItemType> = {
     dataNumber: number;
-    loadNextItemAmount: number;
     itemArray: ItemType[];
-    cardNode: (item: ItemType) => React.ReactNode;
+    responsive?: Partial<SliderResponsiveConfig>;
+} & SliderConfig &
+    SliderStyleConfig<ItemType>;
+
+type SliderConfig = {
+    loadNextItemAmount: number;
     itemAmountPerTime: number;
     autoPlayTimeout?: number;
     className?: string;
+};
+
+type SliderStyleConfig<ItemType> = {
     customOwl?: React.ReactElement | HTMLImageElement;
-}
+    cardNode: (item: ItemType, index: number) => React.ReactNode;
+};
+
+type SliderResponsiveConfig = {
+    xs: SliderConfig;
+    sm: SliderConfig;
+    md: SliderConfig;
+    lg: SliderConfig;
+    xl: SliderConfig;
+    xxl: SliderConfig;
+};
 
 enum SliderMovement {
     FORWARD = 'forward',

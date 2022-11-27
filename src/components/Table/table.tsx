@@ -10,12 +10,16 @@ import {
     CellDataComponentHandlerProps, 
     CellDataObjectProps, 
     FooterProps, 
+    RowBodyProps, 
+    RowDataProps, 
     RowListProps, 
     RowProps, 
     TableProps, 
     TableState, 
     TableValues
 } from './table-types';
+import { Badge } from "react-bootstrap";
+import { TbLock, TbLockOpen } from "react-icons/tb";
 
 
 export function Table<Values extends TableValues>({data,headers,...props}: TableProps<Values>) {
@@ -33,58 +37,71 @@ export function Table<Values extends TableValues>({data,headers,...props}: Table
         }));
     }, [data])
 
-    async function sortByHeader(key: string){
-        let action;
-        if(state.sortedKey === key){
-            action = Promise.resolve(state.data.reverse());
-        }
-        else{
-            action = Promise.resolve(state.data.sort((a,b) => {
-                if(!!parseInt(a[key])) {
-                    const number1 = parseInt(a[key]); 
-                    const number2 = parseInt(b[key]);
+    const functions = {
+        async sortByHeader(key: string){
+            let action;
+            if(state.sortedKey === key){
+                action = Promise.resolve(state.data.reverse());
+            }
+            else{
+                action = Promise.resolve(state.data.sort((a,b) => {
+                    if(!!parseInt(a[key])) {
+                        const number1 = parseInt(a[key]); 
+                        const number2 = parseInt(b[key]);
 
-                    return number1 > number2 ? 1 : number1 < number2 ? -1 : 0;
-                }
-                else if(typeof a[key] === "object" && "title" in a[key]){
-                    const str1 = a[key]["title"].toString().toUpperCase();
-                    const str2 = b[key]["title"].toString().toUpperCase();
+                        return number1 > number2 ? 1 : number1 < number2 ? -1 : 0;
+                    }
+                    else if(typeof a[key] === "object" && "title" in a[key]){
+                        const str1 = a[key]["title"].toString().toUpperCase();
+                        const str2 = b[key]["title"].toString().toUpperCase();
 
-                    return str1 > str2 ? 1 : str1 < str2 ? -1 : 0;
-                }
-                return 0;
-            }))
-        }
-
-        await action.then(newData => {
-            setState(o => {
-                return {
-                    ...o,
-                    data: newData,
-                    sortedKey: key
-                }
+                        return str1 > str2 ? 1 : str1 < str2 ? -1 : 0;
+                    }
+                    else if(typeof a[key] === 'string'){
+                        return a[key] 
+                    }
+                    return 0;
+                }))
+            }
+            await action.then(newData => {
+                setState(o => {
+                    return {
+                        ...o,
+                        data: newData,
+                        sortedKey: key
+                    }
+                });
             });
-        });
-    }
+        },
+        getKeysOfObject(obj: Values[]): string[]{
+            if(!obj.length) return [];
 
-    function getKeysOfObject(obj: Values[]): string[]{
-        if(!obj.length) return [];
-
-        const keys = Object.keys(obj[0]);
-        return keys;
-    }
-
-    function getValueListOfObject(obj: {[k: string]: any}[]):Values[][]{
-        if(!obj.length) return [];
-        return obj.map(item => Object.values(item).map(i => i));
+            const keys = Object.keys(obj[0]);
+            return keys;
+        },
+        getValueListOfObject(obj: {[k: string]: any}[]):Values[][]{
+            if(!obj.length) return [];
+            return obj.map(item => Object.values(item).map(i => i));
+        }
     }
 
     return (<>
         <table className="table__root">
-            <RowHeader data={headers || getKeysOfObject(data)} onClick={(key: string)=>{
-                sortByHeader(key);
-            }} {...props}></RowHeader>
-            <RowBodyList data={getValueListOfObject(state.data).slice((state.currentPage - 1) * state.perPageEntries, state.currentPage * state.perPageEntries)} {...props}></RowBodyList>
+            <RowHeader 
+                data={headers || functions.getKeysOfObject(data)} 
+                onClick={(key: string)=>{
+                    functions.sortByHeader(key);
+                }} 
+                sortBy={props.sortBy}
+                {...props}></RowHeader>
+            <RowBodyList 
+                data={functions.getValueListOfObject(state.data)
+                    .slice(state.currentPage * state.perPageEntries, 
+                    (state.currentPage + 1) * state.perPageEntries)}
+                perPageAmount={state.perPageEntries}
+                currentPage={state.currentPage}
+                dataLength={data.length}
+                {...props}></RowBodyList>
         </table>
         <Footer perPageAmount={state.perPageEntries}
             currentPage={state.currentPage}
@@ -124,12 +141,13 @@ function RowHeader({data,...props}: RowProps){
     </thead>
 }
 
-function RowBodyList({data,...props}:RowListProps){
+function RowBodyList({data,...props}: RowListProps){
     return <tbody>
         {
             data.map((row,index) => (
                 <RowData key={index + 1} 
                     data={row}
+                    rowNumber={props.currentPage && props.perPageAmount ? props.currentPage * props.perPageAmount + index : index}
                     {...props}
                 ></RowData>
             ))
@@ -137,7 +155,7 @@ function RowBodyList({data,...props}:RowListProps){
     </tbody>
 }
 
-function RowData({data, ...props}: RowProps){
+function RowData({data, ...props}: RowDataProps){
     return <tr className="table__data--row">
         <td className="table__checkbox">
             <input type={"checkbox"}></input>
@@ -153,30 +171,52 @@ function RowData({data, ...props}: RowProps){
                 <CellDataComponentHandler data={str}></CellDataComponentHandler>
             </td>
         })}
-
-        <td className="table__data">
+        {props.hasAction && <td className="table__data">
             {props.onAccept && <span className="table__data--action" 
-            aria-controls="accept" >
+                onClick={() => props?.onAccept?.(props.rowNumber)}
+                aria-controls="accept" 
+                >
                     <FaCheck></FaCheck>
                 </span>
             }
             {props.onDeny && <span className="table__data--action" 
-                aria-controls="deny">
+                aria-controls="deny" 
+                onClick={() => props?.onDeny?.(props.rowNumber)}>
                     <FaTimes></FaTimes>
                 </span>
             }
-            {props.onRead && <span className="table__data--action" aria-controls="read">
+            {props.onRead && <span className="table__data--action" 
+                aria-controls="read" 
+                onClick={() => props?.onRead?.(props.rowNumber)}>
                     <HiOutlineEye></HiOutlineEye>
                 </span>
             }
-            {props.onUpdate && <span className="table__data--action" aria-controls="edit">
+            {props.onUpdate && <span 
+                className="table__data--action" 
+                aria-controls="edit"
+                onClick={() => props?.onUpdate?.(props.rowNumber)}>
                     <HiPencil></HiPencil>
                 </span>}
-            {props.onDelete && <span className="table__data--action" aria-controls="delete">
+            {props.onDelete && <span 
+                className="table__data--action" 
+                aria-controls="delete"
+                onClick={() => props?.onDelete?.(props.rowNumber)}>
                     <HiTrash></HiTrash>
                 </span>
             }
-        </td>
+            {props.onUnlocked && <span 
+            className="table__data--action" 
+            aria-controls="unlocked"
+            onClick={() => props?.onUnlocked?.(props.rowNumber)}>
+                <TbLockOpen></TbLockOpen>
+            </span>}
+            {props.onBlocked && <span 
+                className="table__data--action" 
+                aria-controls="blocked"
+                onClick={() => props?.onBlocked?.(props.rowNumber)}>
+                    <TbLock></TbLock>
+                </span>}
+        </td>}
     </tr>
 }
 
@@ -189,31 +229,43 @@ function CellDataComponentHandler(props: CellDataComponentHandlerProps){
         typeof data === 'boolean'||
         !data
     ){
-        return <span>
+        return <span className="table__cell--content">
             {typeof data === "boolean" &&  data.toString() || data}
         </span>
     }
 
     if(Array.isArray(data)){
-        return <ul className="table__cell">
-            {data.map((i, idx) => <li key={idx} className="table__cell--li" style={{listStyleType: 'circle'}}>
-                <CellDataComponentHandler data={i}></CellDataComponentHandler>
-            </li>)}
-        </ul>
+        return(
+            <span className="table__cell--content">
+                <ul className="table__cell">
+                    {data.map((i, idx) => <li key={idx} className="table__cell--li" style={{listStyleType: 'circle'}}>
+                        <CellDataComponentHandler data={i}></CellDataComponentHandler>
+                    </li>)}
+                </ul>
+            </span>
+        ) 
     }
 
-    if(data && "title" in data){
-        return <span className="table__cell">
+    if(data && "status" in data && "title" in data){
+        return <span className="table__cell--content">
+            <Badge bg={data.status}>
+                {data.title}
+            </Badge>
+        </span>
+    }
+
+    if(data && ("title" in data || "image" in data || "subtitle" in data)){
+        return <span className="table__cell table__cell--content">
             <span className="table__cell--flex">
-                {data.image !== undefined && <img className="table__cell--image" 
-                src={data.image || "https://logopond.com/logos/8eaaac3a2fe79ea70f852b5c332c7efb.png"} 
-                alt={data.title + 'image'}></img>}
-                <span className="table__cell--title">
-                    {data.title}
-                    <div>
-                        <i className="table__cell--subtitle">{data.subtitle}</i>
-                    </div>
-                </span>
+                {data?.["image"] && <img className="table__cell--image" 
+                src={data?.image || "https://logopond.com/logos/8eaaac3a2fe79ea70f852b5c332c7efb.png"} 
+                alt={data?.title + ' image'}></img>}
+                {!!(data?.title || data?.subtitle) && <span className="table__cell--title">
+                    {data?.title}
+                    {data?.subtitle && <div>
+                        <i className="table__cell--subtitle">{data?.subtitle}</i>
+                    </div>}
+                </span>}
             </span>
         </span>
     }
@@ -240,13 +292,13 @@ function Footer(props: FooterProps){
         perPageAmount: props.perPageAmount || 10
     });
 
-    const from = ((currentPage - 1) * perPageAmount) + 1;
+    const from = (currentPage * perPageAmount) + 1;
     const to = from + perPageAmount - 1;
 
     React.useEffect(() =>{
-        setCurrenPage(1);
-        props.onSelectPage(1);
-    },[props.dataLength]);
+        setCurrenPage(0);
+        props.onSelectPage(0);
+    },[state.dataLength]);
 
     return (
         <>
@@ -258,6 +310,7 @@ function Footer(props: FooterProps){
                             props.onSelectPerPage(parseInt(e.target.value));
                             state.setPerPageAmount(parseInt(e.target.value));
                         }}>
+                            <option value="5">05</option>
                             <option value="10">10</option>
                             <option value="25">25</option>
                             <option value="50">50</option>
@@ -278,6 +331,7 @@ function Footer(props: FooterProps){
                             setCurrenPage(page);
                             props.onSelectPage(page);
                         }}
+                        activePage={currentPage}
                     ></Pagination>
                 </div>
             </div>

@@ -6,7 +6,7 @@ export const User: React.FC<{}> = () => {
     const {data: {categoryList}} = useTypedSelector(s => s.category);
     return (<>
         <div className="py-5"
-            style={{background:"#000", color:'#fff', borderBottom: '1px solid #fff'}}>
+            style={{background:"#000", color:'#fff', borderBottom: '1px solid #fff', zIndex: 100, position: 'relative'}}>
             <Container>
                 <Row>
                     <Col>
@@ -52,7 +52,7 @@ export const User: React.FC<{}> = () => {
                 </Row>
             </Container>
         </div>
-        <div style={{background: "#000", color:"#fff"}} >
+        <div style={{background: "#000", color:"#fff", zIndex: 100, position: 'relative'}} >
             <Container>
                 <Row style={{alignItems:'center'}}>
                     <Col md="8">

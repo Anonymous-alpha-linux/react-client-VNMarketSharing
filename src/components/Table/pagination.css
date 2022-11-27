@@ -10,10 +10,10 @@
     border-radius: 0.4rem;
     color: white;
     cursor: pointer;
+    border: 1px solid var(--clr-logo);
 }
 
-.pagination__item[aria-active*="true"] {
-    border: none;
+.pagination__item[aria-selected="true"] {
     background-color: #fff;
-    color: black;
+    color: var(--clr-logo);
 }

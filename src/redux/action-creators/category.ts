@@ -11,29 +11,36 @@ export const getCategoryList = (config?: AxiosRequestConfig) => {
             type: ActionTypes.GET_CATEGORY_LIST,
         });
 
-        axiosErrorHandler(
-            () => {
-                categoryAPIInstance
-                    .getAllCategories(config)
-                    .then(({ data }) => {
-                        dispatch({
-                            type: ActionTypes.GET_CATEGORY_LIST_SUCCESS,
-                            payload: {
-                                categoryList: data,
-                                amount: data.length,
-                            },
-                        });
-                    });
-            },
-            (error) => {
+        categoryAPIInstance
+            .getAllCategories(config)
+            .then(({ data }) => {
+                dispatch({
+                    type: ActionTypes.GET_CATEGORY_LIST_SUCCESS,
+                    payload: {
+                        categoryList: data,
+                        amount: data.length,
+                    },
+                });
+            }).catch(error =>{
                 dispatch({
                     type: ActionTypes.GET_PRODUCT_LIST_FAILED,
                     payload: error,
                 });
-            }
-        );
+            });
     };
 };
+
+export const updateCategoryListWithoutAPI = (newData: GetCategoryResponseDTO[]) =>{
+    return async (dispatch: Dispatch<Action>) => {
+        dispatch({
+            type: ActionTypes.GET_CATEGORY_LIST_SUCCESS,
+            payload: {
+                categoryList: newData,
+                amount: newData.length,
+            },
+        })
+    }
+}
 
 export const getProductByCategory = (
     categoryId: number,

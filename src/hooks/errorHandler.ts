@@ -1,13 +1,14 @@
 import { AxiosError } from 'axios';
 
 export function axiosErrorHandler(
-    axiosHandler: () => void,
+    axiosHandler: () => any,
     completeHandler?: (errorMsg: string) => void | null,
     customErrorHandler?: (axiosError: Error | AxiosError | any) => void
 ) {
     try {
         axiosHandler();
     } catch (axiosError: Error | AxiosError | any) {
+        console.log(axiosError);
         if (customErrorHandler) {
             customErrorHandler(axiosError);
         } else {

@@ -1,65 +1,62 @@
 import axios, { AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { Dispatch } from 'redux';
-import { productAPIInstance, apiAuthURL, AppLocalStorage } from '../../config';
+import { productAPIInstance, AppLocalStorage } from '../../config';
 import {
-    GetProductResponseDTO,
     PostProductRequestDTO,
     ProductFilter,
 } from '../../models';
 import { Action, ActionTypes } from '..';
-import { axiosErrorHandler } from '../../hooks';
 
 export const getProductList = (
     filter: ProductFilter,
     config?: AxiosRequestConfig
 ) => {
     return async (dispatch: Dispatch<Action>) => {
-        axiosErrorHandler(
-            () => {
+        dispatch({
+            type: ActionTypes.GET_PRODUCT_LIST,
+        });
+        productAPIInstance
+            .getProductList(
+                {
+                    page: filter.page,
+                    take: filter.take,
+                },
+                config
+            )
+            .then(({ data }) => {
+                const { productList, amount } = data;
                 dispatch({
-                    type: ActionTypes.GET_PRODUCT_LIST,
+                    type: ActionTypes.GET_PRODUCT_LIST_SUCCESS,
+                    payload: {
+                        productList: productList,
+                        max: amount,
+                    },
                 });
-                productAPIInstance
-                    .getProductList(
-                        {
-                            page: filter.page,
-                            take: filter.take,
-                        },
-                        config
-                    )
-                    .then(({ data }) => {
-                        const { productList, amount } = data;
-                        dispatch({
-                            type: ActionTypes.GET_PRODUCT_LIST_SUCCESS,
-                            payload: {
-                                productList: productList,
-                                max: amount,
-                            },
-                        });
-                    });
-            },
-            (error) => {
+            }).catch(error =>{
                 dispatch({
                     type: ActionTypes.GET_PRODUCT_LIST_FAILED,
                     payload: error,
                 });
-            }
-        );
+            });
     };
 };
 
-export const postNewProduct = (productRequest: PostProductRequestDTO) => {
+export const postNewProduct = (productRequest: PostProductRequestDTO, config?: {
+    onSuccess?: () => void;
+    onError?: (error: AxiosError) => void;
+}) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.POST_NEW_PRODUCT,
         });
 
         try {
-            const { data }: AxiosResponse<string> = (
+            const { data }: AxiosResponse<string> =
                 await productAPIInstance.createNewProduct(productRequest, {
                     withCredentials: true,
-                })
-            ).data;
+                });
+
+            config?.onSuccess?.();
 
             dispatch({
                 type: ActionTypes.POST_NEW_PRODUCT_SUCCESS,
@@ -71,6 +68,7 @@ export const postNewProduct = (productRequest: PostProductRequestDTO) => {
             }, 3000);
         } catch (error: any | Error | AxiosError) {
             if (axios.isAxiosError(error)) {
+                config?.onError?.(error as AxiosError);
                 const errResponse = error.response as AxiosResponse;
                 if (errResponse.data) {
                     const {

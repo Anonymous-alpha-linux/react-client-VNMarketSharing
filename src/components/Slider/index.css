@@ -32,7 +32,7 @@
     transform: translateX(0);
     cursor: pointer;
     transform: 0.3s;
-    transition: 2.4s;
+    transition: 2.3s;
     transform: translateX(calc(var(--slider-position) * 100%));
 }
 

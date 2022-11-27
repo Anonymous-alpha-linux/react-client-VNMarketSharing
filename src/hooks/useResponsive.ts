@@ -1,14 +1,16 @@
 import React from 'react';
 import { useMediaQuery } from 'react-responsive';
 
-type screenType =
-    | 'small mobile'
-    | 'mobile'
-    | 'medium'
-    | 'large'
-    | 'extraLarge'
-    | 'extremeLarge'
-    | undefined;
+export enum screenType {
+    'small mobile',
+    'mobile',
+    'medium',
+    'large',
+    'extraLarge',
+    'extremeLarge',
+    'superLarge',
+    undefined,
+}
 
 export function useResponsive(): screenType {
     const isSmallScreen = useMediaQuery({
@@ -26,10 +28,15 @@ export function useResponsive(): screenType {
     const isExLargeScreen = useMediaQuery({
         query: '(min-width: 1200px)',
     });
-    if (isSmallScreen) return 'small mobile';
-    if (isExLargeScreen) return 'extraLarge';
-    if (isLargeScreen) return 'large';
-    if (isMediumScreen) return 'medium';
-    if (isMobileScreen) return 'mobile';
-    return undefined;
+    const isSuperExLargeScreen = useMediaQuery({
+        query: '(min-width: 1200px)',
+    });
+    if (isSmallScreen) return screenType['small mobile'];
+    if (isExLargeScreen) return screenType['extraLarge'];
+    if (isLargeScreen) return screenType['large'];
+    if (isMediumScreen) return screenType['medium'];
+    if (isMobileScreen) return screenType['mobile'];
+    if (isSuperExLargeScreen) return screenType['superLarge'];
+
+    return screenType.undefined;
 }

@@ -1,41 +1,3 @@
-/* .App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-} */
 /*
 =============== 
 Variables
@@ -60,6 +22,12 @@ Variables
   /* color primary */
   --clr-logo: #FF9F43;
   --clr-logo-hover: #BF7632;
+  --clr-logo-light: #FFAB5C;
+
+  /* light color primary */
+  --clr-light-primary: rgb(66, 216, 255);
+  --clr-solid-primary: rgb(11, 144, 179);
+
 
   --clr-font-inside-logo1: #FF4949;
   --clr-font-inside-logo2: #FFCD38;
@@ -91,6 +59,8 @@ Variables
   --dark-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   --max-width: 1170px;
   --fixed-width: 620px;
+  --font-heading-1: Poppins, Arial, Helvetica, sans-serif;
+  --font-paragraph: Arimo, Arial, Helvetica, sans-serif;
 }
 
 *,
@@ -157,7 +127,7 @@ h5 {
 
 p {
   margin-bottom: 1.25rem;
-  font-size: 0.8rem;
+  font-size: 1rem;
   color: var(--clr-grey-5);
 }
 
@@ -265,6 +235,37 @@ table, th, tr, td {
   cursor: pointer;
 }
 
+[data-bcolor="logo"] {
+  background: var(--clr-logo);
+  border: 1px solid var(--clr-logo);
+  color: #fff;
+}
+
+[data-bcolor="logo"]:hover {
+  background: var(--clr-white);
+  border-color: var(--clr-logo);
+  color: var(--clr-logo);
+  box-shadow: 0 0 0 0.25rem rgb(var(--clr-logo-hover) / 50%);
+}
+
+[data-bcolor="logo"]:active {
+  background: var(--clr-white);
+  border-color: var(--clr-logo);
+  color: var(--clr-logo);
+  box-shadow: 0 0 0 0.25rem rgb(var(--clr-logo-hover) / 50%);
+}
+
+[data-bcolor="logo"]:focus {
+  background: var(--clr-white);
+  color: var(--clr-logo);
+  border-color: #BF7632;
+  box-shadow: 0 0 0 0.25rem rgb(var(--clr-logo-hover) / 50%);
+}
+
+[data-text-hover]:hover {
+  color: var(--clr-logo-hover);
+}
+
 select, input[type="date"], input[type="date-time"] {
   cursor: pointer;
 }
@@ -273,10 +274,4 @@ option {
   font-size: 0.875rem;
   text-overflow: clip;
   cursor: pointer;
-}
-
-@media (max-width: 575px) {
-  .row {
-    justify-content: center;
-  }
 }

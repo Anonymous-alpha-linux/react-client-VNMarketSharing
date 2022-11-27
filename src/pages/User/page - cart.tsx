@@ -43,7 +43,6 @@ export const CartPage: React.FC<{}> = () => {
                                     <td>
                                         <div>
                                             <div style={{background: `url(${cartItem.image}) center / contain`}}>
-        
                                             </div>
                                         </div>
                                     </td>

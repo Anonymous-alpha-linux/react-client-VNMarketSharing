@@ -54,7 +54,7 @@ export const CheckoutPage: React.FC<{}> = () => {
                             <th className='p-2'>TOTAL</th>
                         </tr>
                         {
-                            itemList.map((cartItem,index) =>{
+                            itemList.map(({detailIndexes,...cartItem},index) =>{
                                 return <tr key={index + 1}>
                                     <td>
                                         <input type={"checkbox"} defaultChecked={cartItem.checked}></input>
@@ -81,7 +81,9 @@ export const CheckoutPage: React.FC<{}> = () => {
                                         </Row>
                                     </td>
                                     <td>
-                                        <i>{cartItem.detailIndex ? cartItem.item?.productDetails?.at(cartItem.detailIndex)?.price : cartItem.price}</i>
+                                        <i>{cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && detailIndexes?.[1] && p.productClassifyKeyId === detailIndexes?.[0] && p.productClassifyValueId === detailIndexes?.[1])?.price 
+                                        || cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && p.productClassifyKeyId === detailIndexes?.[0])?.price 
+                                        || cartItem.price}</i>
                                     </td>
                                     <td>
                                         <Input.NumberInput 
@@ -151,6 +153,7 @@ const CartInvoice: React.FC<{}> = () =>{
                 merchantId: cartItem.item.userPage.id,
                 total: cartItem.total,
                 description: "Paid for Adsamrketingsharing application",
+                productImage: cartItem.image,
                 price: cartItem.price,
                 productId: cartItem.productId,
                 addressId: cartItem.addressId,
@@ -158,58 +161,60 @@ const CartInvoice: React.FC<{}> = () =>{
                 expireTime: moment(new Date()).locale('vn').add(1, "day").format("YYYY/MM/DD HH:mm:ss"),
             })) as OrderCreationDTO[],
             shipping: 'online',
-            cashAmount: totalPrice
+            cashAmount: totalPrice,
+            userId: Number(userId)
         }
     });
-
-
-    function setAddressList(addressList: GetAddressResponseDTO[]){
-        setState(o => {
-            return {
-                ...o,
-                addressOptions: addressList.map(add => ({
-                    name: `${add.streetAddress} - ${add.ward} - ${add.district} - ${add.city}`,
-                    receiverName: `${add.receiverName}`,
-                    value: add.id || 0,
-                    isSelected: add.isDefault
-                }))
-            }
-        })
-    }
-    function setCodeList(codeList: string[]){
-        setState(o =>{
-            return {
-                ...o,
-                bankCodeList: codeList
-            }
-        });
-    }
-    function loadingOn(){
-        setState(o =>({
-            ...o,
-            loading: true
-        }))
-    }
-    function loadingOff(){
-        setState(o =>({
-            ...o,
-            loading: false
-        }))
-    }
-    function checkout(newInvoice: InvoiceCreationDTO) {
-        loadingOn();
-        axiosErrorHandler(() =>{
-            paymentAPIInstance.createInvoice(newInvoice,"/checkout/status").then(response => {
-                if(response.data?.checkoutUrl){
-                    const { checkoutUrl } = response.data;
-                    window.location.replace(checkoutUrl as string);
+    const functions = {
+        setAddressList(addressList: GetAddressResponseDTO[]){
+            setState(o => {
+                return {
+                    ...o,
+                    addressOptions: addressList.map(add => ({
+                        name: `${add.streetAddress} - ${add.ward} - ${add.district} - ${add.city}`,
+                        receiverName: `${add.receiverName}`,
+                        value: add.id || 0,
+                        isSelected: add.isDefault
+                    }))
                 }
-                loadingOff();
+            })
+        },
+        setCodeList(codeList: string[]){
+            setState(o =>{
+                return {
+                    ...o,
+                    bankCodeList: codeList
+                }
             });
-        }, (msg) =>{
-            loadingOff();
-        });
+        },
+        loadingOn(){
+            setState(o =>({
+                ...o,
+                loading: true
+            }))
+        },
+        loadingOff(){
+            setState(o =>({
+                ...o,
+                loading: false
+            }))
+        },
+        checkout(newInvoice: InvoiceCreationDTO) {
+            functions.loadingOn();
+            axiosErrorHandler(() =>{
+                paymentAPIInstance.createInvoice(newInvoice,"/checkout/status").then(response => {
+                    if(response.data?.checkoutUrl){
+                        const { checkoutUrl } = response.data;
+                        window.location.replace(checkoutUrl as string);
+                    }
+                    functions.loadingOff();
+                });
+            }, (msg) =>{
+                functions.loadingOff();
+            });
+        }
     }
+
     React.useEffect(() =>{
         setState(o =>{
             return {
@@ -218,6 +223,7 @@ const CartInvoice: React.FC<{}> = () =>{
                 initialFormValues: {
                     ...o.initialFormValues,
                     orders: itemList.map(cartItem =>({
+                        productImage: cartItem.image,
                         buyerFullName: username,
                         amount: cartItem.quantity,
                         price: cartItem.price,
@@ -238,48 +244,51 @@ const CartInvoice: React.FC<{}> = () =>{
     }, [totalPrice, itemList]);
 
     React.useEffect(() =>{
-        loadingOn();
         if(userId){
-            axiosErrorHandler(() =>{
-                Promise.all([paymentAPIInstance.getBankList(), addressAPIInstance.getAddresses(userId,1)])
-                    .then(response =>{
-                        const {data} = response[0];
-                        const {data: data2 } = response[1]; 
-                        if(Array.isArray(data) && typeof data?.at(0) === 'string'){
-                            setCodeList(data);
-                        }
-                        if(Array.isArray(data2)){
-                            setAddressList(data2)
-                        }
-                        else{
-                            toast.error("Format of response is not correct")
-                        }
-                        loadingOff();
-                    });
-            },
-            (msg) =>{
-                toast.error(msg);
-                loadingOff();
-            });
+            functions.loadingOn();
+            Promise.all([paymentAPIInstance.getBankList(), addressAPIInstance.getAddresses(userId,1)])
+                .then(response =>{
+                    const {data} = response[0];
+                    const {data: data2 } = response[1]; 
+                    if(Array.isArray(data) && typeof data?.at(0) === 'string'){
+                        functions.setCodeList(data);
+                    }
+                    if(Array.isArray(data2)){
+                        functions.setAddressList(data2)
+                    }
+                    else{
+                        toast.error("Format of response is not correct")
+                    }
+                    functions.loadingOff();
+                }).catch(error =>{
+                    toast.error(error.response);
+                    functions.loadingOff();
+                }).finally(() =>{
+                    functions.loadingOff();
+                });
         }
     },[userId]);
 
-    if(state.loading) return <Spinner animation='border'></Spinner>
+    if(state.loading) 
+        return (<Container className="p-5">
+            <Spinner animation='border'></Spinner>
+        </Container>)
 
     return <Formik initialValues={state.initialFormValues}
-        enableReinitialize={true}
-        validationSchema={invoiceCreationSchema}
-        onSubmit={(values, formikHelpers)=>{
-            formikHelpers.setSubmitting(false);
-            if(values.payment){
-                values = {...values, payment: {...values.payment, userId: Number(userId)}}
-            }
-            checkout({...values});
+                enableReinitialize={true}
+                validationSchema={invoiceCreationSchema}
+                onSubmit={(values, formikHelpers)=>{
+                    formikHelpers.setSubmitting(false);
+                    if(values.payment){
+                        values = {...values, payment: {...values.payment, userId: Number(userId)}}
+                    }
+                    functions.checkout({...values});
         }}>
         {
             ({values, errors,touched ,handleChange, setFieldValue,handleSubmit}) =>{
                 return <div className="px-4 py-4" style={{width: '460px', float: 'right', background: '#fff'}}>
                     <Form onSubmit={handleSubmit}>
+                    {/* <pre>{JSON.stringify(values, null, 4)}</pre> */}
                         <Row className="py-2">
                             <Col>Subtotal:</Col>
                             <Col style={{textAlign: 'right'}}>
@@ -361,8 +370,6 @@ const CartInvoice: React.FC<{}> = () =>{
                             Proceed to checkout
                         </Button>
                     </Form>
-                    <pre>{JSON.stringify(values, null, 4)}</pre>
-                    <pre>{JSON.stringify(errors, null, 4)}</pre>
                 </div>
             }
         }

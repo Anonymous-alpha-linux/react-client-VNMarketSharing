@@ -1,16 +1,16 @@
 import React from 'react';
 import {Home} from '../../containers';
 
-export * from './account';
-export * from './postProduct';
-export * from './product';
-export * from './singleProduct';
-export * from './userPage';
-export * from './productTable';
-export * from './productFilter';
-export * from './checkout';
-export * from './cart';
-export * from './order';
+export * from './page - account';
+export * from './page - postProduct';
+export * from './page - singleProduct';
+export * from './page - product';
+export * from './page - productTable';
+export * from './page - productFilter';
+export * from './page - checkout';
+export * from './page - cart';
+export * from './page - order';
+export * from './page - orderTracker';
 
 export const UserMain: React.FC<{}> = () => {
     return (

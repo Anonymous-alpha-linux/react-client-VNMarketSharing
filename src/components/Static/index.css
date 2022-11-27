@@ -1,0 +1,46 @@
+/* 2. Animated Trunk */
+.animatedTruck__container {
+    width: 100%;
+}
+
+/* #tree {
+    animation: tree 8s ease-in infinite;
+} */
+
+#speed {
+    animation: speed 0.3s ease-in-out infinite alternate;
+}
+
+#truck, #BOX {
+    animation: truck .2s ease-in-out infinite alternate;
+}
+
+@keyframes tree {
+    from {
+        transform: translateX(850px);
+    }
+
+    to {
+        transform: translateX(-900px);
+    }
+}
+
+@keyframes speed {
+    from {
+        transform: translateX(15px);
+    }
+
+    to {
+        transform: translateX(-20px);
+    }
+}
+
+@keyframes truck {
+    from {
+        transform: translateY(0px);
+    }
+
+    to {
+        transform: translateY(4px);
+    }
+}

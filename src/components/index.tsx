@@ -9,3 +9,4 @@ export * as Input from './Input';
 export * from "./Static";
 export * from './Slider';
 export * as Rating from './Rating';
+export * from './Menubar';

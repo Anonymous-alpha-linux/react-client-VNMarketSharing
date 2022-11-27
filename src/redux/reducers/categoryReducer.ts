@@ -69,10 +69,7 @@ const categoryReducer = (
         case ActionTypes.GET_CATEGORY_LIST_FAILED:
             return {
                 ...state,
-                data: {
-                    ...state.data,
-                    page: state.data.page,
-                },
+                data: state.data,
                 loading: false,
                 error: action.payload,
                 status: ResponseStatus.FAILED,

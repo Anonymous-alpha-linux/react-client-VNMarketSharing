@@ -4,6 +4,7 @@ import "./pagination.css"
 type PaginationProps = {
   total: number,
   perPageAmount?: number,
+  activePage?: number,
   selectCurrentPage: (page: number) => void;
 }
 
@@ -20,11 +21,12 @@ export default function Pagination({
         {Array.from(Array(total).keys()).map(number =>{
             return (
               <PaginationItem key={number}
-                pageNumber={number + 1}
+                pageNumber={number}
                 label={(number + 1).toString()}
                 onSelect={(page) =>{
                   selectCurrentPage(page);
                 }}
+                isActive={number === props.activePage}
               ></PaginationItem>
             )
         })}
@@ -40,6 +42,7 @@ type PaginationItemProps = {
   isActive?:boolean;
   onSelect: (page: number) => void;
 }
+
 function PaginationItem({label, children,pageNumber, onSelect, ...props}: PaginationItemProps){
   return (
     <li className={`pagination__item`} 

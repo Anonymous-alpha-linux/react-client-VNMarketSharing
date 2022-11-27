@@ -10,7 +10,7 @@ import { toast } from 'react-toastify';
 import { Rating, Slider } from '../../components';
 import { productAPIInstance, ReviewHub } from '../../config';
 import { Chat } from '../../containers';
-import { axiosErrorHandler, useActions, useResponsive, useTypedSelector } from '../../hooks';
+import { axiosErrorHandler, screenType, useActions, useResponsive, useTypedSelector } from '../../hooks';
 import { GetAddressResponseDTO, GetProductClassifyDetailResponseDTO, GetProductResponseDTO, ReviewProductCreationDTO, ReviewProductResponseDTO } from '../../models';
 import "./single-product.css";
 
@@ -28,6 +28,7 @@ const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/c
 interface ISingleProductState {
   loading: boolean;
   data: GetProductResponseDTO | null;
+  displayImage: string;
   currentImageUrlIndex: number;
   addressList: GetAddressResponseDTO[];
   selectedClassifyTypes?: (number | undefined)[];
@@ -36,6 +37,7 @@ interface ISingleProductState {
   selectedAddressId: number;
   selectedImageIndex: number;
 }
+
 export function SingleProduct() {
   const {data: {userId, addressList}} = useTypedSelector(s => s.user);
   const {addToCart} = useActions();
@@ -45,6 +47,7 @@ export function SingleProduct() {
   const [state,setState] = React.useState<ISingleProductState>({
     loading: false,
     data: null,
+    displayImage: defaultAvatar,
     currentImageUrlIndex: 0,
     selectedClassifyTypes: [],
     selectedAddressId: 0,
@@ -53,7 +56,7 @@ export function SingleProduct() {
   });
   const [key, setKey] = React.useState<string>("photo");
   const [key2, setKey2] = React.useState<string>("description");
-  const screenType = useResponsive();
+  const screen = useResponsive();
 
   function setStateData(data:GetProductResponseDTO) {
     setState(o => {
@@ -133,8 +136,15 @@ export function SingleProduct() {
     }
   }, [addressList]);
 
+  React.useEffect(() => {
+    setState(o =>({
+      ...o,
+      displayImage: o.data?.urls?.at?.(o.currentImageUrlIndex) || defaultAvatar
+    }));
+  }, [state.data?.urls, state.currentImageUrlIndex])
+
   return (
-    <section className="p-5">
+    <section className="py-5">
       <Container>
         <Row>
           <Col sm="auto" className="pb-3" style={{
@@ -143,7 +153,7 @@ export function SingleProduct() {
             maxWidth:"32rem"
           }}>
               <div style={{
-                background: `url(${state.data?.urls && state.data.urls.at(state.currentImageUrlIndex) || defaultAvatar}) center / 100% no-repeat`,
+                background: `url(${state.displayImage}) center / 100% no-repeat`,
                 width:"320px",
                 height: "420px",
                 margin: "0 auto"
@@ -154,11 +164,11 @@ export function SingleProduct() {
                 className="mb-3">
               <Tab eventKey="photo" title="Photo">
                 <Slider dataNumber={state.data?.urls?.length || 0} 
-                    itemAmountPerTime={screenType === "medium" ? 2 : 3}
+                    itemAmountPerTime={screen === screenType["medium"] ? 2 : 3}
                     loadNextItemAmount={1}
                     itemArray={state.data?.urls || []}
                     className="row row-cols-xs-2 row-cols-sm-2 row-cols-md-2 row-cols-lg-3 row-cols-xl-3"
-                    cardNode={(image) => <div data-text-align="center">
+                    cardNode={(image,index) => <div data-text-align="center" onClick={() =>{setState(o =>({...o, currentImageUrlIndex: index}))}}>
                         <img src={image} width={"120px"} height={"120px"} style={{margin: '0 auto', border: '1px solid black'}}></img>
                     </div>}
                   ></Slider>
@@ -213,7 +223,8 @@ export function SingleProduct() {
                               const selectedClassifyTypes = o?.selectedClassifyTypes?.map((id,index) => index !== classifyIndex ? id : type.id);
                               return {
                                 ...o,
-                                selectedClassifyTypes: selectedClassifyTypes
+                                selectedClassifyTypes: selectedClassifyTypes,
+                                displayImage: state.data?.productDetails?.find?.(p => !!selectedClassifyTypes?.[0] && p.productClassifyKeyId === selectedClassifyTypes?.[0])?.presentImage || o.displayImage,
                               }
                             }); 
                           }}
@@ -287,8 +298,8 @@ export function SingleProduct() {
                 <Col xs="12" sm="auto">
                   <Button className="single-product__button--cart"
                     variant="primary"
-                    onClick={() => state.data 
-                    && addToCart(state.data, state.selectedAddressId, state.selectedDetailIndex)}>
+                    onClick={() => {
+                      state.data && addToCart(state.data, state.selectedAddressId, state.selectedClassifyTypes)}}>
                       {state.data?.inventory && state.data.inventory > 0 ? <>
                       <div data-text-align="middle" style={{height:"100%"}}>
                         <BsCartPlusFill></BsCartPlusFill> 

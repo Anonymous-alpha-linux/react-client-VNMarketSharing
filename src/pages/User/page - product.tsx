@@ -1,6 +1,6 @@
 import { Carousel, Button, Row, Col } from 'react-bootstrap';
 import { Slider } from '../../components';
-import { useResponsive, useTypedSelector } from '../../hooks';
+import { screenType, useResponsive, useTypedSelector } from '../../hooks';
 import { Product } from '../../containers';
 import { useMediaQuery } from 'react-responsive';
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
@@ -13,7 +13,7 @@ export function ProductPage() {
         'https://img.freepik.com/premium-vector/super-sale-extra-discount-banner-template-design-background_416835-461.jpg?w=2000',
         'https://img.freepik.com/premium-vector/extra-discount-3d-sale-banner-template-design-background_416835-543.jpg?w=2000',
     ]
-    const screenType = useResponsive();
+    const screen = useResponsive();
     
     return <section style={{
         width: '100%',
@@ -64,9 +64,9 @@ export function ProductPage() {
             <article className='mb-3'>
                 <Slider dataNumber={productList.length} 
                     itemAmountPerTime={
-                        screenType === "extraLarge" ? 4 :
-                        screenType === "large" ? 3 :
-                        screenType === "medium" ? 2 :
+                        screen >= screenType["extraLarge"] ? 4 :
+                        screen === screenType["large"] ? 3 :
+                        screen === screenType["medium"] ? 2 :
                         1
                     }
                     loadNextItemAmount={1}
@@ -196,11 +196,6 @@ export function ProductPage() {
                     md: '3',
                     lg: '4'
                 }}
-                // colProps={{
-                //     xs: 'auto',
-                //     sm: "6",
-                //     md: "4",
-                // }}
                 ></Product.ProductList>
             </article>
         </section>

@@ -1,7 +1,8 @@
 import React from 'react'
+import { Col, Row } from 'react-bootstrap';
 import { HiOutlineChevronLeft, HiOutlineChevronRight } from 'react-icons/hi';
 import './index.css';
-
+import { screenType, useResponsive } from '../../hooks';
 
 enum SliderCartPosition {
     FIRST = "first",
@@ -10,7 +11,6 @@ enum SliderCartPosition {
     OUT_RIGHT = "out right",
     LAST = "last"
 }
-
 
 export function Slider<ItemType>(props: SliderProps<ItemType>) {
     const [state, prev, next] = useSliderPaging(props);
@@ -61,10 +61,10 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
 
     function actionCatcher() {
         ref.current?.forEach(element =>{
-            element?.addEventListener("mousemove", (e) =>{
+            element?.addEventListener("mousemove", () =>{
                 setHasClicked(false);
             });
-            element?.addEventListener("mouseleave", (e) => {
+            element?.addEventListener("mouseleave", () => {
                 setHasClicked(true);
             })
         })
@@ -83,7 +83,13 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
         <div className="product-slider__root">
             <div className="product-slider__container">
                 <div className="product-slider__blur"></div>
-                <div className={'product-slider__showcase' + ` ${props.className}`}>
+                <Row xs={(props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12}
+                    sm={(props?.responsive?.sm?.itemAmountPerTime || props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12} 
+                    md={(props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime || props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12}
+                    lg={(props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime || props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12}
+                    xl={(props?.responsive?.xl?.itemAmountPerTime || props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime || props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12}
+                    xxl={(props?.responsive?.xxl?.itemAmountPerTime || props?.responsive?.xl?.itemAmountPerTime || props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime || props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime) % 12}
+                    className={'product-slider__showcase' + ` ${props.className}`}>
                     {
                         props.itemArray.map((item,index) =>{
                             let position : SliderCartPosition = index < state.firstSlideItemIndex - 1
@@ -98,45 +104,64 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
                                 ? SliderCartPosition.LAST
                                 : SliderCartPosition.IN;
 
-                                return <span key={index + 1} 
+                                return <Col as={"span"} key={index + 1}
+                                    // xs={12 / (props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                    // sm={12 / (props?.responsive?.sm?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                    // md={12 / (props?.responsive?.md?.itemAmountPerTime || props.itemAmountPerTime)}
+                                    // lg={12 / (props?.responsive?.lg?.itemAmountPerTime || props.itemAmountPerTime)}
+                                    // xl={12 / (props?.responsive?.xl?.itemAmountPerTime || props.itemAmountPerTime)}
+                                    // xxl={12 / (props?.responsive?.xxl?.itemAmountPerTime || props.itemAmountPerTime)}
                                     className="product-slider__card" 
-                                    ref={(e)=>{ref.current[index] = e}}
+                                    ref={(e: HTMLSpanElement)=>{ref.current[index] = e}}
                                     data-position={position}
                                     style={{
                                         transform: `translateX(${state.step * 100 * -1 * props.loadNextItemAmount}%)`,
                                         zIndex: 1
                                     }}>
-                                    {(props.cardNode as (item: ItemType) => React.ReactNode)(item)}
-                                </span>
+                                    {(props.cardNode as (item: ItemType, index: number) => React.ReactNode)(item, index)}
+                                </Col>
                             }
+
                             else if(position === SliderCartPosition.OUT_LEFT){
-                                return <span key={index + 1} 
+                                return <Col as={"span"} key={index + 1} 
+                                // xs={12 / (props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                // sm={12 / (props?.responsive?.sm?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                // md={12 / (props?.responsive?.md?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // lg={12 / (props?.responsive?.lg?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // xl={12 / (props?.responsive?.xl?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // xxl={12 / (props?.responsive?.xxl?.itemAmountPerTime || props.itemAmountPerTime)}
                                 className="product-slider__card" 
-                                ref={(e)=>{ref.current[index] = e}}
+                                ref={(e: HTMLSpanElement)=>{ref.current[index] = e}}
                                 data-position={position}
                                 style={{
                                     transform: `translateX(${(redundant + props.itemArray.length - state.lastSlideItemIndex) * 100}%)`
                                 }}>
                                 {
-                                    (props.cardNode as (item: ItemType) => React.ReactNode)(item)
+                                    (props.cardNode as (item: ItemType,index: number) => React.ReactNode)(item, index)
                                 }
-                                </span>
+                                </Col>
                             }
                             
-                            return <span key={index + 1} 
+                            return <Col as={"span"} key={index + 1} 
+                                // xs={12 / (props?.responsive?.xs?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                // sm={12 / (props?.responsive?.sm?.itemAmountPerTime || props.itemAmountPerTime)} 
+                                // md={12 / (props?.responsive?.md?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // lg={12 / (props?.responsive?.lg?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // xl={12 / (props?.responsive?.xl?.itemAmountPerTime || props.itemAmountPerTime)}
+                                // xxl={12 / (props?.responsive?.xxl?.itemAmountPerTime || props.itemAmountPerTime)}
                                 className="product-slider__card" 
-                                ref={(e)=>{ref.current[index] = e}}
+                                ref={(e: HTMLSpanElement)=>{ref.current[index] = e}}
                                 data-position={position}
                                 style={{
                                     transform: `translateX(${state.step * 100 * -1 * props.loadNextItemAmount}%)`
                                 }}>
                                 {
-                                    (props.cardNode as (item: ItemType) => React.ReactNode)(item)
+                                    (props.cardNode as (item: ItemType, index: number) => React.ReactNode)(item,index)
                                 }
-                            </span>
+                            </Col>
                         })
                     }
-                </div>
+                </Row>
             </div>
             { 
             !!props.dataNumber && <>
@@ -160,6 +185,7 @@ export function Slider<ItemType>(props: SliderProps<ItemType>) {
 
 function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
 : [state: SliderState, prev: () => void, next: () => void] {
+    const screen = useResponsive();                    
     const [state, setState] = React.useState<SliderState>({
         dataNumber: props.dataNumber,
         showPerPage: props.itemAmountPerTime,
@@ -170,6 +196,60 @@ function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
         maxStep: Math.ceil((props.dataNumber - props.itemAmountPerTime) / props.loadNextItemAmount),
         step: 0
     });
+    const functions = {
+        changeItemAmount(newValue: number){
+            console.log(newValue);
+            setState(o => ({
+                ...o,
+                showPerPage: newValue,
+                firstSlideItemIndex: 0,
+                lastSlideItemIndex: newValue - 1,
+                runnerTime: Math.ceil((props.dataNumber - newValue) / props.loadNextItemAmount),
+                maxStep: Math.ceil((props.dataNumber - newValue) / props.loadNextItemAmount),
+                step: 0,
+                minStep: 0
+            }));
+        },
+        getItemAmountPerTimeByResponsive(){
+            if(props?.responsive){
+                let itemAmountPerTime;
+                switch (screen) {
+                    case screenType['small mobile']:
+                        itemAmountPerTime = props?.responsive?.xs?.itemAmountPerTime;
+                        break;
+
+                    case screenType['mobile']:
+                        itemAmountPerTime = props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+
+                    case screenType['medium']:
+                        itemAmountPerTime = props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+
+                    case screenType['large']:
+                        itemAmountPerTime = props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+                    
+                    case screenType['extraLarge']:
+                        itemAmountPerTime = props?.responsive?.xl?.itemAmountPerTime || props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+
+                    case screenType['extremeLarge']:
+                        itemAmountPerTime = props?.responsive?.xxl?.itemAmountPerTime || props?.responsive?.xl?.itemAmountPerTime || props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+
+                    case screenType['superLarge']:
+                        itemAmountPerTime = props?.responsive?.xxl?.itemAmountPerTime || props?.responsive?.xl?.itemAmountPerTime || props?.responsive?.lg?.itemAmountPerTime || props?.responsive?.md?.itemAmountPerTime || props?.responsive?.sm?.itemAmountPerTime;
+                        break;
+
+                    default:
+                        itemAmountPerTime = props.itemAmountPerTime;
+                        break;
+                }
+                this.changeItemAmount(itemAmountPerTime || props.itemAmountPerTime);
+            }
+        }
+    }
 
     React.useEffect(() =>{
         init();
@@ -181,6 +261,10 @@ function useSliderPaging<ItemType>(props: SliderProps<ItemType>)
             data: props.itemArray
         }))
     }, [props.itemArray]);
+
+    React.useEffect(() =>{
+        functions.getItemAmountPerTimeByResponsive();
+    },[screen])
 
     function init(){
         setState(o=>({

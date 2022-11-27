@@ -120,3 +120,10 @@ export function timeDifferenceString(
         return _diff > 1 ? `${_diff} ${unit} ${val}` : pre;
     }, '');
 }
+
+export function getKeysofObject(obj: Array<object>): string[] {
+    if (!obj.length) return [];
+
+    const keys = Object.keys(obj.at(0) as object);
+    return keys;
+}

@@ -5,3 +5,4 @@ export * from './ProductDTO';
 export * from './UserPageDTO';
 export * from './PaymentDTO';
 export * from './AddressDTO';
+export * from './SellerDTO';

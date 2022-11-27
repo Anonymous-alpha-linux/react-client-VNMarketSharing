@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { PhoneNumberUtil, PhoneNumber } from 'google-libphonenumber';
+import { PhoneNumberUtil, PhoneNumber, PhoneNumberFormat, PhoneNumberType } from 'google-libphonenumber';
 export const PERMIT_FILE_FORMATS = ['image/jpeg', 'image/png', 'image/jpg'];
 
 export const changeAvatarSchema = yup.object().shape({
@@ -7,7 +7,10 @@ export const changeAvatarSchema = yup.object().shape({
         .mixed()
         .nullable()
         .required()
-        .test('FILE SIZE', 'the file is too large', (value) => {
+        .test(
+        'FILE SIZE', 
+        'the file is too large', 
+        (value) => {
             if (!value) {
                 return true;
             }
@@ -36,7 +39,7 @@ export const createAddress = yup.object().shape({
     receiverName: yup.string().required('*Required'),
     streetAddress: yup.string().required('*Required'),
     district: yup.string().nullable(),
-    ward: yup.string().nullable(),
+    ward: yup.string().required().nullable(),
     city: yup.string().required('*Required'),
     zipcode: yup.string().nullable(),
     isDefault: yup.bool().default(false),
@@ -49,9 +52,15 @@ export const createAddress = yup.object().shape({
             exclusive: true,
             message: 'this field must be in phone number format',
             test: (value) => {
-                return PhoneNumberUtil.getInstance().isValidNumber(
-                    PhoneNumberUtil.getInstance().parse(value)
-                );
+                let phoneUtil = PhoneNumberUtil.getInstance();
+                try{
+                    let userPhoneNumber = phoneUtil.parse(value);
+
+                    return phoneUtil.isValidNumber(userPhoneNumber);
+                }
+                catch(e: any){
+                    return false;
+                }
             },
         })
         .required('*Required'),

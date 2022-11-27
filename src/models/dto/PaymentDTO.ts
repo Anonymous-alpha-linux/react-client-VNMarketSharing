@@ -4,6 +4,7 @@ export type InvoiceCreationDTO = {
     orders: OrderCreationDTO[];
     paymentId?: number;
     payment?: PaymentCreationDTO;
+    userId?: number;
 };
 
 export type PaymentCreationDTO = {
@@ -23,6 +24,7 @@ export type OrderCreationDTO = {
     createdAt: string;
     expireTime: string;
     productId: number;
+    productImage: string;
     buyerId: number;
     merchantId: number;
     addressId?: number;
@@ -63,9 +65,10 @@ export type GetOrderResponseDTO = {
     amount: number;
     price: number;
     total: number;
-    orderStatus: number;
+    orderStatus: string;
     productId: number;
     productName: string;
+    productImage: string;
     merchantId: number;
     merchant: string;
     address: string;
@@ -76,3 +79,14 @@ export type GetOrderResponseDTO = {
 };
 
 export type GetPaymentResponseDTO = {};
+
+export enum OrderStatus {
+    Pending,
+    Waiting,
+    Delivering,
+    Delivered,
+    Completed,
+    Cancelled,
+    CustomerNotReceived,
+    SellerDenied,
+}

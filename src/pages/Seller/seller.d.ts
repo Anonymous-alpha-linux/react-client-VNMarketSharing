@@ -1,7 +1,7 @@
 export type SellerProfileHeaderState = {
     showCrop?: boolean;
-    avatar?: string;
-    banner?: string;
+    avatar?: string | File;
+    banner?: string | File;
 };
 
 export interface SellerProfileProps {}

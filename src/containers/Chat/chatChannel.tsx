@@ -1,6 +1,6 @@
 import React from 'react';
 import {Formik, FormikHelpers} from 'formik';
-import {Button, Col, Form, Modal, ModalProps, Row, Stack} from 'react-bootstrap';
+import {Button, Col, Container, Form, Modal, ModalProps, Row, Stack} from 'react-bootstrap';
 import moment from 'moment';
 import {ChatHub} from '../../config';
 import {useTypedSelector} from '../../hooks';
@@ -61,7 +61,7 @@ export const Channel: React.FC<{}> = () => {
     },[state.chatHubConnection])
 
     return (
-        <div>
+        <Container className="p-5" style={{minHeight: '80vh'}}>
             <h3>Public chat</h3>
             <Formik initialValues={{message: ''}}
                 enableReinitialize={true}
@@ -74,26 +74,29 @@ export const Channel: React.FC<{}> = () => {
             }}>
                 {({errors,touched, values, handleChange, handleSubmit, handleBlur}) =>{
                     return <Form noValidate onSubmit={handleSubmit}>
-                        <Form.Group controlId="validation.Message">
-                            <Form.Label>Message</Form.Label>
-                            <Form.Control type="text"
-                            name="message"
-                            placeholder='Type your message'
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.message}
-                            isInvalid={touched.message && !!errors.message}
-                            ></Form.Control>
+                        <Form.Group controlId="validation.Message" as={Row}>
+                            <Form.Label as={Col} xs={"auto"}>Message</Form.Label>
+                            <Col>
+                                <Form.Control type="text"
+                                name="message"
+                                placeholder='Type your message'
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.message}
+                                isInvalid={touched.message && !!errors.message}
+                                ></Form.Control>
+                            </Col>
                             <Form.Control.Feedback type="invalid">{errors.message}</Form.Control.Feedback>
                         </Form.Group>
                     </Form>
                 }}
             </Formik>
+            <div className='w-100 my-4' style={{background: "#fff", minHeight: "80vh"}}></div>
             {conversation.map((c,indx) => <div key={indx}>
                 <h1>{c.user}</h1>
                 <span>{c.message}</span>
             </div>)}
-        </div>
+        </Container>
     )
 }
 

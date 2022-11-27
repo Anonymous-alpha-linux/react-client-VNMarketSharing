@@ -1,7 +1,6 @@
 import React, { HTMLProps } from 'react';
 import { Form } from 'react-bootstrap';
 import { TableToolContextType, 
-  TableToolsComponentValues, 
   TableToolsProps, 
   TableToolsState } from './table-search-types';
 import { HiOutlineFilter, HiOutlineSearch } from 'react-icons/hi';
@@ -214,8 +213,8 @@ export function TableFilter(props: TableFilterProps){
         <span className='table-filter__root'>
           <i className='table-filter__icon' onClick={props.toggleFilterPanel}>
             {!props.show 
-            && <HiOutlineFilter></HiOutlineFilter>
-            || <FaTimes></FaTimes>}
+            ? (<HiOutlineFilter></HiOutlineFilter>)
+            : (<FaTimes></FaTimes>)}
           </i>
           { props.children }
         </span>
@@ -272,13 +271,13 @@ function TableFilterPanel<Values extends {[key: string]: any}>(props:TableFilter
   };
 
   function filterHandler(item: Values, tableFilerObj: TableFilterObject | OtherTableFilterObject) : boolean {
-    if(typeof tableFilerObj.sortValue === "string"
-        && tableFilerObj.objectType === "string" 
+    if((typeof tableFilerObj.sortValue === "string"
+        && tableFilerObj.objectType === "string") 
         || tableFilerObj.objectType === "boolean")
     {
       const str = getNestedObject(item, tableFilerObj.sortField) as string;
       const pattern = tableFilerObj.sortValue as string;
-      return str.toString().toLowerCase().includes(pattern.toLowerCase());
+      return !!str && str.toString().toLowerCase().includes(pattern.toLowerCase());
     }
     if(tableFilerObj.objectType === "number" && Array.isArray(tableFilerObj.sortValue)){
       const min = tableFilerObj.sortValue[0];

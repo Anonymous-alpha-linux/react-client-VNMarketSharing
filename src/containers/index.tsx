@@ -7,3 +7,5 @@ export * as Admin from './Admin';
 export * as Product from './Product';
 export * as Footer from './Footer';
 export * as Payment from './Payment';
+export * as Order from './Order';
+export * as Category from './Category';

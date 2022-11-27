@@ -5,7 +5,7 @@ import { CustomLink } from '../../components';
 import { Product } from '../../containers';
 import { productAPIInstance } from '../../config';
 import { axiosErrorHandler } from '../../hooks';
-import { GetProductClassifyDetailResponseDTO, GetProductClassifyTypesResponseDTO, GetProductResponseDTO } from '../../models';
+import { GetProductResponseDTO } from '../../models';
 import axios from 'axios';
 
 type ProductTablePageState = {
@@ -14,6 +14,7 @@ type ProductTablePageState = {
   take: number;
   page: number;
 }
+
 export function ProductTablePage() {
   const [state, setState] = React.useState<ProductTablePageState>({
     data: [],
@@ -117,15 +118,13 @@ export function ProductTablePage() {
       }
     );  
   }
-
-  return (<section className="" style={{
-    padding: '0 1.5rem'
-  }}>
+  
+  return (<section>
     <div style={{
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '2rem 0'
+      padding: '2rem 1.2rem'
     }}>
       <span>
         <h2>Product List</h2>

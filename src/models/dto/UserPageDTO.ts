@@ -21,9 +21,9 @@ export type GetUserPageResponseWithoutDescriptionDTO = {
 export type PostUserPageRequestDTO = {
     name: string;
     description: string;
-    bannerUrl: string;
-    pageAvatar: string;
     biography: string;
     phone: string;
     email: string;
+    bannerUrl?: string;
+    pageAvatar?: string;
 };

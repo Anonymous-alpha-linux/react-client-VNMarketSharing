@@ -1,6 +1,6 @@
 import React, { ChangeEvent, FormEvent } from 'react';
 import axios from 'axios';
-import imageCompression from 'browser-image-compression';
+
 import { FieldArray, Formik, FormikErrors, FormikHelpers,FormikProps, useFormikContext } from 'formik';
 import { Button, ButtonGroup, Col, Form, InputGroup, Row } from 'react-bootstrap';
 import { HiChevronRight } from 'react-icons/hi';
@@ -11,94 +11,75 @@ import { FaTimes } from 'react-icons/fa';
 import { BiMinus, BiPlusCircle } from 'react-icons/bi';
 import { BsPlusCircleFill } from 'react-icons/bs';
 
-import { productAPIInstance,categoryAPIInstance, AppLocalStorage } from '../../config';
+import { productAPIInstance,categoryAPIInstance } from '../../config';
 import { PostProductRequestDTO } from '../../models';
-import { axiosErrorHandler, useActions, useDebouncedInput } from '../../hooks';
+import { axiosErrorHandler, useActions, useDebouncedInput, useTypedSelector } from '../../hooks';
 import { postProductSchema, changeAvatarSchema } from '../../schemas';
 import { User } from '../../containers';
+import { getPhoto, transformImagetoString } from '../../utils';
+
 import "./index.css";
 import './postProduct.css';
-import { getBase64Image, getPhoto, transformImagetoString } from '../../utils';
+import { toast } from 'react-toastify';
 
-type ProductClassify = {
-    name: string;
-    types: string[];
-}
-
-type ProductClassifyDetail = {
-    image: File;
-    tierIndex: number[];
-    price: number;
-    inventory: number;
-}
-interface FormValues{
-    name: string;
-    price: number;
-    inventory: number;
-    inPages: boolean;
-    description: string;
-    userPageId: number;
-    files?: File[];
-    categoryIds: SelectCategoryValues[];
-    classifies: ProductClassify[],
-    classifyDetails: ProductClassifyDetail[],
-    reserve: boolean,
-    itemStatus: 0 | 1,
-}
-
-// Form Display
-interface PostProductState {
-    loading: boolean;
-    error: string;
-    currentStep: number;
-}
-
-export const PostProduct = () => {
+// Main form
+export const PostProductForm = () => {
     const [state, setState] = React.useState<PostProductState>({
         loading: false,
         error: '',
         currentStep: 1, 
     });
-
-    function prevStep(){
-        setState(o =>({
-            ...o,
-            currentStep: o.currentStep > 1 ? o.currentStep - 1 : o.currentStep
-        }));
-    }
-    function nextStep(){
-        setState(o =>({
-            ...o,
-            currentStep: o.currentStep < 2 ? o.currentStep + 1 : o.currentStep
-        }));
-    }
-    async function sendProductForm(request: PostProductRequestDTO){
-        const { files, productDetails, ...rest } = request;
-        
-        const encoding64BaseImages = await Promise.all(Array.from(files).map((file) => transformImagetoString(file)));
-
-        const encoding64BaseDetailImages = await Promise.all(Array.from(productDetails).map((detail) => {
-                return new Promise((resolve) => {
-                    Promise.resolve(
-                        transformImagetoString(detail.image)
-                    ).then((image) => {
-                        resolve({
-                            ...detail,
-                            image,
-                        });
-                    });
-                });
-            })
-        );
-
-
-        AppLocalStorage.setPostProductForm({
-            ...rest,
-            files: encoding64BaseImages,
-            productDetails: encoding64BaseDetailImages,
-        });
-
-        window.dispatchEvent(new Event('storage'));
+    const {data: {id}} = useTypedSelector(p => p.seller);
+    const {postNewProduct} = useActions();
+    const functions = {
+        prevStep(){
+            setState(o =>({
+                ...o,
+                currentStep: o.currentStep > 1 ? o.currentStep - 1 : o.currentStep
+            }));
+        },
+        nextStep(){
+            setState(o =>({
+                ...o,
+                currentStep: o.currentStep < 2 ? o.currentStep + 1 : o.currentStep
+            }));
+        },
+        async sendProductForm(request: PostProductRequestDTO){
+            // const { files, productDetails, ...rest } = request;
+            
+            // const encoding64BaseImages = await Promise.all(Array.from(files).map((file) => transformImagetoString(file)));
+    
+            // const encoding64BaseDetailImages = await Promise.all(Array.from(productDetails).map((detail) => {
+            //         return new Promise((resolve) => {
+            //             Promise.resolve(
+            //                 transformImagetoString(detail.image)
+            //             ).then((image) => {
+            //                 resolve({
+            //                     ...detail,
+            //                     image,
+            //                 });
+            //             });
+            //         });
+            //     })
+            // );
+    
+    
+            // AppLocalStorage.setPostProductForm({
+            //     ...rest,
+            //     files: encoding64BaseImages,
+            //     productDetails: encoding64BaseDetailImages,
+            // });
+    
+            // window.dispatchEvent(new Event('storage'));
+            postNewProduct(request, {
+                onSuccess: () =>{
+                    toast.success("Created product. Waiting for inspect");
+                },
+                onError: (error) =>{
+                    toast.error(error?.response?.data as string || "Failed");
+                }
+            });
+        }
     }
 
     React.useEffect(() =>{
@@ -113,10 +94,8 @@ export const PostProduct = () => {
     },[]);
 
     return (
-        <section style={{
-            padding: '2.4rem'
-        }}>
-            <div style={{padding: '0 0 2.4rem'}}>
+        <section className="p-5">
+            <div className="pb-5">
                 <h2>Upload your new product</h2>
                 <i>Please select the properties for your product</i>
             </div>
@@ -127,7 +106,7 @@ export const PostProduct = () => {
                     description: '',
                     inPages: true,
                     inventory: 1,
-                    userPageId: 5,
+                    userPageId: id || 0,
                     price: 12000,
                     categoryIds: [],
                     reserve: true,
@@ -138,7 +117,7 @@ export const PostProduct = () => {
                 validationSchema={postProductSchema}
                 onSubmit={(values:FormValues, formHelpers: FormikHelpers<FormValues>) =>{
                     formHelpers.setSubmitting(false);
-                    const { categoryIds ,classifies ,classifyDetails ,files, ...props} = values;
+                    const { categoryIds, classifies, classifyDetails, files, ...props} = values;
 
                     const productFormRequest = {
                         ...props,
@@ -157,32 +136,33 @@ export const PostProduct = () => {
                                 image: d.image
                             }
                         }),
-                        files: new Set<File>(files),    
+                        files: new Set<File>(files)    
                     } as PostProductRequestDTO;
 
-                    sendProductForm(productFormRequest);
+                    functions.sendProductForm(productFormRequest);
                 }}
                 >
-                    {(props) =>{
+                    {(formProps) =>{
                         const postProductFormSteps = [
                             {
                                 key: 1,
-                                element: <PostProductEntry formProps={props} onClick={nextStep}></PostProductEntry>
+                                element: <PostProductEntry 
+                                            formProps={formProps} 
+                                            onClick={functions.nextStep}></PostProductEntry>
                             },
                             {
                                 key: 2,
-                                element: <PostProductDetail formProps={props}
-                                    onSaveAndHide={props.handleSubmit}
-                                    onUpdate={props.handleSubmit}
-                                    onCancel={prevStep}></PostProductDetail>
+                                element: <PostProductDetail 
+                                    formProps={formProps}
+                                    onSaveAndHide={formProps.handleSubmit}
+                                    onUpdate={formProps.handleSubmit}
+                                    onCancel={functions.prevStep}></PostProductDetail>
                             },
                         ]
                         
                         return (
                             <>
                                 {postProductFormSteps.find(s => s.key === state.currentStep)?.element}
-                                <pre>{JSON.stringify(props.values, null, 4)}</pre>
-                                <pre>{JSON.stringify(props.errors, null, 4)}</pre>
                             </>
                         )
                     }}
@@ -191,19 +171,339 @@ export const PostProduct = () => {
     )
 }
 
-// Second form
-interface PostProductDetailProps{
-    formProps: FormikProps<FormValues>;
-    children?: React.ReactNode;
-    onCancel?: () => void;
-    onSaveAndHide?: () => void;
-    onUpdate?: () => void;
+
+// Step 1 form
+
+const PostProductEntry = ({formProps, onClick}: PostProductEntryProps) =>{
+
+    React.useEffect(() => {
+        const beforeUnloadListener = (event: BeforeUnloadEvent) => {
+            event.preventDefault();
+            return event.returnValue = "Are you sure you want to exit?\nYour form submission will be eliminated";
+        };
+
+        if(formProps.values.name
+            || formProps.values.description
+            || formProps.values.categoryIds.length
+            || formProps.values.files
+        ) {
+            window.addEventListener("beforeunload", beforeUnloadListener, {
+                capture: true,
+            });
+        }
+
+        return () =>{
+            window.removeEventListener("beforeunload", beforeUnloadListener, {
+                capture: true
+            });
+        }
+    },[formProps.values])
+
+    return (
+        <>
+            <Form.Group controlId='postProductName'>
+                <Form.Label>Product Name: </Form.Label>
+                <Form.Control name="name"
+                    onChange={formProps.handleChange}
+                    onBlur={formProps.handleBlur}
+                    isInvalid={formProps.touched.name && !!formProps.errors.name}
+                    value={formProps.values.name}></Form.Control>
+                <Form.Control.Feedback type="invalid">{formProps.errors.name}</Form.Control.Feedback>
+            </Form.Group>            
+
+            <SelectCategoryInput 
+                formProps={formProps}
+                isValid={(isValid) => {
+                    formProps.setErrors({
+                        ...formProps.errors,
+                        categoryIds: !isValid? ["Select your category"]: undefined 
+                    });
+                }}
+            ></SelectCategoryInput>
+
+            <Button 
+                onClick={onClick} 
+                variant='success'
+                disabled={
+                    !!formProps.errors.categoryIds 
+                    || !!formProps.errors.name}
+            >Next</Button>
+        </>
+    )
 }
 
-type PostProductDetailState = {
-    priceTemp: number;
-    inventoryTemp: number;
+const SelectCategoryInput = ({formProps,...props}: SelectCategoryInputProps) => {
+    const [state, setState] = React.useState<{
+        categories: Array<SelectCategoryValues>;
+        selectedCategories: Map<number, SelectCategoryValues>;
+        displayCategories: Array<SelectCategoryValues>,
+        isValid: boolean
+    }>({
+        categories: [],
+        selectedCategories: formProps.values.categoryIds.reduce((map,c) => {
+            map.set(parseInt(c.level), c)
+            return map;
+        } , new Map<number, SelectCategoryValues>()),
+        displayCategories: [],
+        isValid: false
+    }); 
+
+    function fetchCategories() : Promise<Array<SelectCategoryValues>>
+    {
+        return new Promise(resolve => {
+            categoryAPIInstance.getAllCategories()
+            .then(({data}) => {
+                let convertedData = data as SelectCategoryValues[];
+
+                resolve(convertedData);
+            })
+        });
+    }
+
+    function searchCategories(pattern: string): void{
+        setState(o => {
+
+            function getParentCategory(currentCategory: SelectCategoryValues, level: number): SelectCategoryValues{
+                if(parseInt(currentCategory.level) === level){
+                    return currentCategory;
+                }
+                const nextCategory = o.categories.find(c => c.id === currentCategory.parentId);
+
+                if(!nextCategory){
+                    return currentCategory;
+                }
+
+                return getParentCategory(nextCategory, level);
+            }
+            
+            const matchCategories = o.categories.filter(c => {
+                const matchRegExp = new RegExp(`(${pattern})+`, "i");
+                const patternResults = matchRegExp.test(c.name);
+        
+                return patternResults;
+            }).map(mc => {
+                return getParentCategory(mc, 0);
+            }).reduce((p,c) => {
+                p.set(c.id, c);
+                return p;
+            }, new Map<number, SelectCategoryValues>());
+
+            return {
+                ...o,
+                displayCategories: Array.from(matchCategories, ([_, value]) => value)
+            }
+        })
+    }
+
+    React.useEffect(() => {
+        fetchCategories().then(data => {
+            setState(o => ({
+                ...o,
+                categories: data,
+                displayCategories: data.filter(c => parseInt(c.level) === 0)
+            }));
+        });
+    },[]);
+
+    React.useEffect(() => {
+        if(state.selectedCategories.size){
+            formProps.setValues(o => ({
+                ...o,
+                categoryIds: Array.from(state.selectedCategories.values())
+            }));
+        }
+        props.isValid && props.isValid(state.isValid);
+    },[state.selectedCategories, state.isValid]);
+
+    return <section style={{
+        margin: '1.2rem 0'
+    }}>
+        <input placeholder="search categories" 
+            onChange={(e: FormEvent<HTMLInputElement>) => {
+                searchCategories(e.currentTarget.value);
+            }}
+            style={{
+            borderRadius: '1.2rem',
+            padding: '0.5rem 1rem',
+            border: '1px solid #f1f1f1'
+        }}></input>
+
+        <span style={{marginLeft: '1.2rem'}}>Select your correct categories</span>
+
+        <div 
+            style={{
+                display:'grid',
+                gridTemplateColumns: "1fr 1fr 1fr",
+                padding: '1.2rem 1.2rem 1rem 0'
+            }}>
+            <SelectCategoryList 
+                originalData={state.categories}
+                categories={state.displayCategories}
+                level={0}
+                selectedCategories={new Map<number, SelectCategoryValues>()}
+                fetchSubCategories={(parentId, level, arrayData) => {
+                    return new Promise<Array<SelectCategoryValues>>((resolve) => {
+                        const data = arrayData.filter(c => c.parentId === parentId && parseInt(c.level) === level);
+                        resolve(data);
+                    });
+                }}
+                getSelectedCategories={(selectedCategories, permitNext) => {
+
+                    setState(o => ({
+                        ...o,
+                        selectedCategories: selectedCategories,
+                        isValid: permitNext
+                    }));
+                }}
+            ></SelectCategoryList>
+        </div>
+
+        <Form.Group controlId="productCategorySelect">
+            <Form.Label>Selected categories: </Form.Label>
+            
+            <span>
+                {formProps.values.categoryIds?.map(c => c.name).join(" > ")}
+            </span>
+
+            <Form.Control
+                type="hidden"
+                name="categoryIds"
+                isInvalid={!state.isValid && !!formProps.errors.categoryIds}
+            ></Form.Control>
+
+            <Form.Control.Feedback type="invalid">{
+                formProps.errors.categoryIds &&
+                typeof formProps.errors.categoryIds === 'string'
+                ? formProps.errors.categoryIds as string
+                : Array.isArray(formProps.errors.categoryIds)
+                    ? (formProps.errors.categoryIds as Array<string>).at(0)
+                    : ""            
+            }</Form.Control.Feedback>
+        </Form.Group>
+    </section>
 }
+
+const SelectCategoryList = (props: SelectCategoryListProps) =>{
+    const [state, setState] = React.useState<SelectCategoryListState>({
+        data: [],
+        selectedCategories: new Map<number, SelectCategoryValues>(),
+        selectedCategory: null
+    });
+    const isMounting = React.useRef<boolean>(true);
+
+    React.useEffect(() => {
+        if(isMounting.current){
+            const categoryLst = props.categories as SelectCategoryValues[];
+            setState(o => {
+                return {
+                    ...o,
+                    data: categoryLst,
+                    selectedCategory: null,
+                    selectedCategories: new Map<number, SelectCategoryValues>()
+                }
+            });
+        }
+    },[props.categories]);
+
+    function handleClickSingleItem(item: SelectCategoryValues) {
+        const selectedItemMap = new Map<number, SelectCategoryValues>();
+        selectedItemMap.set(parseInt(item.level), item);
+        const newSelectedCategories = new Map<number, SelectCategoryValues>([
+            ...Array.from(props.selectedCategories.entries()),
+            ...Array.from(selectedItemMap.entries())
+        ]);
+        
+        if(!item.subCategories && item.subCategoryCount){
+            props.fetchSubCategories(item.id, parseInt(item.level) + 1, props.originalData)
+            .then(data => {
+                setState(o => {
+                    return {
+                        ...o,
+                        selectedCategory: {
+                            ...item,
+                            subCategories: data
+                        },
+                        selectedCategories: newSelectedCategories
+                    }
+                })
+            })
+        }
+        else{
+            setState(o => {
+                return {
+                    ...o,
+                    selectedCategory: item,
+                    selectedCategories: newSelectedCategories
+                }
+            });
+        }
+
+        props.getSelectedCategories(newSelectedCategories, !item.subCategoryCount);
+    }
+
+    return <>
+        <div style={{
+            width:'100%',
+            border: '1px solid #000'
+        }}>
+            {
+                state.data.map(category => {
+                    return (
+                        <SelectCategoryItem key={category.id}
+                            isActive={!!state.selectedCategory && state.selectedCategory.id === category.id}
+                            item={category}
+                            onClick={handleClickSingleItem}
+                        ></SelectCategoryItem>
+                    )
+                })
+            }
+        </div>
+
+        {!!state.selectedCategory?.subCategories && <SelectCategoryList 
+            originalData={props.originalData}
+            categories={state.selectedCategory.subCategories}
+            selectedCategories={state.selectedCategories || new Map<number, SelectCategoryValues>()}
+            level={props.level + 1}
+            fetchSubCategories={props.fetchSubCategories}
+            getSelectedCategories={props.getSelectedCategories}
+        ></SelectCategoryList>}
+    </>
+}
+
+const SelectCategoryItem = (
+    {item,isActive, ...props}: {
+    item: SelectCategoryValues,
+    isActive?: boolean,
+    onClick?: (item: SelectCategoryValues) => void,
+}) =>{
+    
+    return (
+        <>
+            <div onClick={() => {
+                props.onClick && props.onClick(item);
+            }}
+            style={{
+                padding: '1.2rem 1.2rem 1.2rem 1.2rem',
+                minWidth:'3rem',
+                width: '100%',
+                cursor: 'pointer',
+                background: '#fff',
+                color: `${isActive? "var(--clr-logo)" : "inherit"}`,
+                fontWeight: `${isActive? "800" : "600"}`,
+                border: '1px solid black'
+            }}>
+                {item.name}
+                {!!item.subCategoryCount && <span style={{
+                    float: 'right'
+                }}>
+                    <HiChevronRight></HiChevronRight>
+                </span>}
+            </div>
+        </>
+    )
+}
+
+// Second form
 
 const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostProductDetailProps) =>{
     const [state, setState] = React.useState<PostProductDetailState>({
@@ -242,7 +542,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
     return (<Form onSubmit={formProps.handleSubmit}>
         <Form.Group controlId='postProductDetailBasic'>
             <h3>Product Basics</h3>
-            <Form.Group controlId="productName">
+            <Form.Group controlId="productName" className="py-3">
                 <Form.Label>Product Name </Form.Label>
                 <Form.Control name={"name"} 
                     value={formProps.values.name}
@@ -253,7 +553,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                 <Form.Control.Feedback type="invalid">{formProps.errors.name}</Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group controlId="description">
+            <Form.Group controlId="description" className="py-3">
                 <Form.Label>Description</Form.Label>
                 <Form.Control name={"description"} 
                     as="textarea"
@@ -265,7 +565,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                 <Form.Control.Feedback type="invalid">{formProps.errors.description}</Form.Control.Feedback>
             </Form.Group>
 
-            <Form.Group controlId="categoryIds">
+            <Form.Group controlId="categoryIds" className="py-3">
                 <Form.Label>Categories</Form.Label>
                 <Form.Control name={"categoryIds"} 
                     type="hidden"
@@ -278,7 +578,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
                     </div>
             </Form.Group>
             
-            <Form.Group controlId="files">
+            <Form.Group controlId="files" className="py-3">
                 <MultipleFileUpload
                     name='files'
                     initialFiles={formProps.values.files || []}
@@ -292,7 +592,7 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
             </Form.Group>
         </Form.Group>
 
-        <Form.Group controlId='postProductSelling'>
+        <Form.Group controlId='postProductSelling' className="py-3">
             <h3>Product Selling</h3>
             {!formProps.values.classifies.length && <Form.Group controlId='productDetail'>
                 <Row className="md-4" style={{
@@ -465,12 +765,18 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
 
         </Form.Group>
 
-        <Form.Group controlId='postOtherInformation'>
-            <h3>Other information</h3>
-            <Form.Group controlId="reverseOptions">
-                <Form.Label>Reverse</Form.Label>
-                <Form.Check type="radio" inline name="reserve" label="No" onChange={() => formProps.setFieldValue("reserve", false)} checked/>
-                <Form.Check type="radio" inline name="reserve" label="Yes" onChange={() => formProps.setFieldValue("reserve", true)}/>
+        <Form.Group controlId='postOtherInformation' className="py-3">
+            <h3 className="py-3">Other information</h3>
+            <Form.Group as={Row} controlId="reverseOptions">
+                <Form.Label as={Col}>Reverse</Form.Label>
+                <Row>
+                    <Col xs={'auto'} sm="auto">
+                        <Form.Check type="radio" inline name="reserve" label="No" onChange={() => formProps.setFieldValue("reserve", false)} checked/>
+                    </Col>
+                    <Col xs={'auto'} sm="auto">
+                        <Form.Check type="radio" inline name="reserve" label="Yes" onChange={() => formProps.setFieldValue("reserve", true)}/>
+                    </Col>
+                </Row>
             </Form.Group>
             <Form.Group controlId="itemStatus">
                 <Form.Label>Item status</Form.Label>
@@ -490,21 +796,6 @@ const PostProductDetail = ({formProps, onCancel, onSaveAndHide, onUpdate}:PostPr
 }
 
 // Upload file 
-interface MultipleFileUploadProps{
-    name: string,
-    initialFiles: File[] | string[],
-    onChangeMultiple: (files: (File | null)[]) => void;
-    isInvalid?: boolean;
-    errors?: string;
-    formProps?: FormikProps<FormValues>
-}
-
-type MultipleFileUploadState = {
-    images: (File | string | null)[],
-    currentIndex: number,
-    showCrop: boolean,
-    error?: string | null,
-}
 
 const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
     const [state, setState] = React.useState<MultipleFileUploadState>({
@@ -676,20 +967,7 @@ const MultipleFileUpload = ({formProps,...props}: MultipleFileUploadProps) =>{
     </>
 }
 
-interface SingleFileUploadProp {
-    initialImage?: string | File;
-    name: string;
-    isInvalid?: boolean;
-    errors?: any;
-    onChange?: (image: File | null) => void;
-    onError?: (error: string) => void;
-}
 
-type SingleFileUploadState = {
-    imageUrl?: string | File;
-    showCrop?: boolean;
-    error: string;
-}
 
 const SingleFileUpload = ({initialImage,onChange, ...props}: SingleFileUploadProp) =>{
     const [state, setState] = React.useState<SingleFileUploadState>({
@@ -828,12 +1106,6 @@ const SingleFileUpload = ({initialImage,onChange, ...props}: SingleFileUploadPro
 }
 
 // Product classifies
-interface ClassifyProductInputProps {
-    formProps: FormikProps<FormValues>;
-    name: string;
-    index: number;
-    value: any;
-}
 
 const ClassifyProductInput = ({formProps,...props}: ClassifyProductInputProps) =>{
     const [input, setInput] = useDebouncedInput<string>(props.value,{
@@ -927,17 +1199,6 @@ const ClassifyProductInput = ({formProps,...props}: ClassifyProductInputProps) =
     </>
 }
 
-interface ClassifyProductTypeInputProps {
-    formProps: FormikProps<FormValues>;
-    touched?: boolean;
-    error?: string;
-    showRemoveBtn?: boolean;
-    handleRemoveBtn: () => void;
-    name: string;
-    index: number;
-    value: any;
-}
-
 const ClassifyProductTypeInput = ({formProps,...props}:ClassifyProductTypeInputProps) =>{
     const [input, setInput] = useDebouncedInput<string>(
         props.value,
@@ -985,51 +1246,6 @@ const ClassifyProductTypeInput = ({formProps,...props}:ClassifyProductTypeInputP
 }
 
 // Product classifies preview
-interface ClassifyProductPreviewProps {
-    data: ProductClassify[];
-    detailData: ProductClassifyDetail[];
-    fieldName: string;
-    onChange?: (event: React.ChangeEvent<any>) => void;
-    onChangeClassifyType?: (values: ProductClassifyDetail[]) => void;
-}
-class Node {
-    value: any;
-    nodes: Node[] | null;
-    address: number[];
-
-    constructor(value: any, tails: Node[] | null, address: number[]) {
-        this.value = value;
-        this.nodes = tails;
-        this.address = address;
-    }
-
-    public countChildren(): number {
-        const currentTailNodeLength = this.nodes?.length || 0;
-
-        const nestedTailNodes = this.nodes ? this.nodes.reduce((p: number, n: Node) => p + n.countChildren() ,0) : 0;  
-
-        return currentTailNodeLength + nestedTailNodes;
-    }
-
-    public countLastNodes(): number {
-        if(this.nodes)
-            return this.nodes.length * this.nodes[0].countLastNodes();
-        return 1;
-    }
-
-    public getLastElementAddresses(): number[][]{
-        if(!this.nodes){
-            return [this.address];
-        }
-        return this.nodes.reduce((prev: number[][],node) =>{
-            return [...prev, ...node.getLastElementAddresses()];
-        },[]);
-    }
-}
-type ClassifyProductPreviewListState = {
-    rows?: Node[];
-    details: ProductClassifyDetail[];
-}
 
 const ClassifyProductPreview = (props: ClassifyProductPreviewProps) =>{
     const [state, setState] = React.useState<ClassifyProductPreviewListState>({
@@ -1212,8 +1428,8 @@ const ClassifyProductPreviewRow = (props: {
     });
 
     React.useEffect(() =>{
-        setOriginalPrice(values.classifyDetails[props.index].price);
-        setOriginalInventory(values.classifyDetails[props.index].inventory);
+        setOriginalPrice(values.classifyDetails?.[props.index]?.price || 0);
+        setOriginalInventory(values.classifyDetails?.[props.index]?.inventory || 0);
     },[values.classifyDetails[props.index]]);
 
     return <>
@@ -1327,366 +1543,194 @@ const ClassifyProductPreviewCell = (props: {
 }
 
 
-// Step 1 form
-interface PostProductEntryProps{
+class Node {
+    value: any;
+    nodes: Node[] | null;
+    address: number[];
+
+    constructor(value: any, tails: Node[] | null, address: number[]) {
+        this.value = value;
+        this.nodes = tails;
+        this.address = address;
+    }
+
+    public countChildren(): number {
+        const currentTailNodeLength = this.nodes?.length || 0;
+
+        const nestedTailNodes = this.nodes
+            ? this.nodes.reduce(
+                  (p: number, n: Node) => p + n.countChildren(),
+                  0
+              )
+            : 0;
+
+        return currentTailNodeLength + nestedTailNodes;
+    }
+
+    public countLastNodes(): number {
+        if (this.nodes)
+            return this.nodes.length * this.nodes[0].countLastNodes();
+        return 1;
+    }
+
+    public getLastElementAddresses(): number[][] {
+        if (!this.nodes) {
+            return [this.address];
+        }
+        return this.nodes.reduce((prev: number[][], node) => {
+            return [...prev, ...node.getLastElementAddresses()];
+        }, []);
+    }
+}
+
+type ProductClassify = {
+    name: string;
+    types: string[];
+};
+
+type ProductClassifyDetail = {
+    image: File;
+    tierIndex: number[];
+    price: number;
+    inventory: number;
+};
+
+interface FormValues {
+    name: string;
+    price: number;
+    inventory: number;
+    inPages: boolean;
+    description: string;
+    userPageId: number;
+    files?: File[];
+    categoryIds: SelectCategoryValues[];
+    classifies: ProductClassify[];
+    classifyDetails: ProductClassifyDetail[];
+    reserve: boolean;
+    itemStatus: 0 | 1;
+}
+
+// Form Display
+interface PostProductState {
+    loading: boolean;
+    error: string;
+    currentStep: number;
+}
+
+interface PostProductEntryProps {
     formProps: FormikProps<FormValues>;
     children?: React.ReactNode;
     onClick?: () => void;
 }
 
-const PostProductEntry = ({formProps, onClick}: PostProductEntryProps) =>{
-
-    React.useEffect(() => {
-        const beforeUnloadListener = (event: BeforeUnloadEvent) => {
-            event.preventDefault();
-            return event.returnValue = "Are you sure you want to exit?\nYour form submission will be eliminated";
-        };
-
-        if(formProps.values.name
-            || formProps.values.description
-            || formProps.values.categoryIds.length
-            || formProps.values.files
-        ) {
-            window.addEventListener("beforeunload", beforeUnloadListener, {
-                capture: true,
-            });
-        }
-
-        return () =>{
-            window.removeEventListener("beforeunload", beforeUnloadListener, {
-                capture: true
-            });
-        }
-    },[formProps.values])
-
-    return (
-        <>
-            <Form.Group controlId='postProductName'>
-                <Form.Label>Product Name: </Form.Label>
-                <Form.Control name="name"
-                    onChange={formProps.handleChange}
-                    onBlur={formProps.handleBlur}
-                    isInvalid={formProps.touched.name && !!formProps.errors.name}
-                    value={formProps.values.name}></Form.Control>
-                <Form.Control.Feedback type="invalid">{formProps.errors.name}</Form.Control.Feedback>
-            </Form.Group>            
-
-            <SelectCategoryInput 
-                formProps={formProps}
-                isValid={(isValid) => {
-                    formProps.setErrors({
-                        ...formProps.errors,
-                        categoryIds: !isValid? ["Select your category"]: undefined 
-                    });
-                }}
-            ></SelectCategoryInput>
-
-
-            <Button 
-                onClick={onClick} 
-                variant='success'
-                disabled={
-                    !!formProps.errors.categoryIds 
-                    || !!formProps.errors.name}
-            >Next</Button>
-        </>
-    )
-}
-
 interface SelectCategoryInputProps {
     formProps: FormikProps<FormValues>;
     children?: React.ReactNode;
-    isValid?: (isValid: boolean) => void;   
+    isValid?: (isValid: boolean) => void;
 }
 
-const SelectCategoryInput = ({formProps,...props}: SelectCategoryInputProps) => {
-    const [state, setState] = React.useState<{
-        categories: Array<SelectCategoryValues>;
-        selectedCategories: Map<number, SelectCategoryValues>;
-        displayCategories: Array<SelectCategoryValues>,
-        isValid: boolean
-    }>({
-        categories: [],
-        selectedCategories: formProps.values.categoryIds.reduce((map,c) => {
-            map.set(parseInt(c.level), c)
-            return map;
-        } , new Map<number, SelectCategoryValues>()),
-        displayCategories: [],
-        isValid: false
-    }); 
-
-    function fetchCategories() : Promise<Array<SelectCategoryValues>>
-    {
-        return new Promise(resolve => {
-            categoryAPIInstance.getAllCategories()
-            .then(({data}) => {
-                let convertedData = data as SelectCategoryValues[];
-
-                resolve(convertedData);
-            })
-        });
-    }
-
-    function searchCategories(pattern: string): void{
-        setState(o => {
-
-            function getParentCategory(currentCategory: SelectCategoryValues, level: number): SelectCategoryValues{
-                if(parseInt(currentCategory.level) === level){
-                    return currentCategory;
-                }
-                const nextCategory = o.categories.find(c => c.id === currentCategory.parentId);
-
-                if(!nextCategory){
-                    return currentCategory;
-                }
-
-                return getParentCategory(nextCategory, level);
-            }
-            
-            const matchCategories = o.categories.filter(c => {
-                const matchRegExp = new RegExp(`(${pattern})+`, "i");
-                const patternResults = matchRegExp.test(c.name);
-        
-                return patternResults;
-            }).map(mc => {
-                return getParentCategory(mc, 0);
-            }).reduce((p,c) => {
-                p.set(c.id, c);
-                return p;
-            }, new Map<number, SelectCategoryValues>());
-
-            return {
-                ...o,
-                displayCategories: Array.from(matchCategories, ([_, value]) => value)
-            }
-        })
-    }
-
-    React.useEffect(() => {
-        fetchCategories().then(data => {
-            setState(o => ({
-                ...o,
-                categories: data,
-                displayCategories: data.filter(c => parseInt(c.level) === 0)
-            }));
-        });
-    },[]);
-
-    React.useEffect(() => {
-        if(state.selectedCategories.size){
-            formProps.setValues(o => ({
-                ...o,
-                categoryIds: Array.from(state.selectedCategories.values())
-            }));
-        }
-        props.isValid && props.isValid(state.isValid);
-    },[state.selectedCategories, state.isValid]);
-
-    return <section style={{
-        margin: '1.2rem 0'
-    }}>
-        <input placeholder="search categories" 
-            onChange={(e: FormEvent<HTMLInputElement>) => {
-                searchCategories(e.currentTarget.value);
-            }}
-            style={{
-            borderRadius: '1.2rem',
-            padding: '0.5rem 1rem',
-            border: '1px solid #f1f1f1'
-        }}></input>
-
-        <span style={{marginLeft: '1.2rem'}}>Select your correct categories</span>
-
-        <div 
-            style={{
-                display:'grid',
-                gridTemplateColumns: "1fr 1fr 1fr",
-                padding: '1.2rem 1.2rem 1rem 0'
-            }}>
-            <SelectCategoryList 
-                originalData={state.categories}
-                categories={state.displayCategories}
-                level={0}
-                selectedCategories={new Map<number, SelectCategoryValues>()}
-                fetchSubCategories={(parentId, level, arrayData) => {
-                    return new Promise<Array<SelectCategoryValues>>((resolve) => {
-                        const data = arrayData.filter(c => c.parentId === parentId && parseInt(c.level) === level);
-                        resolve(data);
-                    });
-                }}
-                getSelectedCategories={(selectedCategories, permitNext) => {
-
-                    setState(o => ({
-                        ...o,
-                        selectedCategories: selectedCategories,
-                        isValid: permitNext
-                    }));
-                }}
-            ></SelectCategoryList>
-        </div>
-
-        <Form.Group controlId="productCategorySelect">
-            <Form.Label>Selected categories: </Form.Label>
-            
-            <span>
-                {formProps.values.categoryIds?.map(c => c.name).join(" > ")}
-            </span>
-
-            <Form.Control
-                type="hidden"
-                name="categoryIds"
-                isInvalid={!state.isValid && !!formProps.errors.categoryIds}
-            ></Form.Control>
-
-            <Form.Control.Feedback type="invalid">{
-                formProps.errors.categoryIds &&
-                typeof formProps.errors.categoryIds === 'string'
-                ? formProps.errors.categoryIds as string
-                : Array.isArray(formProps.errors.categoryIds)
-                    ? (formProps.errors.categoryIds as Array<string>).at(0)
-                    : ""            
-            }</Form.Control.Feedback>
-        </Form.Group>
-    </section>
-}
-
-export type SelectCategoryValues = {
+type SelectCategoryValues = {
     id: number;
     name: string;
     level: string;
     parentId: number;
     subCategoryCount: number;
-    subCategories?: SelectCategoryValues[],
-}
+    subCategories?: SelectCategoryValues[];
+};
 
 type SelectCategoryListProps = {
     originalData: SelectCategoryValues[];
     categories: SelectCategoryValues[];
     level: number;
-    selectedCategories: Map<number, SelectCategoryValues>,
-    fetchSubCategories: (parentId: number, level: number, array: SelectCategoryValues[]) => Promise<Array<SelectCategoryValues>>,
-    getSelectedCategories: (selectedItems: Map<number,SelectCategoryValues>, permitNext: boolean) => void;
-}
+    selectedCategories: Map<number, SelectCategoryValues>;
+    fetchSubCategories: (
+        parentId: number,
+        level: number,
+        array: SelectCategoryValues[]
+    ) => Promise<Array<SelectCategoryValues>>;
+    getSelectedCategories: (
+        selectedItems: Map<number, SelectCategoryValues>,
+        permitNext: boolean
+    ) => void;
+};
 
 type SelectCategoryListState = {
-    data: SelectCategoryValues[],
-    selectedCategory: SelectCategoryValues | null,
-    selectedCategories: Map<number,SelectCategoryValues> | null,
+    data: SelectCategoryValues[];
+    selectedCategory: SelectCategoryValues | null;
+    selectedCategories: Map<number, SelectCategoryValues> | null;
+};
+
+interface PostProductDetailProps {
+    formProps: FormikProps<FormValues>;
+    children?: React.ReactNode;
+    onCancel?: () => void;
+    onSaveAndHide?: () => void;
+    onUpdate?: () => void;
 }
 
-const SelectCategoryList = (props: SelectCategoryListProps) =>{
-    const [state, setState] = React.useState<SelectCategoryListState>({
-        data: [],
-        selectedCategories: new Map<number, SelectCategoryValues>(),
-        selectedCategory: null
-    });
-    const isMounting = React.useRef<boolean>(true);
+type PostProductDetailState = {
+    priceTemp: number;
+    inventoryTemp: number;
+};
 
-    React.useEffect(() => {
-        if(isMounting.current){
-            const categoryLst = props.categories as SelectCategoryValues[];
-            setState(o => {
-                return {
-                    ...o,
-                    data: categoryLst,
-                    selectedCategory: null,
-                    selectedCategories: new Map<number, SelectCategoryValues>()
-                }
-            });
-        }
-    },[props.categories]);
-
-    function handleClickSingleItem(item: SelectCategoryValues) {
-        const selectedItemMap = new Map<number, SelectCategoryValues>();
-        selectedItemMap.set(parseInt(item.level), item);
-        const newSelectedCategories = new Map<number, SelectCategoryValues>([
-            ...Array.from(props.selectedCategories.entries()),
-            ...Array.from(selectedItemMap.entries())
-        ]);
-        
-        if(!item.subCategories && item.subCategoryCount){
-            props.fetchSubCategories(item.id, parseInt(item.level) + 1, props.originalData)
-            .then(data => {
-                setState(o => {
-                    return {
-                        ...o,
-                        selectedCategory: {
-                            ...item,
-                            subCategories: data
-                        },
-                        selectedCategories: newSelectedCategories
-                    }
-                })
-            })
-        }
-        else{
-            setState(o => {
-                return {
-                    ...o,
-                    selectedCategory: item,
-                    selectedCategories: newSelectedCategories
-                }
-            });
-        }
-
-        props.getSelectedCategories(newSelectedCategories, !item.subCategoryCount);
-    }
-
-    return <>
-        <div style={{
-            width:'100%',
-            border: '1px solid #000'
-        }}>
-            {
-                state.data.map(category => {
-                    return (
-                        <SelectCategoryItem key={category.id}
-                            isActive={!!state.selectedCategory && state.selectedCategory.id === category.id}
-                            item={category}
-                            onClick={handleClickSingleItem}
-                        ></SelectCategoryItem>
-                    )
-                })
-            }
-        </div>
-
-        {!!state.selectedCategory?.subCategories && <SelectCategoryList 
-            originalData={props.originalData}
-            categories={state.selectedCategory.subCategories}
-            selectedCategories={state.selectedCategories || new Map<number, SelectCategoryValues>()}
-            level={props.level + 1}
-            fetchSubCategories={props.fetchSubCategories}
-            getSelectedCategories={props.getSelectedCategories}
-        ></SelectCategoryList>}
-    </>
+interface MultipleFileUploadProps {
+    name: string;
+    initialFiles: File[] | string[];
+    onChangeMultiple: (files: (File | null)[]) => void;
+    isInvalid?: boolean;
+    errors?: string;
+    formProps?: FormikProps<FormValues>;
 }
 
-const SelectCategoryItem = (
-    {item,isActive, ...props}: {
-    item: SelectCategoryValues,
-    isActive?: boolean,
-    onClick?: (item: SelectCategoryValues) => void,
-}) =>{
-    
-    return (
-        <>
-            <div onClick={() => {
-                props.onClick && props.onClick(item);
-            }}
-            style={{
-                padding: '1.2rem 1.2rem 1.2rem 1.2rem',
-                minWidth:'3rem',
-                width: '100%',
-                cursor: 'pointer',
-                color: `${isActive? "var(--clr-logo)" : "inherit"}`
-            }}>
-                {item.name}
-                {!!item.subCategoryCount && <span style={{
-                    float: 'right'
-                }}>
-                    <HiChevronRight></HiChevronRight>
-                </span>}
-            </div>
-        </>
-    )
+type MultipleFileUploadState = {
+    images: (File | string | null)[];
+    currentIndex: number;
+    showCrop: boolean;
+    error?: string | null;
+};
+
+interface SingleFileUploadProp {
+    initialImage?: string | File;
+    name: string;
+    isInvalid?: boolean;
+    errors?: any;
+    onChange?: (image: File | null) => void;
+    onError?: (error: string) => void;
 }
+
+type SingleFileUploadState = {
+    imageUrl?: string | File;
+    showCrop?: boolean;
+    error: string;
+};
+
+interface ClassifyProductInputProps {
+    formProps: FormikProps<FormValues>;
+    name: string;
+    index: number;
+    value: any;
+}
+
+interface ClassifyProductTypeInputProps {
+    formProps: FormikProps<FormValues>;
+    touched?: boolean;
+    error?: string;
+    showRemoveBtn?: boolean;
+    handleRemoveBtn: () => void;
+    name: string;
+    index: number;
+    value: any;
+}
+
+interface ClassifyProductPreviewProps {
+    data: ProductClassify[];
+    detailData: ProductClassifyDetail[];
+    fieldName: string;
+    onChange?: (event: React.ChangeEvent<any>) => void;
+    onChangeClassifyType?: (values: ProductClassifyDetail[]) => void;
+}
+
+type ClassifyProductPreviewListState = {
+    rows?: Node[];
+    details: ProductClassifyDetail[];
+};

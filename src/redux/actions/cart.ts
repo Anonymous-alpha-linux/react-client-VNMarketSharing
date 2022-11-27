@@ -11,7 +11,7 @@ type AddToCartAction = {
     type: ActionTypes.ADD_TO_CART;
     payload: {
         product: GetProductResponseDTO;
-        detailIndex?: number;
+        detailIndexes?: (number | undefined)[];
         quantity: number;
         price: number;
         image: string;

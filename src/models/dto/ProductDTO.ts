@@ -78,7 +78,17 @@ export type GetProductResponseDTO = {
     urls: string[];
     createdAt: string;
     userPage: GetUserPageResponseDTO;
+    hasAccepted: boolean;
     reviewAmount: number;
+};
+
+export type GetRecentProductResponseDTO = {
+    id: number;
+    productName: string;
+    productImage: string;
+    sellerName: string;
+    sellerAvatar: string;
+    orderAmount: string;
 };
 
 export type GetProductClassifiesResponseDTO = {

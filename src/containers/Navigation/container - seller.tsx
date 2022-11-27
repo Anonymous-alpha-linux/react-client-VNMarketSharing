@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 import { Dropdown, Navbar,ButtonGroup, Image } from 'react-bootstrap';
 import { AiOutlinePrinter,
     AiOutlineDashboard, 
@@ -31,7 +32,6 @@ const SellerSidebar = ({children}: SellerSidebarProps) => {
         title: "Product",
         path: "product",
         icon: <AiOutlineInbox></AiOutlineInbox>,
-        isOpened: false,
         iconClosed: <GoChevronRight></GoChevronRight>,
         iconOpened: <GoChevronDown></GoChevronDown>,
         isRoot: true,
@@ -59,15 +59,21 @@ const SellerSidebar = ({children}: SellerSidebarProps) => {
         iconClosed: <GoChevronRight></GoChevronRight>,
         iconOpened: <GoChevronDown></GoChevronDown>,
         isRoot: true,
-        isOpened: false,
         subNav: [
             {
-                title: 'Order',
-                path: "",
+                title: 'Invoice',
+                path: "invoice",
                 icon: <BsDot></BsDot>,
-                iconClosed: <p>ClosedIcon</p>,
-                iconOpened: <p>OpenedIcon</p>,
+                iconClosed: <GoChevronRight></GoChevronRight>,
+                iconOpened: <GoChevronDown></GoChevronDown>,
             },
+            {
+                title: 'Order',
+                path: 'order',
+                icon: <BsDot></BsDot>,
+                iconClosed: <GoChevronRight></GoChevronRight>,
+                iconOpened: <GoChevronDown></GoChevronDown>,
+            }
         ]
     },
     {
@@ -84,19 +90,18 @@ const SellerSidebar = ({children}: SellerSidebarProps) => {
         icon: <AiOutlinePrinter></AiOutlinePrinter>,
         iconClosed: <p>ClosedIcon</p>,
         iconOpened: <p>OpenedIcon</p>,
-        isRoot: true
+        isRoot: true,
     },
     ]
     
     const {data: {userId}} = useTypedSelector(state => state.user);
     const {getSellerInfo}  = useActions();
 
-    React.useEffect(() =>{
-        if(userId){
-            console.log(userId);
-            getSellerInfo(parseInt(userId));
-        }
-    }, [userId]);
+    // React.useEffect(() =>{
+    //     if(userId){
+    //         getSellerInfo(parseInt(userId));
+    //     }
+    // }, [userId]);
 
     return <>
         <Sidebar data={sidebarStatic} show={true}>
@@ -151,11 +156,38 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
     const {data: {avatar}} = useTypedSelector(state => state.user);
     const {data: {pageAvatar}} = useTypedSelector(state => state.seller);
 
+    const [userAvatar, setUserAvatar] = React.useState("");
     const defaultImage = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
+    const functions = {
+        tryLoadUserImage(imageUrls: (string | undefined)[], index: number){
+            const nextLoadImage = imageUrls?.[index];
+            if(!!nextLoadImage){
+                axios.get(nextLoadImage, {
+                    responseType:'blob'
+                }).then(r =>{
+                    setUserAvatar(nextLoadImage);
+                }).catch(error =>{
+                    if(index === imageUrls.length - 1){
+                        setUserAvatar(defaultImage);
+                        return;
+                    }
+                    
+                    this.tryLoadUserImage(imageUrls, index + 1);
+                });
+            }
+            else {
+                setUserAvatar(defaultImage);
+            }
+        }
+    }
 
-    React.useEffect(()=>{
-        getUserInfo();
-    },[email]);
+    React.useEffect(() =>{
+        functions.tryLoadUserImage([pageAvatar, avatar, defaultImage], 0);
+    }, [pageAvatar, avatar]);
+
+    // React.useEffect(()=>{
+    //     getUserInfo();
+    // },[email]);
     
     return <>
         <Dropdown as={ButtonGroup} size='sm'>
@@ -163,7 +195,7 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
                 <CustomLink to="page">
                     <Image
                     roundedCircle 
-                    src={pageAvatar || avatar || defaultImage}
+                    src={userAvatar}
                     width={"30px"} height={"30px"}>
                     </Image>
                 </CustomLink>
@@ -171,31 +203,33 @@ const ProfileTrigger : React.JSXElementConstructor<{user: string}>= ({user}) =>{
 
             <Dropdown.Menu as="ul">
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="page">
+                    <CustomLink to="page" className="w-100" data-pointer style={{display:"inline-block"}}>
                         Profile
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="">
+                    <CustomLink to="" className="w-100" data-pointer style={{display:"inline-block"}}>
                         My Dashboard
                     </CustomLink>                   
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="chat">
+                    <CustomLink to="chat" className="w-100" data-pointer style={{display:"inline-block"}}>
                         Message
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="notify">
+                    <CustomLink to="notify" className="w-100" data-pointer style={{display:"inline-block"}}>
                         Notification
                     </CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Item as="li" className="align-middle">
-                    <CustomLink to="/">Back to Buy</CustomLink>
+                    <CustomLink to="/" className="w-100" data-pointer style={{display:"inline-block"}}>Back to Buy</CustomLink>
                 </Dropdown.Item>
                 <Dropdown.Divider></Dropdown.Divider>
                 <Dropdown.Item as="li" className="align-middle" onClick={() => logout()}>
-                    Logout
+                    <span className="w-100" data-pointer style={{display:"inline-block"}}>
+                        Logout
+                    </span>
                 </Dropdown.Item>
             </Dropdown.Menu>
         </Dropdown>

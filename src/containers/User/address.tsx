@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Badge, Button, Card, Form, Spinner, Stack, Modal, Row, Col, InputGroup } from 'react-bootstrap';
+import { Badge, Button, Card, Form, Spinner, Stack, Modal, Row, Col, InputGroup, Container } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import { TbEdit } from 'react-icons/tb';
 import { Formik, FormikHelpers } from 'formik';
@@ -19,7 +19,7 @@ export const Address = () => {
 
     return (
         <Row xs={1} sm={1} md={2}>
-            <Col xs={12} sm={12} md={6} lg={4} xl={6}>
+            <Col>
                 <h3>Billing Address</h3>
                 <Button variant='link'>
                     <span style={{color:'#000', cursor: 'pointer'}}>
@@ -35,7 +35,7 @@ export const Address = () => {
                 <AddressDetail type={"billing"}></AddressDetail>
             </Col>
 
-            <Col xs={12} sm={12} md={6} lg={4} xl={6}>
+            <Col>
                 <h3>Shipping Address</h3>
                 <Button variant='link'>
                     <span style={{color:'#000', cursor: 'pointer'}}>
@@ -77,7 +77,9 @@ interface IBillingAddressDetailState {
 }
 
 const AddressDetail = (props: {type: "billing" | "shipping"}) => {
-    const { data: { userId, addressList} } = useTypedSelector(state => state.user);
+    const location = useLocation();
+    const { data: { userId,addressList} } = useTypedSelector(state => state.user);
+    const { getAddressList } = useActions();
     const [state, setState] = React.useState<IBillingAddressDetailState>({
         loading: false,
         error: '',
@@ -138,22 +140,24 @@ const AddressDetail = (props: {type: "billing" | "shipping"}) => {
         }));
     }
 
-    if (state.loading) return <Spinner animation='border'>...</Spinner>
+    if (state.loading) return (<Container className="p-5" data-text-align="middle">
+        <Spinner animation='border'>...</Spinner>
+    </Container>)
 
     return <div>
-        <Row xs={1} sm={1} md={1} lg={1} xl={2}>
+        <Row xs={1} sm={1} xxl={2}>
             {!state.data.length
-                && <Col xs="auto" sm="auto">
-                    <i>{`Add your new ${props.type === "billing" ? "billing" : "shipping"} address to obtain your wish item`}</i>
+            ? <Col>
+                <i>{`Add your new ${props.type === "billing" ? "billing" : "shipping"} address to obtain your wish item`}</i>
+            </Col>
+            : state.data.map(address => {
+                return <Col key={address.id} className="mb-2">
+                    <AddressCard
+                        billingAddress={address} 
+                        completeRemove={(addressId) => removeItem(addressId)}
+                        type={props.type}></AddressCard>
                 </Col>
-                || state.data.map(address => {
-                    return <Col xs={3} sm="auto" key={address.id} >
-                        <AddressCard
-                            billingAddress={address} 
-                            completeRemove={(addressId) => removeItem(addressId)}
-                            type={props.type}></AddressCard>
-                    </Col>
-                })}
+            })}
         </Row>
     </div>
 }
@@ -396,8 +400,8 @@ export const AddressCreationForm = () => {
     React.useEffect(() => {
         getVNProvincesApi();
     }, []);
+
     React.useEffect(() =>{
-        console.log(location.state);
         if(location.state){
             const locationState = location.state as {
                 from: Location,
@@ -442,7 +446,7 @@ export const AddressCreationForm = () => {
             }}>
             {({ values, touched, errors, handleBlur, handleChange, handleSubmit, ...props }) => {
                 return <Form onSubmit={handleSubmit}>
-                    <h4>{location?.hash.toLowerCase().includes("billing") ? "Billing Address" : "Shipping Address"}</h4>
+                    <h3 data-text-align='center'>{location?.hash.toLowerCase().includes("billing") ? "Billing Address" : "Shipping Address"}</h3>
                     <Form.Group controlId='controlReceiverName'>
                         <Form.Label>Receiver Name</Form.Label>
                         <Form.Control value={values.receiverName}
@@ -452,7 +456,7 @@ export const AddressCreationForm = () => {
                         <Form.Control.Feedback type="invalid">{errors.receiverName}</Form.Control.Feedback>
                     </Form.Group>
                     {/* Country and City */}
-                    <Row>
+                    <Row className="pb-3">
                         <Form.Group as={Col} controlId='controlCountry'>
                             <Form.Label>Country/Region/*...</Form.Label>
                             <Form.Control value={values.country} 
@@ -476,7 +480,7 @@ export const AddressCreationForm = () => {
                         </Form.Group>
                     </Row>
                     {/* Ward and District */}
-                    <Row>
+                    <Row className="pb-3">
                         <Form.Group as={Col} controlId='controlDistrict'>
                             <Form.Label>District</Form.Label>
                             <Form.Select value={values.district} 
@@ -506,7 +510,7 @@ export const AddressCreationForm = () => {
                     </Row>
 
                     {/* Street address */}
-                    <Form.Group controlId='controlStreetAddress'>
+                    <Form.Group controlId='controlStreetAddress' className="pb-3">
                         <Form.Label>Street Address</Form.Label>
                         <Form.Control value={values.streetAddress} name="streetAddress"
                             onBlur={handleBlur}
@@ -514,7 +518,7 @@ export const AddressCreationForm = () => {
                         <Form.Control.Feedback type="invalid">{errors.streetAddress}</Form.Control.Feedback>
                     </Form.Group>
                     {/* Zipcode and Phone */}
-                    <Row>
+                    <Row className="pb-3">
                         <Form.Group as={Col} controlId='controlZip'>
                             <Form.Label>Postcode / ZIP (optional)</Form.Label>
                             <Form.Control value={values.zipcode} name="zipcode"
@@ -539,7 +543,6 @@ export const AddressCreationForm = () => {
                                 <Form.Control.Feedback type="invalid">{errors.phoneNumber}</Form.Control.Feedback>
                             </InputGroup>
                         </Form.Group>
-                        <pre>{JSON.stringify(values, null, 4)}</pre>
                     </Row>
 
                     <Button type="submit" style={{margin: "1.2rem 0", fontWeight:"700"}}>Send</Button>

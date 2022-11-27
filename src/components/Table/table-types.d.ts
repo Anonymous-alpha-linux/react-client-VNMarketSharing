@@ -1,9 +1,11 @@
 export type RowHandlers = {
-    onUpdate?: () => void;
-    onDelete?: () => void;
-    onRead?: () => void;
-    onAccept?: () => void;
-    onDeny?: () => void;
+    onUpdate?: (rowNumber: number) => void;
+    onDelete?: (rowNumber: number) => void;
+    onRead?: (rowNumber: number) => void;
+    onAccept?: (rowNumber: number) => void;
+    onDeny?: (rowNumber: number) => void;
+    onBlocked?: (rowNumber: number) => void;
+    onUnlocked?: (rowNumber: number) => void;
 };
 
 export interface TableValues {
@@ -16,7 +18,8 @@ export type TableProps<Values> = {
     hasAction?: boolean;
     perPageEntities?: number;
     noPagination?: boolean;
-} & RowHandlers;
+} & RowHandlers &
+    HeaderProps;
 
 export type TableState<Values> = {
     data: Values[];
@@ -29,16 +32,37 @@ export type RowProps = {
     data: string[];
     hasAction?: boolean;
     onClick?: (key: string) => void;
-} & RowHandlers;
+} & RowHandlers &
+    HeaderProps;
+
+export type HeaderProps = {
+    sortBy?: string[];
+};
+
+export type RowBodyProps = RowProps & RowListProps;
+
+export type RowDataProps = RowBodyProps & {
+    rowNumber: number;
+};
 
 export type RowListProps = {
     data: any[][];
-} & RowHandlers;
+} & RowHandlers &
+    PageProps;
 
 export type CellDataValues = {
     image?: string;
     title?: string;
     subtitle?: string;
+    status?:
+        | 'primary'
+        | 'secondary'
+        | 'success'
+        | 'danger'
+        | 'warning'
+        | 'info'
+        | 'light'
+        | 'dark';
 };
 
 export type CellDataType =
@@ -56,10 +80,13 @@ export type CellDataObjectProps = {
     data: { [key: string]: any };
 };
 
-export type FooterProps = {
+export type PageProps = {
     perPageAmount?: number;
     dataLength: number;
     currentPage?: number;
+};
+
+export type FooterProps = {
     onSelectPage: (page: number) => void;
     onSelectPerPage: (amount: number) => void;
-};
+} & PageProps;

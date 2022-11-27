@@ -1,0 +1,75 @@
+.dashboard-entry__board {
+    border-radius: 12px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+}
+
+.dashboard-entry__solid {
+    background-color: rgb(246, 165, 36);
+    color: #fff;
+}
+
+.dashboard-entry__solid .dashboard-entry__icon {
+    background-color: transparent;
+}
+
+.dashboard-entry__icon {
+    text-align: center;
+    font-size: 2rem;
+    background-color: var(--clr-logo);
+    border-radius: 50%;
+    display: grid;
+    place-content: center;
+    width: 50px;
+    height: 50px;
+}
+
+.dashboard-entry__label {
+    color: #fff;
+}
+
+.recent-user-list__heading {
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: Arial, Helvetica, sans-serif;
+    letter-spacing: 1px;
+}
+
+.recent-user-list {
+    border: 1px solid rgb(152, 148, 148);
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.recent-user-list__table {
+    border: none;
+    width: 100%;
+}
+
+.recent-user-list__head-table {
+    border: none;
+    background-color: rgba(169, 164, 164, 0.1);
+    border-radius: 2px;
+}
+
+.recent-user-list__head-table th {
+    border: none;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.recent-user-list__body-table tr {
+    border: none;
+    box-shadow: 0 -1px rgba(136, 136, 136, 0.1) inset;
+}
+
+.recent-user-list__body-table td {
+    border: none;
+}
+
+.product-detail__section {}
+
+.product-detail__ul {
+    list-style-type: circle;
+    margin: 0;
+    padding: 0 14px;
+}

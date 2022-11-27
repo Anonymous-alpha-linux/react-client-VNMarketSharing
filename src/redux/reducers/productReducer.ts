@@ -27,10 +27,10 @@ const initialState: ReducerState<ProductState> = {
     status: ResponseStatus.NOT_RESPONSE,
 };
 
-const productReducer = (
+function productReducer (
     state: ReducerState<ProductState> = initialState,
     action: Action
-): ReducerState<ProductState> => {
+): ReducerState<ProductState> {
     const oldProductList = state.data.productList;
     switch (action.type) {
         case ActionTypes.GET_PRODUCT_LIST:

@@ -47,7 +47,6 @@ export class AuthInterceptorBehavior implements IInterceptorBehavior {
                 return response;
             },
             async (error) => {
-                console.log(error);
                 const originalConfig = error.config;
 
                 if (
@@ -73,12 +72,12 @@ export class AuthInterceptorBehavior implements IInterceptorBehavior {
                             return axiosAuthAPIInstance(originalConfig);
                         } catch (_error) {
                             LocalStorageService.removeLoginUser();
-                            console.clear();
+                            // console.clear();
                             return Promise.reject(_error);
                         }
                     }
                 }
-                console.clear();
+                // console.clear();
                 return Promise.reject(error);
             }
         );

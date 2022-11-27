@@ -10,12 +10,15 @@ import compressImage from 'browser-image-compression';
 export const Layout: React.FC<{children: any}> = ({children}) => {
   const [localStorageUser, setLocalStorageUser] = React.useState(AppLocalStorage.getLoginUser());
   const {data: {productList, max, page, take}} = useTypedSelector(s => s.product);
-  const {data: {categoryList}, error: categoryError} = useTypedSelector(s => s.category);
+  const {data: {categoryList, page: categoryPage}, error: categoryError} = useTypedSelector(s => s.category);
   const {data: {userId}} = useTypedSelector(s => s.user);
-  const {getUser, postNewProduct, getProductList, getCategoryList, getAddressList} = useActions();
-  const {loading} = useTypedSelector(state => state.auth);
+  const {getUser, postNewProduct, getProductList, getCategoryList, getAddressList, getUserInfo, getSellerInfo} = useActions();
+  const {loading, data } = useTypedSelector(state => state.auth);
+  const {data: sellerData} = useTypedSelector(state => state.seller); 
 
   const _isMounted = React.useRef<boolean>(false);
+  const _hasGotProduct = React.useRef<boolean>(false);
+  const _hasGotCategory = React.useRef<boolean>(false);
 
   // Mounting
   React.useEffect(()=>{
@@ -24,7 +27,7 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
       _isMounted.current = false;
     }
   },[])
-
+  
   // Handle Form form localStorage
   React.useEffect(() =>{
     const formRequest = AppLocalStorage.getPostProductForm();
@@ -83,6 +86,7 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
           },{
               cancelToken: cancelSource.token
           });
+          _hasGotProduct.current = true;
       }
 
       return () =>{
@@ -92,21 +96,23 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
 
   React.useEffect(() =>{
     const cancelSource = axios.CancelToken.source();
-    if(categoryList.length === 0 && !categoryError){
+    if(!_hasGotCategory.current && categoryList.length === 0 && !categoryError){
       getCategoryList({
         cancelToken: cancelSource.token
       });
+      _hasGotCategory.current = true;
     }
     
     return () =>{
       cancelSource.cancel();
     }
-  }, [categoryList]);
+  }, [categoryPage]);
 
   // User persistent
   React.useEffect(()=>{
     if(localStorageUser){
       getUser();
+      getUserInfo();
       return;
     }
     const jwt = getCookie("jwt");
@@ -119,6 +125,7 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
   React.useEffect(() =>{
     if(userId){
       getAddressList(Number(userId));
+      getSellerInfo(Number(userId));
     }
   },[userId])
 

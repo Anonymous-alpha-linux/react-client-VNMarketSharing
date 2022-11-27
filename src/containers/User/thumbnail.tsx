@@ -30,12 +30,80 @@ export const Thumb = React.forwardRef((
     const [completedCropImage, setCompletedCropImage]  = useState<string>("");
     const fileRef = useRef<File>();
     const originalImageRef = React.useRef<HTMLImageElement>(null);
+    const functions = {
+        // Transform image to String64 based URL
+        readImageData(file: File){
+            const fileReader = new FileReader();
+            
+            fileReader.addEventListener("load", () => {
+                setThumb(fileReader.result as string);
+                setCompletedCropImage(fileReader.result as string);
+            }, false);
+    
+            if(file){
+                fileReader.readAsDataURL(file);
+            }
+        },
+        showCrop(showCrop: boolean, thumb: string){
+            return showCrop && (
+            <span 
+            className='p-3'
+            style={{
+                overflowY: 'scroll',
+                overflowX: 'hidden',
+                maxHeight: '80vh',
+                ...props.styleCrop
+            }}>
+                <Row className={"pt-3"} md={2} style={{
+                    position: 'sticky',
+                    top: 0,
+                    left: 0,
+                    background: 'inherit',
+                    zIndex: 1
+                }}>
+                    <Col md={5}>
+                        <Button onClick={() => {
+                            if(fileRef.current){
+                                setImage(fileRef.current);
+                            }}}
+                            style={{background:"var(--clr-logo)"}}
+                        >
+                            Crop Image
+                        </Button>
+                    </Col>
+                    
+                    <Col md={5}>
+                        <label>Cropped Image size:</label>
+                        <p>{((fileRef.current?.size || 0) / 1024 / 1024).toFixed(2)} MB</p>
+                    </Col>
+                </Row>
+            {functions.showThumb(thumb)}
+            </span>)
+        },
+        showThumb(thumbStr: string){
+            return !!thumbStr && (
+                <ImageCrop image={completedCropImage} 
+                    originalImageRef={originalImageRef}
+                    roundedCircle={props.roundedCircle}
+                    onImageCropped={(blob, imgURLData) => {
+                        if(fileRef.current && imgURLData){
+                            const file = new File([blob], fileRef?.current?.name || 'image', {
+                                type: blob.type
+                            });
+                            fileRef.current = file;
+                            setThumb(imgURLData);
+                        }
+                    }}
+                    allowResize={allowResize}
+                ></ImageCrop>)
+        }
+    }; 
     
     // Trigger every changes of [props: {image}]
     useEffect(()=>{
         if(image instanceof File){
             fileRef.current = image;
-            readImageData(image);
+            functions.readImageData(image);
             fileRef.current = image;
         }
         if(typeof image === "string"){
@@ -45,27 +113,8 @@ export const Thumb = React.forwardRef((
         }
     },[image]);
 
-    // Action is triggered as click button "Crop Image"
-    const handleCrop = (image: File) =>{
-        setImage(image);
-    }
-
-    // Transform image to String64 based URL
-    function readImageData(file: File){
-        const fileReader = new FileReader();
-        
-        fileReader.addEventListener("load", () => {
-            setThumb(fileReader.result as string);
-            setCompletedCropImage(fileReader.result as string);
-        }, false);
-
-        if(file){
-            fileReader.readAsDataURL(file);
-        }
-    }
-
     return <>
-        <div className="thumb__container" style={props.styleThumb}>
+        <div className="thumb__container pb-5" style={props.styleThumb}>
             <div className="thumb__original" style={{
                 visibility: 'hidden',
             }}>
@@ -91,57 +140,7 @@ export const Thumb = React.forwardRef((
                 src={thumb || defaultAvatar}>
             </Image>
         </div>
-        {" "} 
-        { 
-        props.showCrop && <span 
-            className='p-3'
-            style={{
-                overflowY: 'scroll',
-                overflowX: 'hidden',
-                maxHeight: '80vh',
-                ...props.styleCrop
-            }}>
-                <Row className={"pt-3"} md={2} style={{
-                    position: 'sticky',
-                    top: 0,
-                    left: 0,
-                    background: 'inherit',
-                    zIndex: 1
-                }}>
-                    <Col md={5}>
-                        <Button onClick={() => {
-                            if(fileRef.current){
-                                handleCrop(fileRef.current);
-                            }}}
-                            style={{background:"var(--clr-logo)"}}
-                        >
-                            Crop Image
-                        </Button>
-                    </Col>
-                    
-                    <Col md={5}>
-                        <label>Cropped Image size:</label>
-                        <p>{((fileRef.current?.size || 0) / 1024 / 1024).toFixed(2)} MB</p>
-                    </Col>
-                </Row>
-            {
-                thumb && <ImageCrop image={completedCropImage} 
-                    originalImageRef={originalImageRef}
-                    roundedCircle={props.roundedCircle}
-                    onImageCropped={(blob, imgURLData) => {
-                        if(fileRef.current && imgURLData){
-                            const file = new File([blob], fileRef?.current?.name || 'image', {
-                                type: blob.type
-                            });
-                            fileRef.current = file;
-                            setThumb(imgURLData);
-                        }
-                    }}
-                    allowResize={allowResize}
-                ></ImageCrop>
-            }
-            </span>
-        }
+        {functions.showCrop(!!props.showCrop, thumb)}
     </>
 })
 
@@ -162,13 +161,213 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
         y: 0
     });
     const [aspect, setAspect] = useState<number | undefined>(1);
-    const [orientation ,setOrientation , setOrientationWithoutEvent] = useDebouncedInput<number, React.ChangeEvent<HTMLInputElement>>(100,{
+    const [orientation , setOrientation] = useDebouncedInput<number, React.ChangeEvent<HTMLInputElement>>(100,{
         debouncedCallback: (value, event) =>{
-            resizeHandler(value);
+            functions.resizeHandler(value);
         }
     });
+    
     const imageRef = React.useRef<HTMLImageElement>(null);
+    const functions = {
+        centerAspectCrop(
+            mediaWidth: number,
+            mediaHeight: number,
+            aspect: number,
+            ) {
+            return centerCrop(
+                makeAspectCrop(
+                {
+                    unit: '%',
+                    width: 90,
+                },
+                aspect,
+                mediaWidth,
+                mediaHeight,
+                ),
+                mediaWidth,
+                mediaHeight,
+        )},
+        // Reload crop state
+        onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+            e.currentTarget.crossOrigin = 'anonymous';
+            // setImgSrc(e.currentTarget);
+            if (aspect) {
+                const { width, height } = e.currentTarget;
+                setCrop(_ => functions.centerAspectCrop(width, height, aspect));
+            }
+        },
+        // Triggered every move of cropper
+        getCroppedImage(sourceImage:HTMLImageElement, 
+            cropConfig:PixelCrop, 
+            resizing = 100,
+            scale = 1,
+            rotate = 0) : Promise<{
+            blob: Blob,
+            imgURL: string,
+        }> {
+            // creating the cropped image from the source image
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+            const TO_RADIANS = Math.PI / 180
+            if(!ctx){
+                throw new Error("No 2d context");
+            }
 
+            const scaleX = sourceImage.naturalWidth / sourceImage.width;
+            const scaleY = sourceImage.naturalHeight / sourceImage.height;
+            
+            const pixelRatio = window.devicePixelRatio;
+
+            canvas.width = Math.floor(cropConfig.width * scaleX * pixelRatio) * (resizing / 100);
+            canvas.height = Math.floor(cropConfig.height * scaleY * pixelRatio) * (resizing / 100);
+
+            // ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+            ctx.scale(pixelRatio, pixelRatio);
+            ctx.imageSmoothingQuality = 'high';
+
+            const cropX = cropConfig.x * scaleX;
+            const cropY = cropConfig.y * scaleY;
+
+            const rotateRads = rotate * TO_RADIANS;
+            const centerX = sourceImage.naturalWidth / 2;
+            const centerY = sourceImage.naturalHeight / 2;
+
+            ctx.save()
+
+            // 5) Move the crop origin to the canvas origin (0,0)
+            ctx.translate(-cropX, -cropY)
+            // 4) Move the origin to the center of the original position
+            ctx.translate(centerX, centerY)
+            // 3) Rotate around the origin
+            ctx.rotate(rotateRads)
+            // 2) Scale the image
+            ctx.scale(scale, scale)
+            // 1) Move the center of the image to the origin (0,0)
+            ctx.translate(-centerX, -centerY)
+
+            ctx.drawImage(
+                sourceImage,
+                0,
+                0,
+                sourceImage.naturalWidth * (resizing / 100),
+                sourceImage.naturalHeight * (resizing / 100),
+                0,
+                0,
+                sourceImage.naturalWidth,
+                sourceImage.naturalWidth
+            );
+
+            ctx.restore();
+            
+            return new Promise((resolve, reject) => {
+                canvas.toBlob((blob) => {
+                    // returning an error
+                    if (!blob) {
+                        reject(new Error("Canvas is empty"));
+                        return;
+                    }
+
+                    // creating a Object URL representing the Blob object given
+                    const croppedImageUrl = window.URL.createObjectURL(blob);
+
+                    imageCompression(blob as File,{
+                        maxSizeMB: 1,
+                        fileType: 'image/jpeg',
+                        alwaysKeepResolution: true,
+                        initialQuality: 1
+                    }).then(compressedBlob => {
+                        resolve({
+                            blob: compressedBlob as Blob,
+                            imgURL: croppedImageUrl,
+                        });
+                    });
+                }, "image/jpeg", 1);
+            });
+        },
+        // Compress the size of image
+        compressImageSize(sourceImage: HTMLImageElement,resize: number, quality = 1): Promise<{
+            blob: Blob,
+            imgURL: string
+        }>{
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
+
+            const originalWidth = sourceImage.width;
+            const originalHeight = sourceImage.height;
+
+            canvas.width = originalWidth * resize;
+            canvas.height = originalHeight * resize;
+        
+            ctx.save();
+
+            ctx.drawImage(
+                sourceImage,
+                0,
+                0,
+                originalWidth * resize,
+                originalHeight * resize
+            )
+
+            ctx.restore();
+
+            return new Promise((resolve, reject) => {
+
+                canvas.toBlob((blob) => {
+                    // returning an error
+                    if (!blob) {
+                        reject(new Error("Canvas is empty"));
+                        return;
+                    }
+
+                    // creating a Object URL representing the Blob object given
+                    const croppedImageUrl = window.URL.createObjectURL(blob);
+                    
+                    imageCompression(blob as File,{
+                        maxSizeMB: 1,
+                        fileType: 'image/jpeg',
+                        alwaysKeepResolution: true,
+                        initialQuality: 1
+                    }).then(compressedBlob => {
+                        resolve({
+                            blob: compressedBlob as Blob,
+                            imgURL: croppedImageUrl,
+                        });
+                    }).catch(error =>{
+                        console.error(error);
+                    });
+                }, "image/jpeg", 1);
+            });
+        },
+        // Triggered as use slide the range of resize input
+        resizeHandler(value: number){
+            if(originalImageRef.current){
+                functions.compressImageSize(
+                    originalImageRef.current
+                    ,(value / 100))
+                .then(({blob, imgURL}) =>{
+                    setImgSrc(imgURL);
+                });
+            }
+        },
+        // Render element by allow resize
+        allowResize(allowResize: boolean){
+            return allowResize && (
+            <Form.Group controlId="resizeImage">
+                <Form.Label>Resizing:</Form.Label>
+                <Form.Control type="range" 
+                    min={10} 
+                    max={100} 
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{
+                        const value = parseInt(e.target.value);
+                        setOrientation(value, e);
+                    }}
+                    value={orientation}
+                ></Form.Control>
+                <p>{orientation} / 100 %</p>
+            </Form.Group>)
+        }
+    }
+    
     // Sync with props
     useEffect(() =>{
         setImgSrc(image);
@@ -183,7 +382,7 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
                 && completedCrop?.width 
                 && completedCrop?.height
             ){
-                getCroppedImage(
+                functions.getCroppedImage(
                     imageRef.current,
                     completedCrop,
                     orientation).then(({blob, imgURL}) =>{
@@ -196,206 +395,9 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
         }
     },[completedCrop]);
 
-    function centerAspectCrop(
-        mediaWidth: number,
-        mediaHeight: number,
-        aspect: number,
-        ) {
-        return centerCrop(
-            makeAspectCrop(
-            {
-                unit: '%',
-                width: 90,
-            },
-            aspect,
-            mediaWidth,
-            mediaHeight,
-            ),
-            mediaWidth,
-            mediaHeight,
-    )}
-    // Reload crop state
-    function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
-        e.currentTarget.crossOrigin = 'anonymous';
-        // setImgSrc(e.currentTarget);
-        if (aspect) {
-            const { width, height } = e.currentTarget;
-            setCrop(_ => centerAspectCrop(width, height, aspect));
-        }
-    }
-    // Triggered every move of cropper
-    function getCroppedImage(sourceImage:HTMLImageElement, 
-        cropConfig:PixelCrop, 
-        resizing = 100,
-        scale = 1,
-        rotate = 0) : Promise<{
-        blob: Blob,
-        imgURL: string,
-    }> {
-        // creating the cropped image from the source image
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-        const TO_RADIANS = Math.PI / 180
-        if(!ctx){
-            throw new Error("No 2d context");
-        }
-
-        const scaleX = sourceImage.naturalWidth / sourceImage.width;
-        const scaleY = sourceImage.naturalHeight / sourceImage.height;
-        
-        const pixelRatio = window.devicePixelRatio;
-
-        canvas.width = Math.floor(cropConfig.width * scaleX * pixelRatio) * (resizing / 100);
-        canvas.height = Math.floor(cropConfig.height * scaleY * pixelRatio) * (resizing / 100);
-
-        // ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-        ctx.scale(pixelRatio, pixelRatio);
-        ctx.imageSmoothingQuality = 'high';
-
-        const cropX = cropConfig.x * scaleX;
-        const cropY = cropConfig.y * scaleY;
-
-        const rotateRads = rotate * TO_RADIANS;
-        const centerX = sourceImage.naturalWidth / 2;
-        const centerY = sourceImage.naturalHeight / 2;
-
-        ctx.save()
-
-        // 5) Move the crop origin to the canvas origin (0,0)
-        ctx.translate(-cropX, -cropY)
-        // 4) Move the origin to the center of the original position
-        ctx.translate(centerX, centerY)
-        // 3) Rotate around the origin
-        ctx.rotate(rotateRads)
-        // 2) Scale the image
-        ctx.scale(scale, scale)
-        // 1) Move the center of the image to the origin (0,0)
-        ctx.translate(-centerX, -centerY)
-
-        ctx.drawImage(
-            sourceImage,
-            0,
-            0,
-            sourceImage.naturalWidth * (resizing / 100),
-            sourceImage.naturalHeight * (resizing / 100),
-            // 0,
-            // 0,
-            // sourceImage.naturalWidth,
-            // sourceImage.naturalWidth
-        );
-
-        ctx.restore();
-        
-        return new Promise((resolve, reject) => {
-            canvas.toBlob((blob) => {
-                // returning an error
-                if (!blob) {
-                    reject(new Error("Canvas is empty"));
-                    return;
-                }
-
-                // creating a Object URL representing the Blob object given
-                const croppedImageUrl = window.URL.createObjectURL(blob);
-
-                imageCompression(blob as File,{
-                    maxSizeMB: 1,
-                    fileType: 'image/jpeg',
-                    alwaysKeepResolution: true,
-                    initialQuality: 1
-                }).then(compressedBlob => {
-                    resolve({
-                        blob: compressedBlob as Blob,
-                        imgURL: croppedImageUrl,
-                    });
-                });
-            }, "image/jpeg", 1);
-        });
-    }
-    // Compress the size of image
-    function compressImageSize(sourceImage: HTMLImageElement,resize: number, quality = 1): Promise<{
-        blob: Blob,
-        imgURL: string
-    }>{
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d") as CanvasRenderingContext2D;
-
-        const originalWidth = sourceImage.width;
-        const originalHeight = sourceImage.height;
-
-        canvas.width = originalWidth * resize;
-        canvas.height = originalHeight * resize;
-        console.log(sourceImage);
-        ctx.save();
-
-        ctx.drawImage(
-            sourceImage,
-            0,
-            0,
-            originalWidth * resize,
-            originalHeight * resize
-        )
-
-        ctx.restore();
-
-        return new Promise((resolve, reject) => {
-
-            canvas.toBlob((blob) => {
-                // returning an error
-                if (!blob) {
-                    reject(new Error("Canvas is empty"));
-                    return;
-                }
-
-                // creating a Object URL representing the Blob object given
-                const croppedImageUrl = window.URL.createObjectURL(blob);
-                
-                imageCompression(blob as File,{
-                    maxSizeMB: 1,
-                    fileType: 'image/jpeg',
-                    alwaysKeepResolution: true,
-                    initialQuality: 1
-                }).then(compressedBlob => {
-                    resolve({
-                        blob: compressedBlob as Blob,
-                        imgURL: croppedImageUrl,
-                    });
-                }).catch(error =>{
-                    console.log(error);
-                });
-            }, "image/jpeg", 1);
-        });
-    }
-    // Triggered as use slide the range of resize input
-    function resizeHandler(value: number){
-        if(originalImageRef.current){
-            console.log("resize", value);
-            console.log(
-                originalImageRef.current.width,
-                originalImageRef.current.height
-            );
-            compressImageSize(
-                originalImageRef.current
-                ,(value / 100))
-            .then(({blob, imgURL}) =>{
-                setImgSrc(imgURL);
-            });
-        }
-    }
-
     return <>
-        {props.allowResize && <Form.Group controlId="resizeImage">
-            <Form.Label>Resizing:</Form.Label>
-            <Form.Control type="range" 
-                min={10} 
-                max={100} 
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>{
-                    const value = parseInt(e.target.value);
-                    setOrientation(value, e);
-                }}
-                value={orientation}
-            ></Form.Control>
-            <p>{orientation} / 100 %</p>
-        </Form.Group>}
+        {functions.allowResize(props.allowResize)}
+        
         <div style={{
             maxWidth: '100%',
             maxHeight: '100%',
@@ -403,8 +405,9 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
             overflowY: 'hidden',
         }}>
             <div className="pt-3" style={{
-                width: originalImageRef.current?.width,
-                height: originalImageRef.current?.height,
+                // width: originalImageRef.current?.width,
+                // height: originalImageRef.current?.height,
+                width: '100%',
             }}>
                 <ReactCrop crop={crop}
                     onChange={(_,percentageCrop) => setCrop(percentageCrop)}
@@ -413,9 +416,10 @@ const ImageCrop = ({image, onImageCropped,originalImageRef, ...props}:{
                     aspect={aspect}
                 >
                     <Image 
+                        style={{width: '100%',height: '100%'}}
                         alt="crop result"
                         src={imgSrc}
-                        onLoad={onImageLoad}
+                        onLoad={functions.onImageLoad}
                         ref={imageRef}
                     ></Image>
                 </ReactCrop>

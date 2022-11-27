@@ -8,6 +8,7 @@ import {
 import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
 import {
     InvoiceCreationDTO,
+    OrderStatus,
     PostProductRequest,
     PostProductRequestDTO,
     ProductFilter,
@@ -80,6 +81,22 @@ export class UserAppAPIInstance extends AppAPIInstance {
                 userId,
                 type,
             },
+        });
+    }
+    getUserList(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('list', config);
+    }
+    blockOrUnlockUser(
+        userId: number,
+        isBlocked: boolean,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put('block', null, {
+            params: {
+                isBlocked,
+                userId,
+            },
+            ...config,
         });
     }
 }
@@ -161,12 +178,21 @@ export class CategoryAppAPIInstance extends AppAPIInstance {
             },
         });
     }
-    postNewCategory(body: object, config?: AxiosRequestConfig) {
+    postNewCategory(
+        body: {
+            name: string;
+            parentCategoryId?: number;
+        },
+        config?: AxiosRequestConfig
+    ) {
         return this.apiInstance.post('category', body, config);
     }
     updateSingleCategory(
         id: string,
-        body: object,
+        body: {
+            name: string;
+            parentCategoryId?: number;
+        },
         config?: AxiosRequestConfig
     ) {
         return this.apiInstance.put('category', body, {
@@ -261,6 +287,22 @@ export class ProductAppAPIInstance extends AppAPIInstance {
             },
         });
     }
+    getUnInspectedProducts(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('uninspected', config);
+    }
+    permitProductByAdmin(
+        isAccepted: boolean,
+        productId: number,
+        config?: AxiosRequestConfig
+    ) {
+        return this.apiInstance.put('permission', null, {
+            ...config,
+            params: {
+                isAccepted,
+                productId,
+            },
+        });
+    }
 }
 
 export class SellerAppAPIInstance extends AppAPIInstance {
@@ -312,6 +354,9 @@ export class SellerAppAPIInstance extends AppAPIInstance {
             }
         );
     }
+    getSellerList(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('list', config);
+    }
 }
 
 export class PaymentApiInstance extends AppAPIInstance {
@@ -353,5 +398,32 @@ export class PaymentApiInstance extends AppAPIInstance {
                 userId,
             },
         });
+    }
+    getOrderById(orderId: number, config?: AxiosRequestConfig) {
+        return this.apiInstance.get('order/' + orderId, {
+            ...config,
+        });
+    }
+    searchOrder() {}
+    getOrderSeller() {}
+}
+
+export class DashboardApiInstance extends AppAPIInstance {
+    constructor() {
+        const bearerToken: string =
+            LocalStorageService.getLoginUser() as string;
+
+        const axiosInstance = axios.create({
+            baseURL: `${host}/api/dashboard`,
+            withCredentials: true,
+            headers: {
+                Authorization: `Bearer ${bearerToken}`,
+            },
+        });
+        super(new AuthInterceptorBehavior(), axiosInstance);
+    }
+    getRecentSeller(config?: AxiosRequestConfig) {}
+    getRecentProduct(config?: AxiosRequestConfig) {
+        return this.apiInstance.get('product/recent', config);
     }
 }

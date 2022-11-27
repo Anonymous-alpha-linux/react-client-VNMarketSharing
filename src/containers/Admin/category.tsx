@@ -1,543 +1,607 @@
-import { AxiosError, AxiosResponse } from 'axios';
-import { Formik, FormikHelpers } from 'formik';
+import { AxiosError } from 'axios';
+import { Formik, FormikHelpers, FormikProps } from 'formik';
 import React from 'react'
-import {Spinner, Table, Button, Form, Stack} from 'react-bootstrap';
+import { Button, Form, Stack, Modal, Row, Col, Spinner, ButtonGroup, ToggleButton, ToggleButtonGroup} from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import * as yup from 'yup';
+import { AiOutlinePlus } from 'react-icons/ai';
 import { categoryAPIInstance } from '../../config';
-import { useTypedSelector,axiosErrorHandler } from '../../hooks';
-import {NodeValue, Tree as TreeView} from '../../components';
+import { useActions, useTypedSelector } from '../../hooks';
+import { NodeValue, Tree as TreeView } from '../../components';
+import { Category } from '../../containers';
+import './index.css';
+import { BiTable } from 'react-icons/bi';
+import { MdAccountTree } from 'react-icons/md';
 
-enum FormStatus {
-    CREATE,
-    EDIT,
-    DELETE,
-    NONE
-}
-interface CategoryData {
-    id: string,
-    name:string,
-    level: number,
-    subCategoryCount: number; 
-    hasOpened: boolean;
-    subCategories?: CategoryData[];
-}
-interface CategoryState {
-    data: CategoryData[],
-    keyTables: string[],
-    loading: boolean,
-    error: string,
-    page: number,
-    take: number,
-    hasChanges?: FormStatus
-}
-export const Category = () => {
+export const CategoryPage = () => {
     const {data: {isAuthorized}} = useTypedSelector(state => state.auth);
     const [state, setState] = React.useState<CategoryState>({
         loading: false,
         error: '',
         data: [],
+        displayedData: [],
         keyTables: ["id", "name", "level","subcategory", "action"],
         page: 1,
         take: 5,
-        hasChanges: FormStatus.NONE
+        hasChanges: FormStatus.NONE,
+        displayedModal: false,
+        editIndex: 0,
+        mode: 'table'
     });
+    const navigatedFormStates = React.useRef<any>();
 
-    React.useEffect(() =>{
-        if(!state.data.length){
-            getItem();
-        }
-    },[isAuthorized]);
+    const submitButtonRef= React.useRef<HTMLButtonElement>(null);
 
-    function getItem(){
-        setState(o =>({
-            ...o,
-            error: '',
-            loading: true,
-        }));
-        categoryAPIInstance.getCategories({page: state.page, take: state.take}).then(({data}) =>{
+    const functions = {
+        load(loading: boolean){
             setState(o =>({
                 ...o,
-                data: data,
-                loading: false,
                 error: '',
-                page: o.page + 1,
+                loading: loading,
             }));
-        }).catch((error: Error | AxiosError | any) =>{
-            let errorResponse = "Failed";
-            if(error instanceof AxiosError){
-                errorResponse = error.response?.data || errorResponse;
-            };
+        },
+        displayModal(display: boolean){
+            setState(o => ({
+                ...o,
+                displayedModal: display
+            }));
+        },
+        changeFormStatus(status: FormStatus, states?: any){
+            navigatedFormStates.current = states;
             setState(o =>({
                 ...o,
-                data: o.data,
-                loading: false,
-                error: errorResponse,
+                hasChanges: status
             }));
-        })
-    }
-    function updateItem(newRecord: CategoryData, type: FormStatus, rootId?: string){
-        if(state.data){
-            if(type === FormStatus.CREATE && rootId){
-                setState(o => ({
+        },
+        changeView(mode: 'table' | 'treeview'){
+            setState(o =>({
+                ...o,
+                mode: mode
+            }));
+        },
+        getItem(){
+            this.load(true);
+            categoryAPIInstance.getAllCategories().then(({data}) =>{
+                if(Array.isArray(data)){
+                    setState(o =>({
                         ...o,
-                        data: o.data.map(r => (r.id === rootId) ? {...r,subCategoryCount: r.subCategoryCount + 1} : r)
-                    }),
-                );
-            }
-            else if(type === FormStatus.CREATE){
-                setState(o => ({
-                    ...o,
-                    data: [...o.data, newRecord]
-                }));
-            }
-            else if(type === FormStatus.EDIT){
-                setState(o=>({
-                    ...o,
-                    data: o.data.map(oldRecord => (oldRecord.id === newRecord.id)? newRecord : oldRecord)
-                }));
-            }
-            else if(type === FormStatus.DELETE){
-                setState(o => ({
-                    ...o,
-                    data: o.data.filter(d => d.id !== newRecord.id)
-                }));
-            }
-        }
-    }
-    function replaceStateData(oldCategoryDataLst: CategoryData[],updatedCategoryData:CategoryData): CategoryData[]{
-        return oldCategoryDataLst.map(oldCategoryData =>{
-            if(updatedCategoryData.id === oldCategoryData.id){
-                return {...oldCategoryData, 
-                    hasOpened: updatedCategoryData.hasOpened,
-                    level: updatedCategoryData.level,
-                    name: updatedCategoryData.name,
-                    subCategories: updatedCategoryData.subCategories,
-                    subCategoryCount: updatedCategoryData.subCategoryCount
-                };
-            }
-            else if(oldCategoryData.subCategories){
-                const newSubCategories = replaceStateData(oldCategoryData.subCategories, updatedCategoryData);
-                return {
-                    ...oldCategoryData,
-                    subCategories: newSubCategories
-                };
-            }
-            return oldCategoryData;
-        });
-    }
-    function hasNewChanges(){
-        setState(o =>({
-            ...o,
-            hasChanges: FormStatus.CREATE
-        }));
-    }
-    function hasClosedChanges(){
-        setState(o =>({
-            ...o,
-            hasChanges: FormStatus.NONE
-        }))
-    }
-    function transformStatetoTreeViewInput(source: CategoryData[], setCurrentIcon?: () => React.ReactNode): NodeValue[]{
-        return source.map(category=>{
-            return {
-                key: category.id,
-                label: category.name,
-                level: category.level,
-                icon: !!setCurrentIcon ? setCurrentIcon() : <span>{'Icon - '}</span>,
-                childrenAmount: category.subCategoryCount,
-                childrenCurrent: category.subCategories ? category.subCategories.length : 0,
-                hasOpened: category.hasOpened,
-                subNodes: !!category.subCategories ? transformStatetoTreeViewInput(category.subCategories, setCurrentIcon) : []
-            }
-        })
-    } 
-    function transformTreeViewInputtoState(source: NodeValue[]): CategoryData[]{
-        return source.map(n=>{
-            return {
-                id: n.key,
-                name: n.label,
-                level: n.level,
-                hasOpened: n.hasOpened,
-                subCategoryCount: n.childrenAmount,
-                subCategories: n.subNodes ? transformTreeViewInputtoState(n.subNodes) : [],
-            }
-        })
-    }
-    function mergeTwoObjectsWithUnique(entryArray: any[], dataArray: any[], key: string): CategoryData[]{
-        return entryArray.reduce((prev, cur) => {
-            const hasNoDuplicated = dataArray.every(item => {
-                if(item[key] === cur[key]){
-                    prev = [...prev, item];
-                    return false;
-                }
-                return true;
-            });
-        
-            if(hasNoDuplicated){
-                prev = [...prev, cur];
-            }
-            return prev;
-        },[]);
-    }
-    return (<Stack direction='vertical' gap={1} className="align-items-start">
-        <TreeView data={transformStatetoTreeViewInput(state.data)}
-            setCurrentNode={async (currentNode) => {
-                function getSubItem(parentId: string) : Promise<CategoryData[]> {
-                    // setState(o =>({
-                    //     ...o,
-                    //     error: '',
-                    //     loading: true,
-                    // }));
-                    return new Promise<CategoryData[]>((resolve) => categoryAPIInstance.getCategories({
-                        parentId: parseInt(parentId), 
-                        level: currentNode.level + 1,
-                        page: Math.floor(currentNode.childrenCurrent / state.take) || 1,
-                        take: state.take
-                    }).then(({data}:{data: CategoryData[]}) =>{
-                        // const updatedCategoryData:CategoryData = {
-                        //         id: currentNode.key,
-                        //         name: currentNode.label,
-                        //         level: currentNode.level,
-                        //         hasOpened: currentNode.hasOpened,
-                        //         subCategories: data,
-                        //         subCategoryCount: currentNode.childrenAmount
-                        // }
-                        // setState(o =>{
-                        //     const newData:CategoryData[] = replaceStateData(state.data, updatedCategoryData);
-                        //     return ({
-                        //     ...o,
-                        //     loading: false,
-                        //     error: '',
-                        //     data: newData
-                        //     });
-                        // });
-                        resolve(data);
-                    }).catch((error: Error | AxiosError | any) =>{
-                        let errorResponse = "Failed";
-                        if(error instanceof AxiosError){
-                            errorResponse = error.response?.data || errorResponse;
-                        };
-                        toast(errorResponse);
-                        // setState(o =>({
-                        //     ...o,
-                        //     data: o.data,
-                        //     loading: false,
-                        //     error: errorResponse,
-                        // }));
+                        data: data,
+                        loading: false,
+                        error: '',
+                        page: o.page + 1,
                     }));
                 }
-                const newList = await getSubItem(currentNode.key);
-                return transformStatetoTreeViewInput(newList);
-            }}>
-        </TreeView>
-        <Table responsive='lg'>
-            <thead>
-                <tr>
-                    {state.keyTables.map((key,index) =>{
-                        return <th key={index + 1}>{key}</th>
-                    })}
-                </tr>
-            </thead>
-
-            <tbody>
-                {!state.loading && state?.data && state.data.map((record,index) =>{
-                    return  <CategoryTableRow key={index + 1}    
-                        setRecord={(newRecord,type,rootId) => !rootId ? updateItem(newRecord,type): updateItem(newRecord,type, rootId)}
-                        record={record}>
-                    </CategoryTableRow>
+            }).catch(error =>{
+                let msg;
+                if(error instanceof AxiosError){
+                    msg = error.response?.data || "Failed";
+                    toast.error(msg);
+                }
+            });
+        },
+        updateItem(newRecord?: CategoryData, type?: FormStatus, rootId?: string){
+            if(state.data && newRecord && type){
+                if(type === FormStatus.CREATE && rootId){
+                    setState(o => ({
+                            ...o,
+                            data: o.data.map(r => (r.id === rootId) ? {...r,subCategoryCount: r.subCategoryCount + 1} : r)
+                        }),
+                    );
+                }
+                else if(type === FormStatus.CREATE){
+                    setState(o => {
+                        const newData = [...o.data.map(c => Number(c.id) === newRecord.parentId ? {
+                            ...c,
+                            subCategories: c.subCategories ? [...c.subCategories, newRecord] : [newRecord],
+                            subCategoryCount: c.subCategoryCount + 1
+                        } : c), newRecord];
+                        
+                        return {
+                            ...o,
+                            data: newData
+                        }
+                    });
+                }
+                else if(type === FormStatus.EDIT){
+                    setState(o=>({
+                        ...o,
+                        data: o.data.map(oldRecord => (oldRecord.id === newRecord.id)? newRecord : oldRecord)
+                    }));
+                }
+                else if(type === FormStatus.DELETE){
+                    setState(o => ({
+                        ...o,
+                        data: o.data.filter(d => d.id !== newRecord.id)
+                    }));
+                }
+            }
+            this.getItem();
+        },
+        replaceStateData(oldCategoryDataLst: CategoryData[],updatedCategoryData:CategoryData): CategoryData[]{
+            return oldCategoryDataLst.map(oldCategoryData =>{
+                if(updatedCategoryData.id === oldCategoryData.id){
+                    return {...oldCategoryData, 
+                        hasOpened: updatedCategoryData.hasOpened,
+                        level: updatedCategoryData.level,
+                        name: updatedCategoryData.name,
+                        subCategories: updatedCategoryData.subCategories,
+                        subCategoryCount: updatedCategoryData.subCategoryCount
+                    };
+                }
+                else if(oldCategoryData.subCategories){
+                    const newSubCategories = functions.replaceStateData(oldCategoryData.subCategories, updatedCategoryData);
+                    return {
+                        ...oldCategoryData,
+                        subCategories: newSubCategories
+                    };
+                }
+                return oldCategoryData;
+            });
+        },
+        submitForCreation(values: {name: string; parentId?: number}){
+            categoryAPIInstance.postNewCategory({
+                name: values.name,
+                parentCategoryId: values.parentId
+            }).then((response) =>{
+                if(response.data){
+                    toast.success("Added new category successfully")
+                    functions.updateItem(response.data, FormStatus.CREATE, values?.parentId?.toString?.());
+                    functions.displayModal(false);
+                }
+            }).catch(error =>{
+                let msg;
+                if(error instanceof AxiosError){
+                    msg = error.response?.data || "Post failed";
+                }
+                toast.error(msg);
+            });
+        },
+        submitForEdit(values: {id?: string; name: string; parentId?: number}){
+            if(values?.id){
+                categoryAPIInstance.updateSingleCategory(values.id, {
+                    name: values.name,
+                    parentCategoryId: values.parentId
+                }).then((response) =>{
+                    toast.success("Edit successfully");
+                    functions.updateItem(response.data, FormStatus.EDIT);
+                    functions.displayModal(false);
+                }).catch(error =>{
+                    let msg;
+                    if(error instanceof AxiosError){
+                        msg = error.response?.data || "Edit failed";
+                        toast.error(msg);
+                    }
+                });
+            }
+        },
+        submitForDelete(values: {id: string, parentId?: number}){
+            categoryAPIInstance.deleteSingleCategory(values.id)
+                .then(_ =>{
+                    toast.success("Deleted successfully");
+                    this.updateItem(state.data.find(p => p.id === values.id), FormStatus.DELETE, values?.parentId?.toString?.());
+                    this.displayModal(false);
+                }).catch(error =>{
+                    toast.error(error);
+                });
+        },
+        renderTableOrTree(mode: 'table' | 'treeview'){
+            return state.loading ? (<Spinner animation="border"></Spinner>)
+            : mode === 'table' ? (<Category.CategoryTable 
+                filterKeys={["name", "level"]}
+                data={state.data.map(row =>{
+                    const {hasOpened, parentId, subCategoryCount,...props} = row;
+                    const name = parentId ? state.data.find(p => Number(p.id) === parentId)?.name : "None";
+                    return {
+                        ...props,
+                        "sub number": subCategoryCount,
+                        "parent name": name
+                    };
                 })}
-
-                {state.loading && <tr>
-                    <td colSpan={4}>
-                        <Spinner animation='border'></Spinner>
-                    </td>
-                </tr>}
-
-                {state.hasChanges !== FormStatus.NONE && <tr>
-                        <Formik initialValues={{name: ''}} 
-                            validationSchema={yup.object().shape({
-                                name: yup.string().required('*Required'),
-                            })}
-                            onSubmit={(values: {name: string}, formHelpers:FormikHelpers<{name: string}>) =>{
-                                axiosErrorHandler(() =>{
-                                    categoryAPIInstance.postNewCategory(values).then((response) =>{
-                                        updateItem(response.data,FormStatus.CREATE);
-                                    });
-                                },
-                                errorMsg =>{
-                                    toast(errorMsg);
+                onRead={(index) => {
+                    setState(o =>({
+                        ...o,
+                        displayedModal: true,
+                        editIndex: Number(state.data?.[index]?.id),
+                        hasChanges: FormStatus.READ
+                    }));
+                }}
+                onEdit={(index) => {
+                    setState(o =>({
+                        ...o,
+                        displayedModal: true,
+                        editIndex: Number(state.data?.[index]?.id) || 0,
+                        hasChanges: FormStatus.EDIT
+                    }));
+                }}
+                onDelete={(index) => {
+                    setState(o =>({
+                        ...o,
+                        displayedModal: true,
+                        editIndex: Number(state.data?.[index]?.id) || 0,
+                        hasChanges: FormStatus.DELETE
+                    }));
+                }}
+            ></Category.CategoryTable>)
+            : (<CategoryTreeview data={state.displayedData}></CategoryTreeview>)
+        },
+        renderModal(){
+            return (
+                <Formik 
+                    initialValues={state.hasChanges !== FormStatus.EDIT ? 
+                        {name: '', parentId: navigatedFormStates.current} : 
+                        {name: state.data.find(p => Number(p.id) === state.editIndex)?.name || "", 
+                         parentId: state.data.find(p => Number(p.id) === state.editIndex)?.parentId}} 
+                    enableReinitialize={true}
+                    validationSchema={yup.object().shape({
+                        name: yup.string().required(),
+                    })}
+                    onSubmit={(values, formHelpers: FormikHelpers<{name: string, parentId?: number}>) =>{
+                        formHelpers.setSubmitting(false);
+                        switch (state.hasChanges) {
+                            case FormStatus.CREATE:
+                                this.submitForCreation({
+                                    name: values.name,
+                                    parentId: values.parentId
+                                })
+                                return;
+                            case FormStatus.EDIT:
+                                this.submitForEdit({
+                                    id: state.data.find(p => Number(p.id) === state.editIndex)?.id,
+                                    name: values.name,
+                                    parentId: values.parentId
                                 });
+                                return;
+                        }
+                    }}>
+                    {(props) =>{
+                        return (
+                            <Modal show={state.displayedModal} onHide={() => functions.displayModal(false)}>
+                                <Modal.Header closeButton>
+                                    <i>{
+                                        state.hasChanges === FormStatus.CREATE ? 
+                                        "Post new category" :
+                                        state.hasChanges === FormStatus.EDIT ?
+                                        "Edit category" :
+                                        state.hasChanges === FormStatus.READ ?
+                                        "Category detail" :
+                                        "Warning"
+                                    }</i>
+                                </Modal.Header>
+                                <Modal.Body>
+                                    {
+                                        state.hasChanges === FormStatus.CREATE ?
+                                        this.renderModalOfCreate(props) :
+                                        state.hasChanges === FormStatus.EDIT ?
+                                        this.renderModalOfEdit(props) :
+                                        state.hasChanges === FormStatus.READ ?
+                                        this.renderModalOfRead(state.data.find(p => Number(p.id) === state.editIndex)!) :
+                                        this.renderDeleteDialog()
+                                    }
+                                </Modal.Body>
+                                <Modal.Footer>
+                                    <Button variant="danger" 
+                                        onClick={() => functions.displayModal(false)}>
+                                        Close
+                                    </Button>
+                                    <Button 
+                                        variant="success" 
+                                        onClick={() =>{
+                                            if(state.hasChanges === FormStatus.DELETE){
+                                                this.submitForDelete({
+                                                    id: state.data.find(p => Number(p.id) === state.editIndex)!.id
+                                                });
+                                                return;
+                                            }
+                                            else if(state.hasChanges === FormStatus.READ){
+                                                functions.changeFormStatus(FormStatus.CREATE, state.data.find(p => Number(p.id) === state.editIndex)!.id);
+                                                return;
+                                            }
+                                            submitButtonRef.current?.click?.();
+                                        }}>
+                                            {state.hasChanges === FormStatus.DELETE ? "Confirm" :
+                                             state.hasChanges === FormStatus.READ ? "Add With This" :
+                                             "Save Changes"}
+                                    </Button>
+                                </Modal.Footer>
+                            </Modal>
+                        )
+                    }}
+                </Formik>
+            )
+        },
+        renderModalOfCreate(formikProps: FormikProps<{name: string; parentId?: number;}>){
+            return (
+                <Form onSubmit={(e) =>{
+                    e.preventDefault();
+                    formikProps.handleSubmit(e);
+                    }}>
+                    <Form.Group className="mb-3" controlId="creationForm.Root">
+                        <Form.Label>Category Base</Form.Label>
+                        <Form.Select
+                            name="parentId"
+                            onChange={formikProps.handleChange}
+                            value={navigatedFormStates?.current}
+                            autoFocus
+                        >
+                            <option value={0}>{"New category"}</option>
+                            {state.data.map(c => c.level < 2 && (
+                                <option value={c.id} key={c.id}>{c.name}</option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="creationForm.Name">
+                        <Form.Label>Category Name</Form.Label>
+                        <Form.Control
+                            name="name"
+                            isInvalid={formikProps.touched.name && !!formikProps.errors.name}
+                            onBlur={formikProps.handleBlur}
+                            onChange={formikProps.handleChange}
+                            placeholder="Ex: Panty, Shoe, ..."
+                        />
+                        <Form.Control.Feedback type="invalid">{formikProps.errors.name}</Form.Control.Feedback>
+                    </Form.Group>
+                    <button ref={submitButtonRef} 
+                    type="submit"
+                    style={{display: 'none'}}></button>
+                </Form>
+            )
+        },
+        renderModalOfEdit(formikProps: FormikProps<{name: string; parentId?: number;}>){
+            return (
+                <Form onSubmit={(e) =>{
+                    e.preventDefault();
+                    formikProps.handleSubmit(e);
+                    }}>
+                    <Form.Group className="mb-3" controlId="creationForm.Root">
+                        <Form.Label>Category Base</Form.Label>
+                        <Form.Select
+                            name="parentId"
+                            value={formikProps.values?.parentId}
+                            onChange={formikProps.handleChange}
+                            autoFocus
+                        >
+                            <option value={0}>{"New category"}</option>
+                            {state.data.map(c => c.level < 2 && (
+                                <option value={c.id} key={c.id + 1}>{c.name}</option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+                    <Form.Group className="mb-3" controlId="creationForm.Name">
+                        <Form.Label>Category Name</Form.Label>
+                        <Form.Control
+                            name="name"
+                            value={formikProps.values.name}
+                            onChange={formikProps.handleChange}
+                            placeholder="Ex: Panty, Shoe, ..."
+                        />
+                        <Form.Control.Feedback type="invalid">{formikProps.errors.name}</Form.Control.Feedback>
+                    </Form.Group>
+                    <button ref={submitButtonRef} 
+                    type="submit"
+                    style={{display: 'none'}}></button>
+                </Form>
+            )
+        },
+        renderModalOfRead(data: CategoryData){
+            return (
+                <section>
+                    <Row>
+                        <Col>Name</Col>
+                        <Col>{data.name}</Col>
+                    </Row>
+                    <Row>
+                        <Col>Level</Col>
+                        <Col>{data.level}</Col>
+                    </Row>
+                    <Row>
+                        <Col>Sub-categories count</Col>
+                        <Col>{data.subCategoryCount}</Col>
+                    </Row>
+                    {!!data.parentId && <Row>
+                        <Col>Parent node</Col>
+                        <Col>{state.data.find(p => Number(p.id) === data.parentId)?.name}</Col>
+                    </Row>}
+                    <Row>
+                        <Col>Sub-nodes</Col>
+                        <Col data-pointer>
+                            {this.renderSubCategories(Number(data.id))}
+                        </Col>
+                    </Row>
+                </section>
+            )
+        },
+        renderDeleteDialog(){
+            return (
+                <div>
+                    <h4>Do you want to remove this item ?</h4>
+                    <i>If you confirmed, this item will be removed permenantly</i>
+                </div>
+            )
+        },
+        renderSubCategories(id: number){
+            return <Stack>
+                {state.data.map(item =>{
+                    return item.parentId === id && (
+                        <span key={item.id}>
+                            - {item.name}
+                        </span>)
+                })}
+            </Stack>
+        },
+    }
 
-                                formHelpers.setSubmitting(false);
-                                formHelpers.setErrors({});
-                                formHelpers.setTouched({});
-                                formHelpers.setValues({name: ''});
+    React.useEffect(() =>{
+        functions.getItem();
+    },[isAuthorized]);
+
+    return (<Stack direction='vertical' gap={1} className="align-items-start p-3">
+        <Row className='px-3 pb-3 w-100' fluid={"true"} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '2rem 1.2rem'
+            }}>
+            <Col xs={'auto'} sm={'auto'}>
+                <h3 style={{textTransform: 'uppercase'}}>Category List</h3>
+                <i>View and Edit category</i>
+            </Col>
+            <Col xs={'auto'} sm={'auto'}>
+                <Stack>
+                    <Button 
+                    onClick={() => {
+                        navigatedFormStates.current = null;
+                        setState(o =>({
+                            ...o,
+                            displayedModal: true,
+                            hasChanges: FormStatus.CREATE
+                        }));
+                    }}
+                    style={{
+                        backgroundColor: 'var(--clr-logo)',
+                        fontWeight: '600',
+                        border: 'none',
+                        padding: '0.6em 0.8em'
+                    }}>
+                        <span style={{
+                        marginRight: '1.2em',
+                        verticalAlign: "text-top"
                         }}>
-                            {(props) =>{
-                                return (<>
-                                    <td></td>
+                            <AiOutlinePlus></AiOutlinePlus>
+                        </span> 
+                        <span>
+                            Add New Category
+                        </span>
+                    </Button>
 
-                                    <td>
-                                        <Form onSubmit={props.handleSubmit}>
-                                            <Form.Control value={props.values.name} 
-                                            isInvalid={props.touched.name && !!props.errors.name}
-                                            onChange={props.handleChange}
-                                            onBlur={props.handleBlur}
-                                            name="name"></Form.Control>
-                                            <Form.Control.Feedback type="invalid">{props.errors.name}</Form.Control.Feedback>
-                                        </Form>                                    
-                                    </td>
+                    <ToggleButtonGroup className="category-page__toggle mt-2"
+                        type="radio" 
+                        name="options" 
+                        defaultValue={'table'} 
+                        onChange={(value) =>{
+                            functions.changeView(value);
+                        }}>
+                        <ToggleButton className="category-page__toggle--button" id="table-view" value={'table'}>
+                            <BiTable></BiTable>
+                        </ToggleButton>
+                        <ToggleButton className="category-page__toggle--button" id="table-tree" value={'treeview'}>
+                            <MdAccountTree></MdAccountTree>
+                        </ToggleButton>
+                    </ToggleButtonGroup>
+                </Stack>
+            </Col>
+        </Row>
 
-                                    <td>0</td>
+        {functions.renderTableOrTree(state.mode)}
 
-                                    <td>
-                                        <Button variant="success" onClick={() => props.handleSubmit()}>+</Button>
-                                        <Button variant="danger" onClick={hasClosedChanges}>-</Button>
-                                    </td>
-                                </>
-                            )}}
-                        </Formik>
-                </tr>}
-
-                <tr>
-                    <td colSpan={5}>
-                        <Button variant="primary" onClick={hasNewChanges}>+</Button>
-                    </td>
-                </tr>           
-            </tbody>
-        </Table>
+        {functions.renderModal()}
     </Stack>
     )
 }
 
+export const CategoryTreeview = ({data}: {data: CategoryData[]}) =>{
+    const functions = {
+        transformStateToTreeViewInput(source: CategoryData[], setCurrentIcon?: () => React.ReactNode): NodeValue[]{
+            return source.map(category=>{
+                return {
+                    key: category.id,
+                    label: category.name,
+                    level: category.level,
+                    icon: setCurrentIcon?.(),
+                    childrenAmount: category.subCategoryCount,
+                    childrenCurrent: category.subCategories ? category.subCategories.length : 0,
+                    hasOpened: category.hasOpened,
+                    subNodes: !!category.subCategories ? functions.transformStateToTreeViewInput(category.subCategories, setCurrentIcon) : []
+                }
+            })
+        },
+        transformTreeViewInputToState(source: NodeValue[]): CategoryData[]{
+            return source.map(n=>{
+                return {
+                    id: n.key,
+                    name: n.label,
+                    level: n.level,
+                    hasOpened: n.hasOpened,
+                    subCategoryCount: n.childrenAmount,
+                    subCategories: n.subNodes ? this.transformTreeViewInputToState(n.subNodes) : [],
+                }
+            })
+        },
+        mergeTwoObjectsWithUnique(entryArray: any[], dataArray: any[], key: string): CategoryData[]{
+            return entryArray.reduce((prev, cur) => {
+                const hasNoDuplicated = dataArray.every(item => {
+                    if(item[key] === cur[key]){
+                        prev = [...prev, item];
+                        return false;
+                    }
+                    return true;
+                });
+            
+                if(hasNoDuplicated){
+                    prev = [...prev, cur];
+                }
+                return prev;
+            },[]);
+        },
+    }
 
-type CategoryTableRowProps = {
-    record: CategoryData,
-    setRecord?: (newRecord: CategoryData,type: FormStatus,rootId?: string) => void,
-    children?: React.ReactNode,
-    handleResult?: (props: CategoryTableRowResultProps) => React.ReactNode,
+    return (
+        <div className="p-3 w-100" style={{background: '#fff', minHeight: "50vh"}}>
+            <TreeView data={functions.transformStateToTreeViewInput(data.filter(p => p.level == 0))}
+                setCurrentNode={(currentNode) => {
+                    return functions.transformStateToTreeViewInput(data.filter(p => p?.parentId && p.parentId === Number(currentNode.key)));
+                }}>
+            </TreeView>
+        </div>
+    )
+}
+
+export enum FormStatus {
+    READ,
+    CREATE,
+    EDIT,
+    DELETE,
+    NONE,
+}
+
+export interface CategoryData {
+    id: string;
+    name: string;
+    level: number;
+    parentId?: number;
+    subCategoryCount: number;
+    hasOpened: boolean;
+    subCategories?: CategoryData[];
+}
+
+export interface CategoryState {
+    data: CategoryData[];
+    displayedData: CategoryData[];
+    keyTables: string[];
+    loading: boolean;
+    error: string;
+    page: number;
+    take: number;
+    hasChanges?: FormStatus;
+    displayedModal: boolean;
+    editIndex: number;
+    mode: 'table' | 'treeview';
+}
+
+export type CategoryTableRowProps = {
+    record: CategoryData;
+    setRecord?: (
+        newRecord: CategoryData,
+        type: FormStatus,
+        rootId?: string
+    ) => void;
+    children?: React.ReactNode;
+    handleResult?: (props: CategoryTableRowResultProps) => React.ReactNode;
     handleCreate?: (props: CategoryData) => any;
     handleUpdate?: (props: CategoryData) => any;
     handleDelete?: (id: string) => void;
     handleBlur?: () => void;
+};
+
+export interface CategoryTableRowResultProps {
+    values?: CategoryData[];
 }
-interface CategoryTableRowResultProps {
-    values?: CategoryData[],
-}
-const CategoryTableRow = React.memo(({record,setRecord,handleBlur}:CategoryTableRowProps) => {
-    const [state, setState] = React.useState<Partial<CategoryState>>({
-        loading: false,
-        error: '',
-        data: record.subCategories || [],
-        hasChanges: FormStatus.NONE,
-        page: 1,
-        take: 5
-    });
-
-    function getSubItem(parentId: string){
-        setState(o =>({
-            ...o,
-            error: '',
-            loading: true,
-        }));
-        categoryAPIInstance.getCategories({parentId: parseInt(parentId), 
-            level: record.level + 1,
-            page: state.page,
-            take: state.take,
-        }).then(({data}) =>{
-            setState(o =>({
-                ...o,
-                data: !!o.data ? [...o.data,...data] : data,
-                loading: false,
-                error: '',
-                page: o.page && o.page + 1
-            }));
-        }).catch((error: Error | AxiosError | any) =>{
-            let errorResponse = "Failed";
-            if(error instanceof AxiosError){
-                errorResponse = error.response?.data || errorResponse;
-            };
-            setState(o =>({
-                ...o,
-                data: o.data,
-                loading: false,
-                error: errorResponse,
-            }));
-        })
-    }
-    function updateItem(newRecord: CategoryData, type: FormStatus, rootId?:string){
-        if(state.data){
-            if(type === FormStatus.CREATE && rootId){
-                setState(o => ({
-                        ...o,
-                        data: !!o.data ? o.data.map(r =>(r.id === rootId) ? {...r,subCategoryCount: r.subCategoryCount + 1} : r) : o.data
-                    })
-                );
-            }
-            else if(type===FormStatus.CREATE){
-                setState(o => ({
-                    ...o,
-                    data: !!o.data? [...o.data, newRecord]:[newRecord]
-                }));
-            }
-            else if(type === FormStatus.EDIT){
-                setState(o=>({
-                    ...o,
-                    data: !!o.data ? o.data?.map(oldRecord => (oldRecord.id === newRecord.id)? newRecord : oldRecord): []
-                }));
-            }
-            else if(type === FormStatus.DELETE){
-                setState(o => ({
-                    ...o,
-                    data: !!o.data ? o.data.filter(d => d.id !== newRecord.id):o.data
-                }))
-            }
-        }
-    }
-    function deleteItem(recordId: string){
-        categoryAPIInstance.deleteSingleCategory(recordId).then(response =>{
-            toast("Deleted item");
-            setRecord && setRecord(record, FormStatus.DELETE);
-            hasClosedChanges();
-        }).catch((err: Error | AxiosError | any)=>{
-            let errorResponse = "Delete failed";
-            if(err instanceof AxiosError) {
-                errorResponse = err.response?.data as string || errorResponse;
-            } 
-            toast(errorResponse);
-        });
-    }
-    function hasNewChanges(){
-        setState(o =>({
-            ...o,
-            hasChanges: FormStatus.CREATE
-        }));
-    }
-    function hasChanges(){
-        setState(o =>({
-            ...o,
-            hasChanges: FormStatus.EDIT
-        }));
-    }
-    function hasClosedChanges(){
-        setState(o =>({
-            ...o,
-            hasChanges: FormStatus.NONE
-        }))
-    }
-    
-
-    return <>
-        <Formik initialValues={{name: '', parentCategoryId: record.id}} 
-            validationSchema={yup.object().shape({
-                name: yup.string().required('*Required'),
-                parentCategoryId: yup.string().nullable()
-            })}
-            onSubmit={(values: {name: string, parentCategoryId: string}, formHelpers:FormikHelpers<{name: string,parentCategoryId: string}>) =>{
-                if(state.hasChanges === FormStatus.CREATE){
-                    axiosErrorHandler(() =>{
-                        categoryAPIInstance.postNewCategory(values)
-                        .then((response) => {
-                            const {data}: AxiosResponse = response;
-                            return categoryAPIInstance.getSingleCategory(data.id)
-                        })
-                        .then((response) =>{
-                            updateItem(response.data, FormStatus.CREATE);
-                            setRecord && setRecord(response.data, FormStatus.CREATE, record.id);
-                        });
-                    },
-                    errorMsg =>{
-                        toast(errorMsg);
-                    });
-                }
-                else if(state.hasChanges === FormStatus.EDIT){
-                    axiosErrorHandler(
-                        () =>{
-                            categoryAPIInstance.updateSingleCategory(record.id,values).then(({data}) =>{
-                                return data && setRecord && setRecord(data,FormStatus.EDIT);
-                            });
-                        },
-                        errorMsg =>{
-                        toast(errorMsg);
-                    })
-                }
-
-                formHelpers.setSubmitting(false);
-                formHelpers.setErrors({});
-                formHelpers.setTouched({});
-                formHelpers.setValues({name: '', parentCategoryId:''});
-        }}>
-            {(props) =>{
-                return (<>
-                    {/* Show record information  */}
-                    <tr>
-                        <td>#C{record.id}</td>
-                        <td>{record.name}</td>
-                        <td>{record.level}</td>
-                        <td>{record.subCategoryCount}</td>
-                        <td>
-                            {/* {!!record.subCategoryCount && <Button onClick={() => getSubItem(record.id)}>Expand</Button>} */}
-                            <Button variant='success' onClick={hasNewChanges}>Add SubCategory</Button>
-                            <Button variant='warning' onClick={() => {
-                                hasChanges();
-                                props.setFieldValue("name", record.name);
-                                props.setFieldValue("parentCategoryId", record.id);
-                            }}>Update SubCategory</Button>
-                            <Button variant="danger" onClick={() => deleteItem(record.id)}>Delete Item</Button>
-                        </td>
-                    </tr>
-
-                    {/* Add or Edit record */}
-                    {state.hasChanges !== FormStatus.NONE && <tr>
-                        <td></td>
-
-                        <td>
-                            <Form onSubmit={props.handleSubmit} onBlur={() =>{
-                                handleBlur && handleBlur();
-                                hasClosedChanges();
-                            }}>
-                                <Form.Control value={props.values.name} 
-                                isInvalid={props.touched.name && !!props.errors.name}
-                                onChange={props.handleChange}
-                                autoFocus
-                                onBlur={props.handleBlur}
-                                name="name"></Form.Control>
-                                <Form.Control.Feedback type="invalid">{props.errors.name}</Form.Control.Feedback>
-                            </Form>                                    
-                        </td>
-
-                        <td>{state.hasChanges === FormStatus.CREATE? record.level + 1: record.level}</td>
-
-                        <td>
-                            <Button variant="success" onClick={() => props.handleSubmit()}>+</Button>
-                            <Button variant="danger" onClick={() =>{    
-                                hasClosedChanges();
-                            }}>x</Button>
-                        </td>
-                    </tr>}
-                </>
-                )}
-            }
-        </Formik>
-
-        {/* Loading waiter */}
-        {state.loading && <tr>
-            <td colSpan={4}>
-                <Spinner animation="border"></Spinner>
-            </td>
-        </tr>}
-
-        {/* Expanding subitems */}
-        {!!state.data?.length && state.data?.map((sub,index) => <CategoryTableRow key={index + 1} 
-        setRecord={(newRecord,type,recordId)=> updateItem(newRecord,type,recordId)} 
-        record={sub}></CategoryTableRow>)}
-    
-        {/* Load more signature */}
-        {(!!state.data && state.data?.length < record.subCategoryCount) && <tr>
-            <td colSpan={4}>
-                <Button variant="success" onClick={() => getSubItem(record.id)}>+</Button>
-            </td>
-        </tr>}
-    </>
-})

@@ -5,6 +5,7 @@ interface AuthState {
     data: {
         email: string;
         role: string;
+        roles: string[];
         isAuthorized: boolean;
     };
     loading: boolean;
@@ -16,6 +17,7 @@ const initialState: AuthState = {
     data: {
         email: '',
         role: '',
+        roles: [],
         isAuthorized: false,
     },
     loading: false,
@@ -39,7 +41,10 @@ const authReducer = (
             return {
                 loading: false,
                 error: '',
-                data: action.payload,
+                data:{ 
+                    ...state.data,
+                    ...action.payload
+                },
                 status: ResponseStatus.SUCCESS,
             };
         case ActionTypes.LOGIN_FAILED:
@@ -122,7 +127,10 @@ const authReducer = (
             return {
                 loading: false,
                 error: '',
-                data: action.payload,
+                data: {
+                    ...state.data,
+                    ...action.payload
+                },
                 status: ResponseStatus.SUCCESS,
             };
         case ActionTypes.CONFIRM_ACCOUNT_FAILED:
@@ -146,6 +154,7 @@ const authReducer = (
                 error: '',
                 status: ResponseStatus.SUCCESS,
                 data: {
+                    ...state.data,
                     email: state.data?.email,
                     role: state.data?.role,
                     isAuthorized: true,

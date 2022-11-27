@@ -12,6 +12,7 @@ export const Tree = React.memo((props: TreeProps) => {
     function updateTreeWithNewNode(newNode: NodeValue){
         props.data && props.getTreeData && props.getTreeData(props.data);
     }
+
     React.useEffect(() =>{
         if(props.data){
             setState(o =>({
@@ -21,7 +22,7 @@ export const Tree = React.memo((props: TreeProps) => {
         }
     },[props.data]);
 
-    return <ul style={{listStyleType:'square'}}>
+    return <ul>
         {state.data && state.data.map((node) => {
             return (
             <Node key={node.key}
@@ -40,9 +41,12 @@ const Node =(props: NodeProps) => {
         error: '',
         data: props.node
     });
-    React.useEffect(() =>{ setState(o=>({
-        ...o,
-        data:props.node})) },[props.node]);
+    React.useEffect(() =>{ 
+        setState(o=>({
+            ...o,
+            data:props.node
+        })); 
+    },[props.node]);
     function setNewNodeData(newNodeData:NodeValue){
         // Update current tree again
         props.updateTreeWithNewNode(newNodeData);
@@ -60,30 +64,30 @@ const Node =(props: NodeProps) => {
     }
     return (
         <li style={{
-                listStyleType: 'circle',
+                listStyleType: 'none',
                 cursor: 'pointer'
             }}>
 
-                {!props.hasCustomState && <>
-                    <span className="tree-node-icon" onClick={async () => {
-                        state.data.hasOpened = !state.data.hasOpened;
-                        if(state.data.childrenAmount > state.data.childrenCurrent){
-                            setState(o =>({...o, loading: true, error: ''}));
-                            const newDataList = props.setCurrentNode && await props.setCurrentNode(props.node);
-                            setSubDataList(newDataList || []);
-                        }
-                    }}>
-                        {state.data.icon}
-                    </span>
+            {!props.hasCustomState && <div onClick={async () => {
+                    state.data.hasOpened = !state.data.hasOpened;
+                    if(state.data.childrenAmount > state.data.childrenCurrent){
+                        setState(o =>({...o, loading: true, error: ''}));
+                        const newDataList = props.setCurrentNode && await props.setCurrentNode(props.node);
+                        setSubDataList(newDataList || []);
+                    }
+                }}>
+                <span className="tree-node-icon">
+                    {state.data.icon}
+                </span>
 
-                    <span>
-                        {state.data.label}
-                    </span>
-                </>}
+                <span>
+                    {state.data.label}
+                </span>
+            </div>}
 
-                {props.hasCustomState && props.customState && props.customState(state.data)}
+            {props.hasCustomState && props.customState && props.customState(state.data)}
 
-                {state.loading && <Spinner animation='border'></Spinner>}
+            {state.loading && <Spinner animation='border'></Spinner>}
 
             {state.data.hasOpened && (<Tree data={state.data.subNodes} setCurrentNode={props.setCurrentNode} getTreeData={props.getTreeData} isLoadMore></Tree>)}
         </li>

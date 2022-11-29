@@ -110,12 +110,15 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
 
   // User persistent
   React.useEffect(()=>{
+    
     if(localStorageUser){
       getUser();
       getUserInfo();
       return;
     }
     const jwt = getCookie("jwt");
+    console.log(jwt);
+    
     if(jwt){
       AppLocalStorage.setLoginUser(jwt);
       setLocalStorageUser(AppLocalStorage.getLoginUser());

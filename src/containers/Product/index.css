@@ -95,7 +95,7 @@
 }
 
 .singleProduct__label--list label[data-label-product-type~="sold"] {
-    background-color: #d6d6d6;
+    background-color: #646464;
 }
 
 .singleProduct__tag {

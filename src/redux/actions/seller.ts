@@ -1,5 +1,5 @@
 import { ActionTypes } from '../action-types';
-import { GetUserPageResponseDTO } from '../../models';
+import { GetOrderResponseDTO, GetUserPageResponseDTO } from '../../models';
 
 export type SellerAction =
     | IGetUserPageAction
@@ -13,7 +13,10 @@ export type SellerAction =
     | IChangeUserPageAvatarFailed
     | IChangeUserPageBanner
     | IChangeUserPageBannerSuccess
-    | IChangeUserPageBannerFailed;
+    | IChangeUserPageBannerFailed
+    | IGetMerchantOrderList
+    | IGetMerchantOrderListSuccess
+    | IGetMerchantOrderListFailed;
 
 export interface IGetUserPageAction {
     type: ActionTypes.GET_USER_PAGE;
@@ -68,5 +71,21 @@ export interface IChangeUserPageBannerSuccess {
 
 export interface IChangeUserPageBannerFailed {
     type: ActionTypes.CHANGE_USER_PAGE_BANNER_FAILED;
+    payload: string;
+}
+
+export interface IGetMerchantOrderList {
+    type: ActionTypes.GET_MERCHANT_ORDER_LIST;
+}
+
+export interface IGetMerchantOrderListSuccess {
+    type: ActionTypes.GET_MERCHANT_ORDER_LIST_SUCCESS,
+    payload: {
+        merchantOrderList: GetOrderResponseDTO[];
+    }
+}
+
+export interface IGetMerchantOrderListFailed {
+    type: ActionTypes.GET_MERCHANT_ORDER_LIST_FAILED;
     payload: string;
 }

@@ -21,6 +21,8 @@ import { getPhoto, transformImagetoString } from '../../utils';
 import "./index.css";
 import './postProduct.css';
 import { toast } from 'react-toastify';
+import { NotificationHubContext, Hub } from '../hubcontainer';
+import { ProgressAlert } from '../../containers/User';
 
 // Main form
 export const PostProductForm = () => {
@@ -31,6 +33,9 @@ export const PostProductForm = () => {
     });
     const {data: {id}} = useTypedSelector(p => p.seller);
     const {postNewProduct} = useActions();
+    const [percentage, setPercentage] = React.useState<number>(0);
+    const {notificationHub} = React.useContext(NotificationHubContext) as Hub;
+
     const functions = {
         prevStep(){
             setState(o =>({
@@ -77,8 +82,17 @@ export const PostProductForm = () => {
                 },
                 onError: (error) =>{
                     toast.error(error?.response?.data as string || "Failed");
-                }
+                },
+                onUploadProgress: (event: ProgressEvent) =>{
+                    let percentage = Math.floor((event.loaded * 100) / event.total);
+                    setPercentage(percentage);
+                    if(percentage === 100 && notificationHub.hasConnected()){
+                        notificationHub.notifyNewProduct();                        
+                    }
+                },
             });
+
+            
         }
     }
 
@@ -95,6 +109,7 @@ export const PostProductForm = () => {
 
     return (
         <section className="p-5">
+
             <div className="pb-5">
                 <h2>Upload your new product</h2>
                 <i>Please select the properties for your product</i>
@@ -167,6 +182,13 @@ export const PostProductForm = () => {
                         )
                     }}
             </Formik>
+
+            {percentage > 0 && <ProgressAlert 
+                bodyText={percentage === 100 ? "Uploaded successfully" : "Sending your product information to server..."}
+                progressProps={{
+                    now: percentage,
+                    label: `${percentage}%`
+                }} onClose={() => setPercentage(0)}></ProgressAlert>}
         </section>
     )
 }

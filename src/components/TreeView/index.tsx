@@ -3,7 +3,7 @@ import {Spinner} from 'react-bootstrap';
 import {NodeValue,NodeProps,TreeProps,TreeState, NodeElementState} from './type';
 export * from './type';
 
-export const Tree = React.memo((props: TreeProps) => {
+export const Tree = (props: TreeProps) => {
     const [state,setState] = React.useState<TreeState>({
         loading: false,
         error: '',
@@ -33,7 +33,7 @@ export const Tree = React.memo((props: TreeProps) => {
             </Node>
         )})}
     </ul>
-})
+}
 
 const Node =(props: NodeProps) => {
     const [state,setState] = useState<NodeElementState>({
@@ -76,9 +76,9 @@ const Node =(props: NodeProps) => {
                         setSubDataList(newDataList || []);
                     }
                 }}>
-                <span className="tree-node-icon">
+                {!!state.data.childrenAmount && <span className="tree-node-icon me-3">
                     {state.data.icon}
-                </span>
+                </span>}
 
                 <span>
                     {state.data.label}

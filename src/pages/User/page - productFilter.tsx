@@ -4,33 +4,11 @@ import axios from 'axios';
 import { To, useLocation, useSearchParams } from 'react-router-dom';
 import { useTypedSelector, useActions } from '../../hooks';
 import { AiOutlineRight } from 'react-icons/ai';
-import { CustomLink, Input } from '../../components';
+import { CustomLink, Input, Rating } from '../../components';
 import { HiViewGrid, HiViewList } from 'react-icons/hi';
 import { GetProductResponseDTO } from '../../models';
 import { Product } from '../../containers';
 
-
-type LocationState = {
-    from: string;
-  } | {
-    fromNavigation: boolean;
-    categoryId: number;
-  };
-
-enum FilterView {
-  GRID_VIEW = 'grid',
-  STACK_VIEW = "stack"
-}
-
-enum SortType {
-  LATEST_ITEM = 'Newest Items',
-  BEST_SELLING = "Best Selling",
-  ALPHA_ASC = "A to Z",
-  ALPHA_DES = "Z to A",
-  BY_REVIEW = "By Review",
-  PRICE_ASC = "Price: Ascending",
-  PRICE_DESC = "Price: Descending"
-}
 
 export function ProductFilter() {
     const {data: {categoryList}, error: categoryError} = useTypedSelector(s => s.category);
@@ -299,27 +277,111 @@ const FilterPanel = () => {
       default: 10000
     }}></FilterPanelCatalog>
 
-    <FilterPanelCatalog title={"Brands"} filterValue={{
+    <FilterPanelCatalog title={"Reviews"} filterValue={{
+      type: FilterType.RATE
+    }}></FilterPanelCatalog>
+
+    {/* <FilterPanelCatalog title={"Purchased"} filterValue={{
+      type: FilterType.RATE
+    }}></FilterPanelCatalog> */}
+
+    <div className='p-2 my-3' data-text-align="middle" data-pointer style={{background: 'var(--clr-logo)', color: "#fff", borderRadius: '2px'}}>
+      <>Apply</>
+    </div>
+    {/* <FilterPanelCatalog title={"Brands"} filterValue={{
       type: FilterType.LIST_VIEW,
       values: [{
         title: 'Gucci',
         value: "0"
       }]
-    }}></FilterPanelCatalog>
+    }}></FilterPanelCatalog> */}
   </aside>
 }
 
+const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
+
+  return <div className='py-2' style={{
+    borderTop: "1px solid #000",
+  }}>
+    <h4 style={{
+      textTransform: 'uppercase'
+    }} className="p-2">{props.title}</h4>
+
+    <article className='px-3'>
+      {
+        // props.filterValue.type === FilterType.LIST_VIEW
+        props.filterValue.type === FilterType.LIST_VIEW ? 
+        (<Stack gap={3}>
+          {props.filterValue.values.map((filter,index) =>{
+            return <div key={index + 1} style={filter.style}>
+              {!!filter.link ?
+              <CustomLink to={filter.link}>
+                <span style={{fontSize:'0.8rem'}}>{filter.title}</span>
+              </CustomLink>: 
+              <span style={{fontSize:'0.8rem'}}>{filter.title}</span>}
+              {!!filter.subs?.length && <i style={{float:'right'}}><AiOutlineRight></AiOutlineRight></i>}
+            </div>
+          })}
+        </Stack>)
+        : props.filterValue.type === FilterType.PRICE_RANGE ? 
+        (<Stack className="py-2">
+          <Input.MultiRangeSlider min={props.filterValue.min}
+            max={props.filterValue.max}
+            onChange={(min, max) =>{
+            }}></Input.MultiRangeSlider>
+        </Stack>)
+        : (<Stack className="py-2">
+          {Array.from(Array(5).keys()).map(value => {
+            return (<Row>
+              <Col>
+                <Rating.Star percentage={(5 - value) * 20}></Rating.Star>
+              </Col>
+              <Col>
+                <span className="ms-2">{value + 1}</span>
+              </Col>
+            </Row>)
+          })}
+        </Stack>)
+      }
+    </article>
+  </div>
+}
+
+type LocationState = {
+  from: string;
+} | {
+  fromNavigation: boolean;
+  categoryId: number;
+};
+
+enum FilterView {
+  GRID_VIEW = 'grid',
+  STACK_VIEW = "stack"
+}
+
+enum SortType {
+  LATEST_ITEM = 'Newest Items',
+  BEST_SELLING = "Best Selling",
+  ALPHA_ASC = "A to Z",
+  ALPHA_DES = "Z to A",
+  BY_REVIEW = "By Review",
+  PRICE_ASC = "Price: Ascending",
+  PRICE_DESC = "Price: Descending"
+}
+
+
 enum FilterType {
   LIST_VIEW,
-  PRICE_RANGE
+  PRICE_RANGE,
+  RATE
 }
 
 type FilterPanelCatalogProps = {
   title : string;
   filterValue: {
     type: FilterType.LIST_VIEW,
-    values: FilterValue[]
-  } | FilterPriceValue;
+    values: FilterValue[];
+  } | FilterPriceValue | FilterRateValue;
 }
 
 type FilterValue = {
@@ -337,37 +399,8 @@ type FilterPriceValue = {
   default?: number;
 }
 
-const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
-
-  return <div className='py-2' style={{
-    borderTop: "1px solid #000",
-  }}>
-    <h4 style={{
-      textTransform: 'uppercase'
-    }} className="p-2">{props.title}</h4>
-
-    <article className='px-3'>
-      {
-        props.filterValue.type === FilterType.LIST_VIEW
-        ? <Stack gap={3}>
-          {props.filterValue.values.map((filter,index) =>{
-            return <div key={index + 1} style={filter.style}>
-              {!!filter.link ?
-              <CustomLink to={filter.link}>
-                <span style={{fontSize:'0.8rem'}}>{filter.title}</span>
-              </CustomLink>: 
-              <span style={{fontSize:'0.8rem'}}>{filter.title}</span>}
-              {!!filter.subs?.length && <i style={{float:'right'}}><AiOutlineRight></AiOutlineRight></i>}
-            </div>
-          })}
-        </Stack>
-        : <Stack>
-          <Input.MultiRangeSlider min={props.filterValue.min}
-            max={props.filterValue.max}
-            onChange={(min, max) =>{
-            }}></Input.MultiRangeSlider>
-        </Stack>
-      }
-    </article>
-  </div>
+type FilterRateValue = {
+  type: FilterType.RATE,
+  // value?: number
 }
+

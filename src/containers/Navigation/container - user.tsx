@@ -158,6 +158,10 @@ const Searchbar = (props:{isOpened?: boolean, style?: React.CSSProperties}) => {
         searchProductList();
     },[input]);
 
+    React.useEffect(() =>{
+        console.log(results);
+    },[results]);
+
     function searchProductList(){
         const searchItems = productList.filter(p => {
             const foundString = p.name.toLowerCase().search(input.toLowerCase()) > -1 
@@ -203,22 +207,23 @@ const SearchItem = (props: {product: GetProductResponseDTO}) => {
     return <>
         <Row gap={2} className={"searchItem__container"}>
             <Col sm={"auto"}>
-                <div style={{
+                <div className="m-2" style={{
                     background: `url(${props.product.urls[0] || defaultImage}) center / 100% no-repeat`,
-                    width:"120px",
-                    height:'120px'
+                    width:"80px",
+                    height:'80px'
                 }}>
 
                 </div>
                 {/* <img src={props.product.urls[0] || defaultImage} width={"120px"} height={"120px"}></img> */}
             </Col>
             <Col>
-                <div className="py-3">
+                <div className="py-3" style={{color: '#000'}}>
                     <CustomLink to={`/product/${props.product.id}`}>
                         <h4 className="searchItem__title--name" title={props.product.name}>{props.product.name}</h4>
                     </CustomLink>
-                    <div>{props.product.price}</div>
-                    <div><Rating.Star percentage={0.7}></Rating.Star></div>
+                    <div>{props.product.price.toLocaleString("en-US")} VND</div>
+                    <div><Rating.Star percentage={0.7}></Rating.Star>
+                    <span className="ms-1">({props.product.reviewAmount})</span></div>
                 </div>
             </Col>
         </Row>

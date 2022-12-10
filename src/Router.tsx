@@ -4,7 +4,6 @@ import {Account, Chat, User,Admin,AppNav, Footer} from './containers';
 import {AdminPage, SellerPage, UserPage} from './pages';
 import {useTypedSelector} from './hooks';
 import { Container, Spinner } from "react-bootstrap";
-import { sellerAPIInstance } from './config'
 import { ResponseStatus } from './models';
 
 const roles = ['Administrator', 'User', 'Merchant']
@@ -29,11 +28,13 @@ function Router() {
                             <Account.Login></Account.Login>
                         </RouteAuth>
                     }></Route>
+
                     <Route path="register" element={
                         <RouteAuth>
                             <Account.Register></Account.Register>
                         </RouteAuth>
                     }></Route>
+
                     <Route path="confirmEmail">
                         <Route index element={<RouteAuth> 
                             <Account.EmailConfirmation.NotConfirmedEmail></Account.EmailConfirmation.NotConfirmedEmail>
@@ -44,15 +45,18 @@ function Router() {
                             </>
                         }></Route>
                     </Route>
+
                     <Route path="confirm/changePassword" element={<RouteAuth>
                         <Account.SendEmailToChangePassword></Account.SendEmailToChangePassword>
                     </RouteAuth>}>
                     </Route>
+
                     <Route path="changePassword">
                         <Route index element={<RouteAuth>
                             <Account.ChangePassword></Account.ChangePassword>
                         </RouteAuth>}></Route>
                     </Route>
+
                     <Route path="*" element={<Container className="p-5">
                         <h3 data-text-align="center">
                             Empty page
@@ -64,6 +68,7 @@ function Router() {
                     <Outlet></Outlet>
                 </>}>
                     <Route index element={<UserPage.ProductPage></UserPage.ProductPage>}></Route>
+
                     <Route path="product" element={<Outlet></Outlet>}>
                         <Route index element={<UserPage.ProductFilter></UserPage.ProductFilter>}></Route>
                         <Route path=":id" element={<UserPage.SingleProduct></UserPage.SingleProduct>}></Route>
@@ -77,6 +82,11 @@ function Router() {
                     <Route path="cart" element={<Outlet></Outlet>}>
                         <Route index element={<UserPage.CartPage></UserPage.CartPage>}></Route>
                     </Route>
+
+                    <Route path="notify" element={<>
+                        <UserPage.Notification></UserPage.Notification>
+                    </>
+                    }></Route>
                 </Route>
 
                 <Route path="account" element={<RouteGuard>
@@ -85,7 +95,7 @@ function Router() {
                         </UserPage.AccountPage>
                     </RouteGuard>
                 }>
-                    <Route path="dashboard" element={<h1>Client Dashboard</h1>}></Route>
+                    <Route path="dashboard" element={<UserPage.UserDashboard></UserPage.UserDashboard>}></Route>
 
                     <Route path="profile" element={<User.Profile></User.Profile>}></Route>
 
@@ -117,7 +127,7 @@ function Router() {
                 {/* Seller */}
                 <Route path="sale" element={
                     <SellerAuth>
-                        <RouteGuard roles={roles}>
+                        <RouteGuard roles={["Merchant"]}>
                             <AppNav.SellerSidebar>
                                 <Outlet></Outlet>
                             </AppNav.SellerSidebar>
@@ -147,6 +157,7 @@ function Router() {
                     <Route path="expense"></Route>
                     <Route path="*" element={<h2>Not found</h2>}></Route>
                 </Route>
+
                 {/* Go to when user doesn't register as merchant role */}
                 <Route path="sale/register" element={<SellerPage.SellerProfile></SellerPage.SellerProfile>}></Route>
 
@@ -186,7 +197,8 @@ function Router() {
 }
 
 export function RouteGuard(props: {children: JSX.Element,roles?: string[]}){
-    const {data} = useTypedSelector(state => state.auth); 
+    const {data: {isAuthorized, ...authDataProps}, loading: authLoading, ...authPropss} = useTypedSelector(state => state.auth); 
+    const {data: {...userDataProps}, status, loading: userLoading, ...userProps} = useTypedSelector(state => state.user);
     const location = useLocation();
 
     function validateRoles(roles: string[], authorizes: string[]):boolean {
@@ -198,19 +210,39 @@ export function RouteGuard(props: {children: JSX.Element,roles?: string[]}){
         });
     }
 
-    if(!data.isAuthorized) return <Navigate to='/auth/login' state={{from: location}} replace></Navigate>
-    if(props?.roles && !validateRoles(props.roles, data.roles)) return (<Navigate to={'/'} replace></Navigate>)
+    React.useEffect(() => {
+        console.log("loading", authLoading && userLoading);
+        console.log("status", status);
+        console.log("roles", roles);
+        console.log("isAuthorized", isAuthorized)
+    }, []);
+
+    if(authLoading && userLoading) return (
+        <Container className="p-5" data-text-align="middle">
+            <Spinner animation="border"></Spinner>
+        </Container>);
+    
+    if(!isAuthorized) return (<Navigate to='/auth/login' state={{from: location}} replace></Navigate>);
+    
+    if(props?.roles && !validateRoles(props.roles, roles) && status === ResponseStatus.SUCCESS) return (<Navigate to={'/'} replace></Navigate>);
+    
     return (props.children);
 }
 
 const RouteAuth = (props: {children: JSX.Element}) => {
-    const {data} = useTypedSelector(state => state.auth); 
+    const {data, loading, status} = useTypedSelector(state => state.auth); 
     const location = useLocation();
     const locationState = location.state as {
         from?: Location
     };
 
-    if(data.isAuthorized) return (<Navigate to={locationState?.from?.pathname || "/"} replace></Navigate>)
+    if(loading) return (
+        <Container className="p-5" data-text-align="middle">
+            <Spinner animation="border"></Spinner>
+        </Container>
+    )
+
+    if(data.isAuthorized && status === ResponseStatus.SUCCESS) return (<Navigate to={locationState?.from?.pathname || "/"} replace></Navigate>)
 
     return props.children;
 }
@@ -221,6 +253,7 @@ const SellerAuth = (props: {children: JSX.Element}) => {
     const navigate = useNavigate();
 
     React.useEffect(() =>{
+        console.log(status === ResponseStatus.FAILED);
         if(status === ResponseStatus.FAILED){
             navigate("/sale/register", {
                 replace: true,
@@ -231,7 +264,7 @@ const SellerAuth = (props: {children: JSX.Element}) => {
             setIsAllowed(true);
             return;
         }
-    },[data]);
+    },[status]);
 
     if(loading) return (
         <Container className="p-5" data-text-align="middle">

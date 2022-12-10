@@ -12,9 +12,8 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
   const {data: {productList, max, page, take}} = useTypedSelector(s => s.product);
   const {data: {categoryList, page: categoryPage}, error: categoryError} = useTypedSelector(s => s.category);
   const {data: {userId}} = useTypedSelector(s => s.user);
-  const {getUser, postNewProduct, getProductList, getCategoryList, getAddressList, getUserInfo, getSellerInfo} = useActions();
-  const {loading, data } = useTypedSelector(state => state.auth);
-  const {data: sellerData} = useTypedSelector(state => state.seller); 
+  const {getUser, postNewProduct, getProductList, getCategoryList, getAddressList, getUserInfo, getSellerInfo, getNotifications} = useActions();
+  const {loading } = useTypedSelector(state => state.auth);
 
   const _isMounted = React.useRef<boolean>(false);
   const _hasGotProduct = React.useRef<boolean>(false);
@@ -127,11 +126,12 @@ export const Layout: React.FC<{children: any}> = ({children}) => {
 
   React.useEffect(() =>{
     if(userId){
+      console.log(userId);
       getAddressList(Number(userId));
       getSellerInfo(Number(userId));
+      getNotifications(Number(userId));
     }
-  },[userId])
-
+  },[userId]);
 
   if(loading && !_isMounted.current) return <Spinner animation='border' role='status'></Spinner>
 

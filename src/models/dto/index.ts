@@ -6,3 +6,4 @@ export * from './UserPageDTO';
 export * from './PaymentDTO';
 export * from './AddressDTO';
 export * from './SellerDTO';
+export * from './NotificaitonDTO';

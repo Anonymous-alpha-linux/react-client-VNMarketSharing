@@ -42,10 +42,10 @@ export const CheckoutPage: React.FC<{}> = () => {
                     Your cart 
                     <span style={{fontSize: '1.2rem'}}>({itemList.length} ITEM)</span>
                 </h3>
-                <article>
+                <article style={{background: "#fff"}}>
                     <table style={{width: '100%'}}>
                         <tr>
-                            <th>
+                            <th className="p-2">
                                 <input type="checkbox" defaultChecked={false}></input>
                             </th>
                             <th className='p-2'>ITEM</th>
@@ -56,17 +56,17 @@ export const CheckoutPage: React.FC<{}> = () => {
                         {
                             itemList.map(({detailIndexes,...cartItem},index) =>{
                                 return <tr key={index + 1}>
-                                    <td>
+                                    <td className="p-2">
                                         <input type={"checkbox"} defaultChecked={cartItem.checked}></input>
                                     </td>
                                     <td className='py-2'>
                                         <Row xs={2} sm={2}>
                                             <Col sm="4" md="3">
-                                                <div style={{background: `url(${cartItem.image}) center / 100% no-repeat, #fff`, width: '180px', height: '200px', margin: '0 auto'}}>
+                                                <div style={{background: `url(${cartItem.image}) center / 100% no-repeat, #fff`, width: '120px', height: '120px', margin: '0 auto'}}>
                                                 </div>
                                             </Col>
                                             <Col sm="8">
-                                                <h5>{cartItem.item.name}</h5>
+                                                <h4>{cartItem.item.name}</h4>
                                                 <div>
                                                     <label>Receiver :</label>
                                                     <p>{addressList.find(a => a.id === cartItem.addressId)!.receiverName}</p>
@@ -80,12 +80,12 @@ export const CheckoutPage: React.FC<{}> = () => {
                                             </Col>
                                         </Row>
                                     </td>
-                                    <td>
-                                        <i>{cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && detailIndexes?.[1] && p.productClassifyKeyId === detailIndexes?.[0] && p.productClassifyValueId === detailIndexes?.[1])?.price 
-                                        || cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && p.productClassifyKeyId === detailIndexes?.[0])?.price 
-                                        || cartItem.price}</i>
+                                    <td className="p-2">
+                                        <i>{cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && detailIndexes?.[1] && p.productClassifyKeyId === detailIndexes?.[0] && p.productClassifyValueId === detailIndexes?.[1])?.price.toLocaleString("en-US") 
+                                        || cartItem.item?.productDetails?.find(p => detailIndexes?.[0] && p.productClassifyKeyId === detailIndexes?.[0])?.price.toLocaleString("en-US")
+                                        || cartItem.price.toLocaleString("en-US")}</i>
                                     </td>
-                                    <td>
+                                    <td className="p-2">
                                         <Input.NumberInput 
                                             value={cartItem.quantity} 
                                             min={1} 
@@ -97,10 +97,10 @@ export const CheckoutPage: React.FC<{}> = () => {
                                             }}
                                             ></Input.NumberInput>
                                     </td>
-                                    <td>
-                                        {cartItem.total}
+                                    <td className="p-2">
+                                        {cartItem.total.toLocaleString("en-US")}
                                     </td>
-                                    <td>
+                                    <td className="p-2">
                                         <span style={{color:'red'}} onClick={() => removeItemFromCart(index)}>
                                             <TiTimes></TiTimes>
                                         </span>
@@ -286,7 +286,7 @@ const CartInvoice: React.FC<{}> = () =>{
         }}>
         {
             ({values, errors,touched ,handleChange, setFieldValue,handleSubmit}) =>{
-                return <div className="px-4 py-4" style={{width: '460px', float: 'right', background: '#fff'}}>
+                return <div className="px-4 py-4" style={{width: '460px', float: 'right', background: '#fff', boxShadow: "rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px"}}>
                     <Form onSubmit={handleSubmit}>
                     {/* <pre>{JSON.stringify(values, null, 4)}</pre> */}
                         <Row className="py-2">
@@ -433,12 +433,12 @@ export const CheckoutSuccessPage: React.FC<{}> = () =>{
         }
     },[location]);
     
-    if(state.status === "failed") return <h1>Failed to payment</h1>
+    if(state.status === "failed") return <h3>Failed to payment</h3>
 
     return (<section>
         <Container>
             <h3 className="py-3">Success Payment</h3>
-            <article className="px-3" style={{border: '1px solid white', background: "#fff"}}>
+            <article className="p-3 mb-5" style={{border: '1px solid white', background: "#fff", boxShadow: "rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px"}}>
                 <div className="py-2">
                     <Row>
                         <Col>Transaction No :</Col> <Col>{state.data?.id}</Col>

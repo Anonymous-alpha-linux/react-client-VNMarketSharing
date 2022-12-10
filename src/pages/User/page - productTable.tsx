@@ -290,13 +290,13 @@ export function ProductTablePage() {
       data={state.data}
       headers={["name", "product classifies","price", "inventory", "inPages", "Sold quantity", "categories"]}
       onRead={(rowNumber) =>{
-        console.log("Read",state.data[rowNumber]);
+        // console.log("Read",state.data[rowNumber]);
         setState(o => ({...o,showModal: true, currentIndex: rowNumber, mode: "read"}));
       }}
-      onUpdate={(rowNumber) =>{
-        // console.log("Update",state.data[rowNumber]);
-        setState(o => ({...o,showModal: true, currentIndex: rowNumber, mode: "update"}));
-      }}
+      // onUpdate={(rowNumber) =>{
+      //   // console.log("Update",state.data[rowNumber]);
+      //   setState(o => ({...o,showModal: true, currentIndex: rowNumber, mode: "update"}));
+      // }}
       onDelete={(rowNumber) =>{
         // console.log("Deleted", state.data[rowNumber]);
         setState(o => ({...o,showModal: true, currentIndex: rowNumber, mode: "delete"}));

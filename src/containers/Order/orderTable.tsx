@@ -10,7 +10,7 @@ interface OrderTableState<Values> {
 
 type OrderTableProps<Values> = OrderTableState<Values> & {
   headers?: string[];
-  onRead: (item: Values) => void;
+  // onRead: (item: Values) => void;
   onAccept: (item: Values) => void;
   onDeny: (item: Values) => void;
 }
@@ -30,9 +30,9 @@ export function OrderTable<Values extends TableValues>(props: OrderTableProps<Va
             headers={getKeysofObject(props.data)}
             data={searchMatchesResult}
             perPageEntities={5}
-            onRead={(rowNumber) => {
-              props.onRead(searchMatchesResult[rowNumber]);
-            }}
+            // onRead={(rowNumber) => {
+            //   props.onRead(searchMatchesResult[rowNumber]);
+            // }}
             onAccept={rowNumber => {
               props.onAccept(searchMatchesResult[rowNumber]);
             }}

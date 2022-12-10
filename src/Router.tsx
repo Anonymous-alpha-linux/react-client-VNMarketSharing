@@ -155,7 +155,11 @@ function Router() {
                         <Route path=":id" element={<h3>Single Order list</h3>}></Route>
                     </Route>
                     <Route path="expense"></Route>
-                    <Route path="*" element={<h2>Not found</h2>}></Route>
+                    <Route path="*" element={<Container>
+                        <h2>
+                            Not found
+                        </h2>
+                    </Container>}></Route>
                 </Route>
 
                 {/* Go to when user doesn't register as merchant role */}

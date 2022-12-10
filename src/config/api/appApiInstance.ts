@@ -1,5 +1,5 @@
 import { getNotifications } from './../../redux/action-creators/user';
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 import { serialize } from 'object-to-formdata';
 import {
     IInterceptorBehavior,
@@ -377,6 +377,18 @@ export class SellerAppAPIInstance extends AppAPIInstance {
                 merchantId,
             }
         });
+    }
+    traverseOrder(orderId: number,status: OrderStatus, config?: AxiosRequestConfig & {
+        onSuccess?: () => void;
+        onError?: (error: AxiosError) => void;
+    }){
+        return this.apiInstance.get("order/traverse", {
+            ...config,
+            params: {
+                orderId,
+                status: status
+            }
+        })
     }
 }
 

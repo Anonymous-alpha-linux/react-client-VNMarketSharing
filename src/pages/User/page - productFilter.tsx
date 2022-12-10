@@ -337,7 +337,7 @@ const FilterPanelCatalog = (props: FilterPanelCatalogProps) =>{
                 <Rating.Star percentage={(5 - value) * 20}></Rating.Star>
               </Col>
               <Col>
-                <span className="ms-2">{value + 1}</span>
+                <span className="ms-2">{5 - value}</span>
               </Col>
             </Row>)
           })}

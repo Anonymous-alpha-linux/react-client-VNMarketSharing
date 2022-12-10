@@ -2,9 +2,11 @@ import React from 'react';
 import moment from 'moment';
 import { Order } from '../../containers';
 import { useTypedSelector } from '../../hooks';
-import { GetOrderResponseDTO } from '../../models';
+import { GetOrderResponseDTO, OrderStatus } from '../../models';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Container, Spinner } from 'react-bootstrap';
+import { sellerAPIInstance } from '../../config';
+import { toast } from 'react-toastify';
 
 export const OrderShow: React.FC<{}> = () => {
     const {data: {userId}} = useTypedSelector(s=>s.user);
@@ -33,9 +35,9 @@ export const OrderShow: React.FC<{}> = () => {
         }
     },[userId]);
 
-    if(loading) return <Container fluid>
+    if(loading) return (<Container fluid>
         <Spinner animation='border'></Spinner>
-    </Container>
+    </Container>);
 
     return (
         <section className="p-4">
@@ -54,14 +56,42 @@ export const OrderShow: React.FC<{}> = () => {
                         ...props,
                     };
                 })}
-                onRead={(item) =>{
-                    console.log(item);
-                }}
+                // onRead={(item) =>{
+                //     console.log(item);
+                // }}
                 onAccept={(item) =>{
+                    sellerAPIInstance.traverseOrder(item.id, OrderStatus.Delivering).then(res => {
+                        setOrders(orders => {
+                            return orders.map(o => o.id === item.id ? {
+                                ...o,
+                                status:{
+                                    title: "Delivering",
+                                    status: OrderStatus.Delivering
+                                }
+                            }: o);
+                        });
 
+                        toast.success("updated");
+                    }).catch(error => {
+                        toast.error("Update order failed");
+                    });;
                 }}
                 onDeny={(item) =>{
+                    sellerAPIInstance.traverseOrder(item.id, OrderStatus.SellerDenied).then(res => {
+                        setOrders(orders => {
+                            return orders.map(o => o.id === item.id ? {
+                                ...o,
+                                status:{
+                                    title: "Seller Denied",
+                                    status: OrderStatus.SellerDenied
+                                }
+                            }: o);
+                        });
 
+                        toast.success("updated");
+                    }).catch(error => {
+                        toast.error("Update order failed");
+                    });
                 }}
             ></Order.OrderTable>
         </section>

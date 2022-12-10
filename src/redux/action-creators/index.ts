@@ -277,7 +277,7 @@ export const resetStatus = () => {
     };
 };
 
-export const sendEmailToChangePassword = (email: string, returnUrl?: string) => {
+export const sendEmailToChangePassword = (email: string, returnUrl?: string, onSuccess?: (email:string) => void, onError?: (error: AxiosResponse) => void) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
             type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD,
@@ -294,12 +294,15 @@ export const sendEmailToChangePassword = (email: string, returnUrl?: string) => 
                 }
             );
 
+            onSuccess?.(email);
+
             dispatch({
                 type: ActionTypes.SEND_EMAIL_TO_CHANGE_PASSWORD_SUCCESS,
             });
         } catch (error: any | AxiosError | Error) {
             if (axios.isAxiosError(error)) {
                 const errResponse = error.response as AxiosResponse;
+                onError?.(errResponse);
                 if (errResponse) {
                     const {
                         serverMessage,

@@ -1,4 +1,4 @@
-import { GetAddressResponseDTO, ResponseStatus } from '../../models';
+import { GetAddressResponseDTO, GetNotificationTrackerDTO, ResponseStatus } from '../../models';
 import { ActionTypes } from '../action-types';
 import { Action } from '../actions';
 
@@ -8,6 +8,7 @@ interface UserState {
         username: string;
         avatar: string;
         addressList: GetAddressResponseDTO[];
+        notifies: GetNotificationTrackerDTO[];
     };
     loading: boolean;
     error: string;
@@ -20,6 +21,7 @@ const initialState: UserState = {
         username: '',
         avatar: '',
         addressList: [],
+        notifies: []
     },
     error: '',
     loading: false,
@@ -129,6 +131,59 @@ export default function userReducer(
                 status: ResponseStatus.FAILED,
                 error: action.payload,
             };
+
+        case ActionTypes.GET_NOTIFICATIONS:
+            return {
+                ...state,
+                loading: true,
+                status: ResponseStatus.NOT_RESPONSE,
+                error: ''
+            };
+        case ActionTypes.GET_NOTIFICATIONS_SUCCESS:
+            return {
+                ...state,
+                data: {
+                    ...state.data,
+                    notifies: action.payload
+                },
+                loading: false,
+                status: ResponseStatus.SUCCESS,
+                error: ''
+            };
+        case ActionTypes.GET_NOTIFICATIONS_FAILED:
+            return {
+                ...state,
+                loading: false,
+                status: ResponseStatus.FAILED,
+                error: action.payload
+            };
+
+        case ActionTypes.PUSH_NEW_NOTIFICATION:
+            return {
+                ...state,
+                loading: true,
+                status: ResponseStatus.NOT_RESPONSE,
+                error: ''
+            }
+        case ActionTypes.PUSH_NEW_NOTIFICATION_SUCCESS:
+            return {
+                ...state,
+                data: {
+                    ...state.data,
+                    notifies: !state.data.notifies.some(p => p.notifyId === action.payload.notifyId) ? [action.payload, ...state.data.notifies] : state.data.notifies
+                },
+                loading: false,
+                status: ResponseStatus.SUCCESS,
+                error: ''
+            }
+        case ActionTypes.PUSH_NEW_NOTIFICATION_FAILED:
+            return {
+                ...state,
+                loading: false,
+                status: ResponseStatus.FAILED,
+                error: action.payload
+            }
+        
         default:
             return state;
     }

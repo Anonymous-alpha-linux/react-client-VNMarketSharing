@@ -1,5 +1,5 @@
 import { AxiosInstance } from 'axios';
-import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
+import { AppLocalStorage as LocalStorageService } from '../LocalStorageConfig';
 import { apiAuthURL, axiosAuthAPIInstance } from './apiConfig';
 
 export interface IInterceptorBehavior {

@@ -175,3 +175,42 @@ export const changeSellerBanner = (
         }
     };
 };
+
+export const getSellerOrder = (merchantId: number, config?: AxiosRequestConfig) =>{
+    return async (dispatch: Dispatch<Action>) => {
+        dispatch({
+            type: ActionTypes.GET_MERCHANT_ORDER_LIST
+        });
+
+        sellerAPIInstance.getOrderList(merchantId, config).then(response =>{
+            const {data} = response;
+            if(Array.isArray(data)){
+                dispatch({
+                    type: ActionTypes.GET_MERCHANT_ORDER_LIST_SUCCESS,
+                    payload: {
+                        merchantOrderList: data
+                    }
+                });
+            }
+        }).catch(error =>{
+            if (axios.isAxiosError(error)) {
+                const errResponse = error.response as AxiosResponse;
+                if (errResponse.data) {
+                    const {
+                        serverMessage,
+                    }: { message: string; serverMessage: string } =
+                        errResponse.data;
+                    dispatch({
+                        type: ActionTypes.CHANGE_USER_PAGE_BANNER_FAILED,
+                        payload: serverMessage,
+                    });
+                }
+            } else {
+                dispatch({
+                    type: ActionTypes.CHANGE_USER_PAGE_BANNER_FAILED,
+                    payload: error?.message,
+                });
+            }
+        });
+    }
+}

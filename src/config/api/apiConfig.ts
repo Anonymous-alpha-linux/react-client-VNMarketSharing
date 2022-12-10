@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
+import { AppLocalStorage as LocalStorageService } from '../LocalStorageConfig';
 import {
     UserAppAPIInstance,
     AddressAppAPIInstance,

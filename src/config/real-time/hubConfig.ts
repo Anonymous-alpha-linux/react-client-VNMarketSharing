@@ -1,7 +1,7 @@
 import * as signalR from '@microsoft/signalr';
-import { ReviewProductCreationDTO, ReviewProductResponseDTO } from '../models';
-import { AppLocalStorage as LocalStorageService } from './tokenConfig';
-
+import { GetNotificationDTO, GetNotificationTrackerDTO, ReviewProductCreationDTO, ReviewProductResponseDTO } from '../../models';
+import { AppLocalStorage as LocalStorageService } from '../LocalStorageConfig';
+import { chatHubRequestConstraints, chatHubResponseConstraints, notificationHubRequestConstraints, reviewHubRequestConstraints, reviewHubResponseConstraints} from './constraints';
 const host = process.env.REACT_APP_ENVIRONMENT_HOST;
 // class MyLogger implements signalR.ILogger {
 //     log(logLevel: signalR.LogLevel, message: string) {
@@ -40,7 +40,7 @@ abstract class Hub {
                 withCredentials: true,
             })
             .configureLogging(signalR.LogLevel.Debug)
-            .withAutomaticReconnect()
+            .withAutomaticReconnect([0, 100])
             .build();
     }
 
@@ -92,22 +92,6 @@ abstract class Hub {
     abstract getHubName(): string;
 }
 
-export enum chatHubRequestConstraints {
-    SEND_MESSAGE_TO_ALL = 'sendMessageToAll',
-    SEND_MESSAGE_TO_CALLER = 'sendMessageToCaller',
-    SEND_MESSAGE_TO_USER = 'sendMessageToUser',
-}
-
-export enum chatHubResponseConstraints {
-    RECEIVE_MESSAGE = 'broadcastMessage',
-}
-
-interface IChatHub extends Hub {
-    sendMessageToAll(name: string, message: string): void;
-    sendMessageToCaller(name: string, message: string): void;
-    senMessageToUser(connectionId: string, message: string): void;
-    receiveMessage(callback: (name: string, message: string) => void): void;
-}
 class ChatHub extends Hub {
     constructor() {
         super('/hubs/chat');
@@ -147,18 +131,13 @@ class ChatHub extends Hub {
     }
 }
 
-export enum reviewHubRequestConstraints {
-    JOIN_REVIEW_GROUP = 'joinReviewGroup',
-    LEAVE_REVIEW_GROUP = 'leaveReviewGroup',
-    SEND_REVIEW_TO_MERCHANT = 'sendReviewToMerchant',
-}
-
-export enum reviewHubResponseConstraints {
-    RECEIVE_REVIEW_FROM_BUYER = 'broadcastReceiveReview',
-}
 class ReviewHub extends Hub {
     constructor() {
         super('/hubs/review');
+    }
+
+    override getHubName(): string {
+        return 'review';
     }
 
     // Mean: join to see new review of product as real-time
@@ -199,11 +178,35 @@ class ReviewHub extends Hub {
         );
         return result;
     }
+}
+
+class NotificationHub extends Hub{
+    constructor() {
+        super('/hubs/notify');
+    }
 
     override getHubName(): string {
-        return 'review';
+        return 'notify';
+    }
+
+    testNotification(callback?: () =>void){
+        callback?.();
+        return this.hubConnectionBuilder.send("TestNotify");
+    }
+
+    joinNotificationGroup(callback?: () => void){
+        callback?.();
+        return this.hubConnectionBuilder.send(notificationHubRequestConstraints.JOIN_NOTIFICATION_GROUP);
+    }
+
+    receiveNotification(callback: (newEntry: GetNotificationTrackerDTO) => void){
+        return this.hubConnectionBuilder.on(notificationHubRequestConstraints.RECEIVE_NOTIFICATION, callback);
+    }
+
+    notifyNewProduct(): Promise<void>{
+        return this.hubConnectionBuilder.send("notifyNewProduct", "/admin/product");
     }
 }
 
-export { ChatHub, ReviewHub };
+export { ChatHub, ReviewHub, NotificationHub };
 export const HubState = signalR.HubConnectionState;

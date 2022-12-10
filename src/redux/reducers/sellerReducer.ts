@@ -1,9 +1,11 @@
 import { ReducerState } from '.';
-import { GetUserPageResponseDTO, ResponseStatus } from '../../models';
+import { GetOrderResponseDTO, GetUserPageResponseDTO, ResponseStatus } from '../../models';
 import { ActionTypes } from '../action-types';
 import { Action } from '../actions';
 
-type SellerState = Partial<GetUserPageResponseDTO>;
+type SellerState = Partial<GetUserPageResponseDTO & {
+    orders: GetOrderResponseDTO[]
+}>;
 const initialState: ReducerState<SellerState> = {
     data: {},
     error: '',
@@ -115,6 +117,33 @@ export const sellerReducer = (
                 data: state.data,
                 status: ResponseStatus.FAILED,
             };
+        
+        case ActionTypes.GET_MERCHANT_ORDER_LIST:
+            return {
+                ...state,
+                loading: true,
+                error: '',
+                status: ResponseStatus.NOT_RESPONSE
+            }
+        case ActionTypes.GET_MERCHANT_ORDER_LIST_SUCCESS:
+            return {
+                ...state,
+                loading: false,
+                error: '',
+                status: ResponseStatus.SUCCESS,
+                data: {
+                    ...state.data,
+                    orders: action.payload.merchantOrderList,
+                }
+            }
+        case ActionTypes.GET_MERCHANT_ORDER_LIST_FAILED:
+            const s = action.payload;
+            return {
+                ...state,
+                loading: false,
+                error: action.payload,
+                status: ResponseStatus.FAILED
+            }
         default:
             return state;
     }

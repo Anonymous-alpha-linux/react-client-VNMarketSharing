@@ -78,8 +78,7 @@ interface IBillingAddressDetailState {
 
 const AddressDetail = (props: {type: "billing" | "shipping"}) => {
     const location = useLocation();
-    const { data: { userId,addressList} } = useTypedSelector(state => state.user);
-    const { getAddressList } = useActions();
+    const { data: { addressList} } = useTypedSelector(state => state.user);
     const [state, setState] = React.useState<IBillingAddressDetailState>({
         loading: false,
         error: '',
@@ -357,6 +356,7 @@ type BillingAddressFormState = {
 
 export const AddressCreationForm = () => {
     const { data: { userId } } = useTypedSelector(state => state.user);
+    const { getAddressList } = useActions();
     const [state, setState] = React.useState<BillingAddressFormState>({
         districts: [],
         initialFormValues: {
@@ -435,6 +435,7 @@ export const AddressCreationForm = () => {
                 formHelpers.setSubmitting(false);
 
                 addressAPIInstance.createAddress(values).then(() => {
+                    getAddressList(Number(userId));
                     navigate(-1);
                     toast.success("New item has been added successfully");
                 }).catch((error: Error | AxiosError | any) => {
@@ -597,6 +598,7 @@ export const AddressUpdateForm = () => {
     React.useEffect(() => {
         getVNProvincesApi();
     }, []);
+    
     React.useEffect(() =>{
         if(location.state){
             const locationState = location.state as {

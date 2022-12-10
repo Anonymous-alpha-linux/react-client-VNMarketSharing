@@ -1,8 +1,9 @@
 import { Carousel, Button, Row, Col } from 'react-bootstrap';
-import { Slider } from '../../components';
+import { CustomLink, Slider } from '../../components';
 import { screenType, useResponsive, useTypedSelector } from '../../hooks';
 import { Product } from '../../containers';
 import { useMediaQuery } from 'react-responsive';
+import React from 'react';
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 export function ProductPage() {
@@ -43,13 +44,15 @@ export function ProductPage() {
             <Row xs={1} sm={2} md={3}>
                 {categoryList.slice(0, 3).map((category, index) =>{
                     return <Col key={index + 1} className="mb-3" style={{overflow:"hidden"}}>
-                        <div className="productPage__card" 
-                            style={{
-                            background: `url(${defaultAvatar}) center / 100% no-repeat`,
-                            
-                        }}>
-                            {category.name}
-                        </div>
+                        <CustomLink to={`/product?category_id=${category.id}`}>
+                            <div className="productPage__card" 
+                                style={{
+                                background: `url(${defaultAvatar}) center / 100% no-repeat`,
+                                
+                            }}>
+                                {category.name}
+                            </div>
+                        </CustomLink>
                     </Col>
                 })}
             </Row>
@@ -115,7 +118,7 @@ export function ProductPage() {
         </section>
 
         {/* Product offer */}
-        <section className='py-3'>
+        {/* <section className='py-3'>
             <article style={{textAlign: 'center', padding:'3rem', borderTop: '1px solid #f1f1f1'}}>
                 <h2>Offer for you</h2>
                 <i>Quickly get your opportunity</i>
@@ -140,7 +143,7 @@ export function ProductPage() {
                     })}
                 </Row>
             </article>
-        </section>
+        </section> */}
 
         {/* Top Category List */}
         <section className='py-3'>
@@ -150,26 +153,30 @@ export function ProductPage() {
             </article>
             <article>
                 <Row className="px-5">
-                    {categoryList.filter(c => c.level === 0).map((c,index) =>{
-                        return <Col key={index + 1}>
-                            <span style={{textAlign: 'center', 
-                                display: 'inline-block', 
-                                width:"100%", 
-                                borderRadius:"4px", 
-                                boxShadow:'1px 1px 1px 1px #000, -1px 2px 3px #000', 
-                                padding: '1rem 1.2rem', 
-                                fontWeight: '600',
-                                cursor:'pointer'
-                            }}>
-                                {c.name}
-                            </span>
-                        </Col>
+                    {categoryList.filter(c => c.level !== 2).map((c,index) =>{
+                        return <React.Fragment key={index + 1}>
+                            <Col className="my-2" xs="auto">
+                                <CustomLink to={`/product?category_id=${c.id}}#Shoe`}>
+                                    <span style={{textAlign: 'center', 
+                                        display: 'inline-block', 
+                                        width:"100%", 
+                                        borderRadius:"4px", 
+                                        boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px", 
+                                        padding: '1rem 1.2rem', 
+                                        fontWeight: '600',
+                                        cursor:'pointer'
+                                    }}>
+                                        {c.name}
+                                    </span>
+                                </CustomLink>
+                            </Col>
+                        </React.Fragment>
                     })}
                 </Row>
             </article>
         </section>
 
-        <section className='py-3'>
+        {/* <section className='py-3'>
             <article style={{textAlign: 'center', padding:'3rem', borderTop: '1px solid #f1f1f1'}}>
                 <h2>Shop Our Top Brands</h2>
             </article>
@@ -180,7 +187,7 @@ export function ProductPage() {
                     <Col>Channel</Col>
                 </Row>
             </article>
-        </section>
+        </section> */}
 
         {/* Proposal products */}
         <section className='py-3'>

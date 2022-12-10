@@ -1,8 +1,9 @@
 import React from 'react'
 import {Card,Row,Col,Button,Stack,Container, Form, RowProps, ColProps} from 'react-bootstrap';
-import { BsCartPlusFill } from 'react-icons/bs';
+import { BsCartPlusFill, BsCashCoin } from 'react-icons/bs';
 import { FaHeart } from 'react-icons/fa';
 import { useMediaQuery } from 'react-responsive';
+import { toast } from 'react-toastify';
 import { CustomLink, CustomNavLink, Rating } from '../../components';
 import { useActions, useTypedSelector } from '../../hooks';
 import { GetProductResponseDTO } from '../../models';
@@ -49,6 +50,9 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
     });
     const isExLargeScreen = useMediaQuery({
         query: '(min-width:1200px)'
+    });
+    const price = productItem?.productDetails?.map?.(d => d.price) || productItem.price.toLocaleString("en-US", {
+        maximumFractionDigits: 0,
     });
 
     React.useEffect(() =>{
@@ -109,12 +113,14 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                         </div>
                         
                         <Card.Subtitle style={{textAlign: 'center', marginTop: '1.8rem', color: "red"}}>
-                            <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>{productItem.price.toFixed(2)}</i>    
-                            {productItem.price.toLocaleString("en-US", {
-                                maximumFractionDigits: 0,
-                                // currencyDisplay: 'đ',
-                                // currencySign: "đ"
-                            })} VND
+                            <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>
+                                    {Array.isArray(price) 
+                                    ? `${Math.min(...price).toLocaleString("en-US")} - ${Math.max(...price).toLocaleString("en-US")}`
+                                    : price}
+                            </i>    
+                            {Array.isArray(price) && price.length
+                                ? `${Math.min(...price).toLocaleString("en-US")} - ${Math.max(...price).toLocaleString("en-US")}`
+                                : price} 
                         </Card.Subtitle>
 
                         <div style={{textAlign: 'center'}}>
@@ -135,29 +141,40 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                         <Row gap={1} style={{justifyContent: 'space-between'}}>
                             <Col sm={'auto'}>
                                 {
-                                    !!productItem.productDetails.length &&
+                                    !!productItem.productDetails.length ?
                                     <CustomLink to={{
                                         pathname: `/product/${productItem.id}`
                                     }}>
-                                        <Button className="bg-dark" 
+                                        <Button
                                             style={{
+                                                background: "#f09a22",
                                                 cursor: 'pointer', 
                                                 textTransform: 'uppercase',
-                                                fontWeight: '600'
+                                                fontWeight: '600',
+                                                border: 'none'
                                             }}>
                                             Options
                                         </Button>
                                     </CustomLink>
-                                    ||
-                                    <Button variant="primary" 
-                                    onClick={() => addToCart(productItem, addressId)} 
-                                    style={{cursor: 'pointer'}}>
-                                        <BsCartPlusFill></BsCartPlusFill>
+                                    :
+                                    <Button 
+                                    onClick={() => {
+                                        addToCart(productItem, addressId);
+                                        toast.success("Added this item to cart", {
+                                            position: 'bottom-left',
+                                        });
+                                    }} 
+                                    style={{cursor: 'pointer', background: '#298f00', boxShadow: 'none', border: 'none', height: '100%'}}>
+                                        <span data-text-align="middle">
+                                            <BsCartPlusFill></BsCartPlusFill>
+                                        </span>
                                     </Button>
                                 }
                             </Col>
                             <Col sm={'auto'}>
-                                <Button variant="warning" style={{cursor: 'pointer'}}>Purchase</Button>
+                                <Button variant="warning" style={{cursor: 'pointer'}}>
+                                    <BsCashCoin></BsCashCoin>
+                                </Button>
                                 {" "}
                                 <Button variant="danger" style={{cursor: 'pointer'}} >
                                     <FaHeart></FaHeart>
@@ -205,13 +222,13 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                         </div>
                         <h4 style={{ marginTop: '1.8rem', color: "red"}}>
                             <i style={{textAlign: 'center', margin: '1.8rem 1.2rem 0 0', textDecorationLine: 'line-through', color:'#b3b3b3'}}>
-                                {productItem.price.toLocaleString("en-US", {
-                                    maximumFractionDigits: 0,
-                                })}
+                                {Array.isArray(price) 
+                                ? `${Math.min(...price).toLocaleString("en-US")} - ${Math.max(...price).toLocaleString("en-US")}`
+                                : price}
                             </i>    
-                            {productItem.price.toLocaleString("en-US", {
-                                maximumFractionDigits: 0,
-                            })} VND
+                            {Array.isArray(price) 
+                                ? `${Math.min(...price).toLocaleString("en-US")} - ${Math.max(...price).toLocaleString("en-US")}`
+                                : price} 
                         </h4>
                         <i className='singleProduct__description--stack'>{productItem.description}</i>
                         <div className="my-4">
@@ -236,7 +253,7 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
 
                         <div>
                             {
-                                !!productItem.productDetails.length &&
+                                !!productItem.productDetails.length ?
                                     <CustomLink to={{
                                         pathname: `/product/${productItem.id}`
                                     }}>
@@ -248,7 +265,7 @@ export const SingleProduct: React.FC<{productItem: GetProductResponseDTO, view?:
                                             Choose your options
                                         </Button>
                                     </CustomLink>
-                                    ||
+                                    :
                                     <Button style={{background:'var(--clr-logo)', border:'none'}} onClick={() => addToCart(productItem, addressId)}>
                                         <BsCartPlusFill></BsCartPlusFill>
                                         <b style={{verticalAlign: 'middle', marginLeft: '1rem', fontSize:"1rem"}}>ADD TO CART</b>

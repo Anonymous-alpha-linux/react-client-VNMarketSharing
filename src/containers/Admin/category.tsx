@@ -4,7 +4,7 @@ import React from 'react'
 import { Button, Form, Stack, Modal, Row, Col, Spinner, ButtonGroup, ToggleButton, ToggleButtonGroup} from 'react-bootstrap';
 import { toast } from 'react-toastify';
 import * as yup from 'yup';
-import { AiOutlinePlus } from 'react-icons/ai';
+import { AiFillMinusCircle, AiFillPlusCircle, AiOutlinePlus } from 'react-icons/ai';
 import { categoryAPIInstance } from '../../config';
 import { useActions, useTypedSelector } from '../../hooks';
 import { NodeValue, Tree as TreeView } from '../../components';
@@ -222,7 +222,10 @@ export const CategoryPage = () => {
                     }));
                 }}
             ></Category.CategoryTable>)
-            : (<CategoryTreeview data={state.displayedData}></CategoryTreeview>)
+            : (<CategoryTreeview data={state.data} 
+                activeIcon={() =><AiFillPlusCircle></AiFillPlusCircle>}
+                nonActiveIcon={()=><AiFillMinusCircle></AiFillMinusCircle>}
+                ></CategoryTreeview>)
         },
         renderModal(){
             return (
@@ -498,19 +501,24 @@ export const CategoryPage = () => {
     )
 }
 
-export const CategoryTreeview = ({data}: {data: CategoryData[]}) =>{
+export const CategoryTreeview = ({data, activeIcon, nonActiveIcon}: {data: CategoryData[], activeIcon?: () => React.ReactNode, nonActiveIcon?: () => React.ReactNode}) =>{
+    const [state,setState] = React.useState(data);
+    React.useEffect(() =>{
+        setState(data);
+    },[data]);
+
     const functions = {
-        transformStateToTreeViewInput(source: CategoryData[], setCurrentIcon?: () => React.ReactNode): NodeValue[]{
+        transformStateToTreeViewInput(source: CategoryData[], activeIcon?: () => React.ReactNode, nonActiveIcon?: () => React.ReactNode): NodeValue[]{
             return source.map(category=>{
                 return {
                     key: category.id,
                     label: category.name,
                     level: category.level,
-                    icon: setCurrentIcon?.(),
+                    icon: category.hasOpened ? nonActiveIcon?.() : activeIcon?.(),
                     childrenAmount: category.subCategoryCount,
                     childrenCurrent: category.subCategories ? category.subCategories.length : 0,
                     hasOpened: category.hasOpened,
-                    subNodes: !!category.subCategories ? functions.transformStateToTreeViewInput(category.subCategories, setCurrentIcon) : []
+                    subNodes: !!category.subCategories ? functions.transformStateToTreeViewInput(category.subCategories, activeIcon, nonActiveIcon) : []
                 }
             })
         },
@@ -546,9 +554,10 @@ export const CategoryTreeview = ({data}: {data: CategoryData[]}) =>{
 
     return (
         <div className="p-3 w-100" style={{background: '#fff', minHeight: "50vh"}}>
-            <TreeView data={functions.transformStateToTreeViewInput(data.filter(p => p.level == 0))}
+            <TreeView data={functions.transformStateToTreeViewInput(state.filter(p => p.level === 0), activeIcon, nonActiveIcon)}
                 setCurrentNode={(currentNode) => {
-                    return functions.transformStateToTreeViewInput(data.filter(p => p?.parentId && p.parentId === Number(currentNode.key)));
+                    // setState(p => p.map((item) => item.id === currentNode.key ? {...item, hasOpened: !item.hasOpened} : item));
+                    return functions.transformStateToTreeViewInput(state.filter(p => p?.parentId && p.parentId === Number(currentNode.key)), activeIcon, nonActiveIcon);
                 }}>
             </TreeView>
         </div>

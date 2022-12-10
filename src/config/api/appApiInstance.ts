@@ -1,3 +1,4 @@
+import { getNotifications } from './../../redux/action-creators/user';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { serialize } from 'object-to-formdata';
 import {
@@ -5,7 +6,7 @@ import {
     AuthInterceptorBehavior,
     PublicInterceptorBehavior,
 } from './interceptorBehavior';
-import { AppLocalStorage as LocalStorageService } from '../tokenConfig';
+import { AppLocalStorage as LocalStorageService } from '../LocalStorageConfig';
 import {
     InvoiceCreationDTO,
     OrderStatus,
@@ -98,6 +99,18 @@ export class UserAppAPIInstance extends AppAPIInstance {
             },
             ...config,
         });
+    }
+    getNotifications(userId: number, filter?: {
+        page: number;
+        take: number;
+    }, config?: AxiosRequestConfig){
+        return this.apiInstance.get('notifies', {
+            ...config,
+            params: {
+                userId,
+                ...filter
+            },
+        })
     }
 }
 
@@ -356,6 +369,14 @@ export class SellerAppAPIInstance extends AppAPIInstance {
     }
     getSellerList(config?: AxiosRequestConfig) {
         return this.apiInstance.get('list', config);
+    }
+    getOrderList(merchantId: number,config?: AxiosRequestConfig) {
+        return this.apiInstance.get('order', {
+            ...config,
+            params: {
+                merchantId,
+            }
+        });
     }
 }
 

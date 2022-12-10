@@ -180,7 +180,7 @@ export function SingleProduct() {
             <article id="single-product__header">
               <h3>{state.data?.name}</h3>
               <div>
-                <Rating.Star percentage={0.7}></Rating.Star>
+                <Rating.Star percentage={1}></Rating.Star>
                 {
                   state.data?.reviewAmount &&
                   <i style={{marginLeft:"0.5rem", verticalAlign: 'middle'}}>{`${state.data.reviewAmount} Customer Reviews`}</i> ||

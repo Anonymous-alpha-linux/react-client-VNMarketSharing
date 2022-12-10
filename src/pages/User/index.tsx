@@ -11,6 +11,9 @@ export * from './page - checkout';
 export * from './page - cart';
 export * from './page - order';
 export * from './page - orderTracker';
+export * from './page - dashboard';
+export * from './page - profile';
+export * from './page - notification';
 
 export const UserMain: React.FC<{}> = () => {
     return (

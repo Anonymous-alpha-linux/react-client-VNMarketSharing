@@ -4,7 +4,8 @@ import {Formik, FormikHelpers, useFormikContext} from 'formik';
 import {Form,Button,
     Spinner,Stack,Ratio,
     Modal,Toast,ToastContainer, 
-    ProgressBar, ProgressBarProps, ButtonGroup} from 'react-bootstrap';
+    ProgressBar, ProgressBarProps, 
+    ButtonGroup} from 'react-bootstrap';
 import axios, {AxiosError, AxiosResponse} from 'axios';
 import {useTypedSelector,useActions} from '../../hooks';
 import {changeAvatarSchema, updateInfoSchema} from '../../schemas';
@@ -14,45 +15,42 @@ import {Thumb} from './thumbnail';
 import { CustomLink } from '../../components';
 import { AiOutlineEdit } from 'react-icons/ai';
 import "./index.css"
+import { MdOutlineDone } from 'react-icons/md';
+import { toast } from 'react-toastify';
 
 const defaultAvatar = 'https://cdn.sforum.vn/sforum/wp-content/uploads/2021/07/cute-astronaut-wallpaperize-amoled-clean-scaled.jpg';
 
 export const Profile = () => {
-    const {data,loading} = useTypedSelector(state => state.user);
+    const {data} = useTypedSelector(state => state.user);
     const [isModalShow, setModalShow] = useState<boolean>(false);
     const [searchParams] = useSearchParams();
 
     function openModal() {return setModalShow(true);}
     function closeModal(){ return setModalShow(false); }
 
-    React.useEffect(() => console.log(searchParams), [searchParams]);
-
     return (<>
         <Stack direction={"vertical"} 
         className="col-md-7 p-5 mx-auto align-items-md-center"
         style={{background: "#fff"}}
         gap={3}>
-            {loading ? <Ratio aspectRatio={"1x1"} style={{width: '120px', height: '120px'}}>
-                <Spinner animation="border"></Spinner>
-            </Ratio>
-            : <>
-                <div className='profile__image'
-                    style={{
-                        background: `url(${data.avatar || defaultAvatar}) center / contain no-repeat`
-                    }}
-                    onClick={openModal}>
-                    <div className="profile__icon--edit">
-                        <AiOutlineEdit></AiOutlineEdit>
-                    </div>
+            <div className='profile__image'
+                style={{
+                    background: `url(${data.avatar || defaultAvatar}) center / contain no-repeat`
+                }}
+                onClick={openModal}>
+                <div className="profile__icon--edit">
+                    <AiOutlineEdit></AiOutlineEdit>
                 </div>
-            </>}
+            </div>
 
-            <ImageEditor isModalShow={isModalShow} 
-            closeModal={closeModal}></ImageEditor>
+            <ImageEditor 
+                isModalShow={isModalShow} 
+                closeModal={closeModal}
+            ></ImageEditor>
 
             {searchParams.get("isEdit")
-            && <EditableProfile></EditableProfile>
-            || <>
+            ? <EditableProfile></EditableProfile>
+            : <React.Fragment>
                 <PersonalBio></PersonalBio>
                 <CustomLink to={{
                     pathname: '',
@@ -62,7 +60,7 @@ export const Profile = () => {
                         Edit
                     </Button>
                 </CustomLink>
-            </>
+            </React.Fragment>
             }
         </Stack>
     </>
@@ -85,8 +83,8 @@ const ImageEditor = ({isModalShow,closeModal} : {
                 Close
             </Button>
             <Button variant="primary" 
-            onClick={submitForm} 
-            disabled={loading}>{loading ? 
+                onClick={submitForm} 
+                disabled={loading}>{loading ? 
                 <>
                     <Spinner as="span"
                         animation="border"
@@ -99,31 +97,42 @@ const ImageEditor = ({isModalShow,closeModal} : {
     }
 
     return (
-        <Modal show={isModalShow} backdrop="static" onHide={closeModal}>
+        <Modal className='m-3' show={isModalShow} backdrop="static" onHide={closeModal} style={{minHeight:"80vh"}}>
             <Formik validationSchema={changeAvatarSchema}   
                 initialValues={{file: data.avatar}}    
                 onSubmit={(values: {file: any},formHelpers: FormikHelpers<{file: any}>)=>{
+                    formHelpers.setSubmitting(false);
                     if(values.file instanceof File){
                         changeAvatar(values.file, {
                             onUploadProgress: (event:ProgressEvent)=>{
                                 let percentage = Math.floor((event.loaded * 100) / event.total);
-                                
-                                if(percentage < 100){
+                                if(percentage <= 100){
                                     setAvatarProgress(percentage);
                                 }
+                            },
+                            onSuccess: () =>{
+                                toast.success("Done your avatar!");
+                            },
+                            onError: () =>{
+                                toast.error("Failed on upload to server. Please try again!");
                             }
                         });
                     }
-                    formHelpers.setSubmitting(false);
                 }}>
                     {({values,errors, handleSubmit, setFieldValue, setErrors}) => {
                         return <>
                             <Modal.Header closeButton>
-                            <Modal.Title></Modal.Title>
+                                <Modal.Title></Modal.Title>
                             </Modal.Header>
                             <Modal.Body>
                                 <Form onSubmit={handleSubmit}>
-                                    <div>
+                                    {loading 
+                                    ? <div data-text-align="middle">
+                                        <Ratio aspectRatio={"1x1"} style={{width: '120px', height: '120px'}}>
+                                            <Spinner animation="border"></Spinner>
+                                        </Ratio>
+                                    </div>
+                                    : <div>
                                         <Thumb image={values.file} 
                                             showCrop={true}
                                             roundedCircle
@@ -141,6 +150,7 @@ const ImageEditor = ({isModalShow,closeModal} : {
                                             allowResize={false}
                                         ></Thumb>
                                     </div>
+                                    }
                                     <Form.Control type="file" 
                                         name="file" 
                                         accept="image/*"
@@ -161,38 +171,38 @@ const ImageEditor = ({isModalShow,closeModal} : {
                                     <Form.Text id="profileHelpBlock" muted>
                                         Your file should be less than 5 megabytes and format with .jpg / .png better
                                     </Form.Text>
+                                    {avatarProgress > 0 && <ProgressAlert bodyText='Uploading your image...' progressProps={{now: avatarProgress, label: `${avatarProgress}%`}}></ProgressAlert>}
                                 </Form>
                             </Modal.Body>
                             <Modal.Footer>
                                 <Footer></Footer>
-                            </Modal.Footer>
+                            </Modal.Footer>           
                     </>}}
             </Formik>
-            {avatarProgress > 0 && <ProgressAlert progressProps={{now: avatarProgress, label: `${avatarProgress}%`}}></ProgressAlert>}
         </Modal>
     )
 }
 
-const ProgressAlert = ({progressProps,style}:{progressProps: ProgressBarProps,style?: React.CSSProperties}) =>{
-    return <ToastContainer containerPosition='fixed' position='bottom-end' style={style}>
-        <Toast>
+export const ProgressAlert = ({progressProps ,style, onClose, bodyText}:{bodyText: string, progressProps: ProgressBarProps,style?: React.CSSProperties, onClose?: () => void}) =>{
+    return <ToastContainer containerPosition='fixed' position={
+        'bottom-end'
+    } style={{...style}}>
+        <Toast onClose={onClose}>
             <Toast.Header>
-                <h1>Upload Processing</h1>
+                <div>
+                    {progressProps.now === 100 && <span className='p-2 me-3' style={{background: '#5fb00d', color: '#fff', borderRadius: '50%', display: 'inline-block', }}>
+                        <span data-text-align="middle">
+                            <MdOutlineDone></MdOutlineDone>
+                        </span>
+                    </span>}
+                    {bodyText}
+                </div>
             </Toast.Header>
             <Toast.Body>
-                <ProgressBar {...progressProps}></ProgressBar>
+                <ProgressBar {...progressProps} variant="success" style={{boxShadow: "rgba(0, 0, 0, 0.16) 0px 1px 4px"}}></ProgressBar>
             </Toast.Body>
         </Toast>
     </ToastContainer>
-}
-
-export interface UserInfoState {
-    loading: boolean,
-    error: string,
-    data:{
-        biography: string, 
-        dateOfBirth: Date,  
-    }
 }
 
 const PersonalBio = () =>{
@@ -240,7 +250,6 @@ const PersonalBio = () =>{
         }
     },[userId]);
     if(state.error) return <Navigate to="/error" state={{from: location}}></Navigate>
-    if(state.loading) return <Spinner animation='border'>...</Spinner>
     return <>
         <Form.Label>My DisplayName</Form.Label>
         <Form.Control type="disable" value={username} readOnly></Form.Control>
@@ -264,7 +273,14 @@ const EditableProfile = () =>{
             dateOfBirth: (new Date()).toUTCString()
         }}
         onSubmit={(values: UpdateUserInfoRequest, formikHelpers: FormikHelpers<UpdateUserInfoRequest>) =>{
-            updateUserInfo(values);
+            updateUserInfo(values, {
+                onSuccess: () =>{
+                    toast.success("Updated your information");
+                },
+                onError: () =>{
+                    toast.error("Failed on updating your information");
+                }
+            });
             formikHelpers.setSubmitting(false);
         }}>
         {({values, errors, touched, handleChange, handleSubmit}) =>{
@@ -317,4 +333,15 @@ const EditableProfile = () =>{
             </Form>
         )}}
     </Formik>
+}
+
+
+
+export interface UserInfoState {
+    loading: boolean,
+    error: string,
+    data:{
+        biography: string, 
+        dateOfBirth: Date,  
+    }
 }

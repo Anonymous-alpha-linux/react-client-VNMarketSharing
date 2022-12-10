@@ -44,6 +44,8 @@ export const getProductList = (
 export const postNewProduct = (productRequest: PostProductRequestDTO, config?: {
     onSuccess?: () => void;
     onError?: (error: AxiosError) => void;
+    onUploadProgress?: (e: ProgressEvent) => void;
+    onDownloadProgress?: (e: ProgressEvent) => void;
 }) => {
     return async (dispatch: Dispatch<Action>) => {
         dispatch({
@@ -54,6 +56,8 @@ export const postNewProduct = (productRequest: PostProductRequestDTO, config?: {
             const { data }: AxiosResponse<string> =
                 await productAPIInstance.createNewProduct(productRequest, {
                     withCredentials: true,
+                    onUploadProgress: config?.onUploadProgress,
+                    onDownloadProgress: config?.onDownloadProgress,
                 });
 
             config?.onSuccess?.();

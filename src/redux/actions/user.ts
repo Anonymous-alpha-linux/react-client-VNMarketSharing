@@ -1,4 +1,4 @@
-import { GetAddressResponseDTO } from '../../models';
+import { GetAddressResponseDTO, GetNotificationDTO, GetNotificationTrackerDTO } from '../../models';
 import { ActionTypes } from '../action-types';
 
 export type UserAction =
@@ -13,7 +13,13 @@ export type UserAction =
     | IUpdateUserInfoFailedAction
     | IGetAddressListAction
     | IGetAddressListSuccessAction
-    | IGetAddressListFailedAction;
+    | IGetAddressListFailedAction
+    | IGetNotificationListAction
+    | IGetNotificationListSuccessAction
+    | IGetNotificationListFailedAction
+    | IPushNotificationAction
+    | IPushNotificationSuccessAction
+    | IPushNotificationFailureAction;
 
 export interface IGetUserInfoAction {
     type: ActionTypes.GET_USER_INFO;
@@ -70,5 +76,33 @@ export interface IGetAddressListSuccessAction {
 
 export interface IGetAddressListFailedAction {
     type: ActionTypes.GET_ADDRESS_LIST_FAILED;
+    payload: string;
+}
+
+export interface IGetNotificationListAction{
+    type: ActionTypes.GET_NOTIFICATIONS;
+}
+
+export interface IGetNotificationListSuccessAction{
+    type: ActionTypes.GET_NOTIFICATIONS_SUCCESS;
+    payload: GetNotificationTrackerDTO[];
+}
+
+export interface IGetNotificationListFailedAction{
+    type: ActionTypes.GET_NOTIFICATIONS_FAILED;
+    payload: string;
+}
+
+export interface IPushNotificationAction {
+    type: ActionTypes.PUSH_NEW_NOTIFICATION;
+}
+
+export interface IPushNotificationSuccessAction {
+    type: ActionTypes.PUSH_NEW_NOTIFICATION_SUCCESS;
+    payload: GetNotificationTrackerDTO;
+}
+
+export interface IPushNotificationFailureAction {
+    type: ActionTypes.PUSH_NEW_NOTIFICATION_FAILED;
     payload: string;
 }

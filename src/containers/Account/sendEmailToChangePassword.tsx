@@ -6,6 +6,7 @@ import { ResponseStatus } from '../../models';
 import {sendEmailToChangePasswordSchema} from '../../schemas';
 import './index.css';
 import { CustomLink } from '../../components';
+import { toast } from 'react-toastify';
 
 export const    SendEmailToChangePassword = () => {
     const {loading,status} = useTypedSelector(state => state.auth);
@@ -42,7 +43,11 @@ export const    SendEmailToChangePassword = () => {
         validationSchema={sendEmailToChangePasswordSchema}
         onSubmit={(values:{email:string}, formHelpers: FormikHelpers<{email:string}>) =>{
             if(loading) return;
-            sendEmailToChangePassword(values.email, "/auth/changePassword");
+            sendEmailToChangePassword(values.email, "/auth/changePassword", (email) => {
+                toast.success("Please check your email")
+            }, (response) =>{
+                toast.error(response.data?.["serverMessage"]);
+            });
             formHelpers.setSubmitting(false);
         }}>
             {({touched,errors,values,isValidating,handleChange,handleBlur,handleSubmit})=> {

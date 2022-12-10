@@ -1,15 +1,15 @@
 import React from 'react';
 import { Table } from '../../components';
-import { TableValues } from '../../components/Table/table-types';
+import { RowHandlers, TableValues } from '../../components/Table/table-types';
 interface ProductTableState<Values> {
   data: Values[];
 }
 type ProductTableProps<Values> = ProductTableState<Values> & {
   headers: string[];
-};
+} & RowHandlers;
 
 export function ProductTable<Values extends TableValues>(props: ProductTableProps<Values>) {
-  
+  const {data,headers} = props;
   function getKeysofObject(obj: Values[]){
     if(!obj.length) return [];
 
@@ -28,15 +28,11 @@ export function ProductTable<Values extends TableValues>(props: ProductTableProp
             {({searchMatchesResult}) =>{
               return <>
                 <Table.Table 
+                  {...props}
                   hasAction
                   headers={getKeysofObject(props.data)}
                   data={searchMatchesResult}
                   perPageEntities={5}
-                  onAccept={() => {}}
-                  onDeny={() =>{}}
-                  onRead={() => {}}
-                  onUpdate={() => {}}
-                  onDelete={() => {}}
                 ></Table.Table>
               </>
             }}
